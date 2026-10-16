@@ -86,21 +86,15 @@ def set_cell(cell, text):
     set_multiline(cell, [str(text)])
 
 
-def set_multiline(cell, lines, autofit=True):
+def set_multiline(cell, lines):
     """多行写入一个单元格：清空后按模板首个段落样式重建所有行。
 
     必须先在副本上改文本、再整体替换原始 <a:p>，否则按 _p 查找会重复命中。
     空行也必须保留为独立段落（否则会多出/丢掉行，如油耗 4 行夹着空值）。
-    autofit=True 时，行数/单行字数偏多会按比例缩小字号，防止文字溢出。
     """
     if not lines:
         return
     lines = ["" if x is None else str(x) for x in lines]
-    if autofit:
-        try:
-            _autofit_cell_font(cell, lines)
-        except Exception:
-            pass
     tf = cell.text_frame
     base_p = tf.paragraphs[0]
     proto = copy.deepcopy(base_p._p)
@@ -133,38 +127,6 @@ def set_multiline(cell, lines, autofit=True):
         txBody.remove(old)
     for pel in new_ps:
         txBody.append(pel)
-
-
-def _autofit_cell_font(cell, lines):
-    """估算文本是否溢出单元格，若偏多则按比例缩小字号（下限 6pt）。"""
-    from pptx.util import Pt
-    tf = cell.text_frame
-    cur = None
-    for para in tf.paragraphs:
-        for run in para.runs:
-            if run.font.size:
-                cur = run.font.size
-                break
-        if cur:
-            break
-    if not cur:
-        return
-    # 估算：中文 1.0 宽 / 英文 0.55 宽；单行容量约 46 个"标准字符"
-    CAP = 46.0
-    total_rows = 0
-    max_w = 0.0
-    for ln in lines:
-        w = sum(1.0 if ord(ch) > 127 else 0.55 for ch in ln)
-        max_w = max(max_w, w)
-        total_rows += max(1, int(w / CAP) + (1 if w % CAP else 0))
-    target = cur.pt
-    if total_rows > 11 or max_w > CAP:
-        ratio = min(1.0, 11.0 / total_rows, CAP / max(max_w, 1.0))
-        target = max(6.0, round(cur.pt * ratio, 1))
-    if target < cur.pt:
-        for para in tf.paragraphs:
-            for run in para.runs:
-                run.font.size = Pt(target)
 
 
 def set_shape_text(shape, text, lang=None):
@@ -327,10 +289,10 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                     fill_pictures(slide, img_map, pic_slots)
                     print("  已插入图片:", list(img_map.keys()))
 
-        # 标题：模板串 + 品牌变量（取该语言的品牌名）
-        title_tpl = tmap.get("title")
-        sub_title = data.get("__title_sub__")
-        title_custom = (data.get("__title_custom__") or "").strip()
+        # 标题：仅第 1 页替换（第 2/3/4 页保持模板原样）
+        title_tpl = tmap.get("title") if s_idx == 0 else None
+        sub_title = data.get("__title_sub__") if s_idx == 0 else None
+        title_custom = ((data.get("__title_custom__") or "").strip()) if s_idx == 0 else ""
         if title_tpl or sub_title or title_custom:
             brand_raw = data.get("e_brand") or ""
             brand = translate(brand_raw, lang) if brand_raw else ""
