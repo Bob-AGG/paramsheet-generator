@@ -1,0 +1,415 @@
+[
+ {
+  "slide": 1,
+  "tables": [
+   {
+    "idx": 3,
+    "rows": 6,
+    "cols": 3,
+    "cells": [
+     [
+      "ITEMS",
+      "PRP",
+      "EPS "
+     ],
+     [
+      "Power",
+      "632kVA",
+      "688kVA"
+     ],
+     [
+      "Power",
+      "506kW",
+      "550kW"
+     ],
+     [
+      "Frequency / Phase / Power factor",
+      "50Hz / 3P / PF0.8",
+      ""
+     ],
+     [
+      "Standard voltage",
+      "400/230V",
+      ""
+     ],
+     [
+      "Available voltage",
+      "380/220V · 415/240V",
+      ""
+     ]
+    ]
+   },
+   {
+    "idx": 5,
+    "rows": 10,
+    "cols": 3,
+    "cells": [
+     [
+      "PERFORMANCE DATA",
+      "",
+      ""
+     ],
+     [
+      "    Engine brand",
+      "",
+      "DEUTZ"
+     ],
+     [
+      "    Engine model",
+      "",
+      "D17"
+     ],
+     [
+      "    Fuel",
+      "",
+      "Diesel"
+     ],
+     [
+      "    Aspiration",
+      "",
+      "Turbo, CAC"
+     ],
+     [
+      "    Cooling",
+      "",
+      "Water-cooled"
+     ],
+     [
+      "    Governor",
+      "",
+      "Electronic"
+     ],
+     [
+      "    Cyl arrangement",
+      "",
+      "6L"
+     ],
+     [
+      "    Application",
+      "",
+      "Prime & Standby"
+     ],
+     [
+      "Fuel consumption",
+      "100% ESP(L/H)\n100% PRP(L/H)\n75% PRP(L/H)\n50% PRP(L/H)",
+      "115.1\n105.8\n85.0\n57.1"
+     ]
+    ]
+   },
+   {
+    "idx": 9,
+    "rows": 5,
+    "cols": 3,
+    "cells": [
+     [
+      "",
+      "OPEN",
+      "SILENT"
+     ],
+     [
+      "",
+      "3400*3400*340",
+      "4210*4210*4210"
+     ],
+     [
+      "",
+      "3400",
+      "4210"
+     ],
+     [
+      "",
+      "700",
+      "700"
+     ],
+     [
+      "",
+      "",
+      ""
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "slide": 2,
+  "tables": [
+   {
+    "idx": 0,
+    "rows": 9,
+    "cols": 2,
+    "cells": [
+     [
+      "BASIC DATA",
+      ""
+     ],
+     [
+      "Engine brand",
+      "DEUTZ"
+     ],
+     [
+      "Engine model",
+      "D17"
+     ],
+     [
+      "Displacement",
+      "16.25L"
+     ],
+     [
+      "No. of cyl / arrangement",
+      "6L"
+     ],
+     [
+      "Bore x stroke",
+      "142x171mm"
+     ],
+     [
+      "Compression ratio",
+      "18.7:1"
+     ],
+     [
+      "Engine speed",
+      "1500rpm"
+     ],
+     [
+      "Engine type",
+      "4-stroke diesel"
+     ]
+    ]
+   },
+   {
+    "idx": 1,
+    "rows": 4,
+    "cols": 2,
+    "cells": [
+     [
+      "EXHAUST SYSTEM",
+      ""
+     ],
+     [
+      "Exhaust stack gas temperature (max. )",
+      "560°C"
+     ],
+     [
+      "Exhaust gas flow rate (max. )",
+      "107.5m³/min"
+     ],
+     [
+      "Exhaust system backpressure (maximum allowable)",
+      "5.0kPa"
+     ]
+    ]
+   },
+   {
+    "idx": 2,
+    "rows": 3,
+    "cols": 2,
+    "cells": [
+     [
+      "FUEL SYSTEM",
+      ""
+     ],
+     [
+      "Maximum restriction at lift pump",
+      "19.6kPa"
+     ],
+     [
+      "Max. fuel flow",
+      "131L/H"
+     ]
+    ]
+   },
+   {
+    "idx": 3,
+    "rows": 4,
+    "cols": 2,
+    "cells": [
+     [
+      "COOLING SYSTEM",
+      ""
+     ],
+     [
+      "Radiator air flow",
+      "540m³/min"
+     ],
+     [
+      "Total oil capacity",
+      "30L"
+     ],
+     [
+      "Total coolant capacity",
+      "27L"
+     ]
+    ]
+   },
+   {
+    "idx": 5,
+    "rows": 4,
+    "cols": 2,
+    "cells": [
+     [
+      "ELECTRICAL SYSTEM",
+      ""
+     ],
+     [
+      "Starter motor rated voltage",
+      "DC24V"
+     ],
+     [
+      "Start battery",
+      "2x60Ah(580CCA)"
+     ],
+     [
+      "Battery charging alternator",
+      "DC24V/40A"
+     ]
+    ]
+   },
+   {
+    "idx": 6,
+    "rows": 5,
+    "cols": 2,
+    "cells": [
+     [
+      "INLET AIR",
+      ""
+     ],
+     [
+      "Air filter",
+      "Dry type"
+     ],
+     [
+      "Max. combustion air Intake restriction",
+      "5.0kPa"
+     ],
+     [
+      "Combustion air inlet flow rate",
+      "560 L/S"
+     ],
+     [
+      "Max. allowable combustion air inlet temp",
+      "50°C"
+     ]
+    ]
+   },
+   {
+    "idx": 7,
+    "rows": 7,
+    "cols": 2,
+    "cells": [
+     [
+      "BASIC DATA",
+      ""
+     ],
+     [
+      "Insulation & temperature rise",
+      "Class H/H"
+     ],
+     [
+      "Excitation type",
+      "Self-excited"
+     ],
+     [
+      "Winding leads",
+      "12"
+     ],
+     [
+      "Winding connections (standard)",
+      "Star"
+     ],
+     [
+      "Winding pitch",
+      "Two thirds"
+     ],
+     [
+      "Number of phase",
+      "Three phase"
+     ]
+    ]
+   },
+   {
+    "idx": 8,
+    "rows": 7,
+    "cols": 2,
+    "cells": [
+     [
+      "BASIC DATA",
+      ""
+     ],
+     [
+      "Type",
+      "Brushless"
+     ],
+     [
+      "No. of bearings",
+      "Single bearing"
+     ],
+     [
+      "Coupling system",
+      "Flexible disc"
+     ],
+     [
+      "Maximum over speed",
+      "2250 RPM"
+     ],
+     [
+      "Coating type",
+      "Vacuum impregnation"
+     ],
+     [
+      " IP rating",
+      " IP23"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "slide": 3,
+  "tables": []
+ },
+ {
+  "slide": 4,
+  "tables": [
+   {
+    "idx": 0,
+    "rows": 2,
+    "cols": 1,
+    "cells": [
+     [
+      "STANDARD  FEATURES"
+     ],
+     [
+      "◆ Diesel engine，50 degrees radiator, brushless alternator\n◆ Intelligent controller\n◆ Output circuit breaker (up to1250A)\n◆ Maintenance-free start battery, battery charge, battery switch\n◆ Steel industrial silencer, exhaust bellows and elbows\n◆ Steel chasis and anti-vibration shock absorbers\n◆ Lifting and moving structure, expansion of oil and\n coolant discharge\n◆ Moving parts protection, hot parts protection\n◆ Special toolbox, delivery attached documentation"
+     ]
+    ]
+   },
+   {
+    "idx": 2,
+    "rows": 5,
+    "cols": 2,
+    "cells": [
+     [
+      "OPTIONAL   FEATURES",
+      ""
+     ],
+     [
+      "ENGINE",
+      "◆ Water jacket preheater\n◆ Oil Preheater, oil level maintainer,  \n    oil manual pump\n◆ Heavy air filtration\n◆ Residential silencer\n◆ Remote radiator, heat exchanger"
+     ],
+     [
+      "ALTERNATOR",
+      "◆ PMG/AREP excitation system\n◆ Anti-condensation heater\n◆ Winding/bearing RTD\n◆ Double bearing structure\n◆ IP44 protection class"
+     ],
+     [
+      "CONTROL\nSYSTEM",
+      "◆ Synchronizing panel, remote   \n    control panel\n◆ RS232/485, 4G & GPS wireless, \n    ethernet communication card\n◆ Additional digital/analog \n    input/output\n◆ Monitoring software, mobile APP\n◆ Ni-Cad batteries"
+     ],
+     [
+      "GENERATING\nSET",
+      "◆ External fuel tank, automatic fuel \n    feeding\n◆ ATS / output / combining / \n    distribution cabinet\n◆ Load test cabinet\n◆ Mobile trailer\n◆ Customized design"
+     ]
+    ]
+   }
+  ]
+ }
+]

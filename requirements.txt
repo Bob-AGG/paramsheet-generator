@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-pptx
+Pillow
+python-multipart
+pypdf
+pdfplumber
+openpyxl
+xlrd
