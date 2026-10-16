@@ -91,40 +91,39 @@
 const FREQ_FIELDS = ['freq','prp_kva','eps_kva','prp_kw','eps_kw',
                      'rpm','fc_esp','fc_prp','fc_75','fc_50'];
 
+/* 只保留模板中标注了 12345 的格子；其余格子（含第3、4页）一律保持模板原值不动。
+   分三类：机组 / 动力 / 电机 */
 const GROUPS = [
- {id:'basic', t:'📋 基本参数', open:true, fields:[
-   {k:'model',  t:'机组型号', ph:'例: D17'},
-   {k:'__sub',  t:'标题旁型号字（如 AS550E5）', ph:'AS550E5'},
-   {k:'title',  t:'大标题（留空=自动：品牌带出）', ph:'Industrial Range Powered By X'},
+ {id:'basic', t:'🏭 机组', open:true, fields:[
+   {k:'model',  t:'机组型号（图片文件名）', ph:'例: D17'},
+   {k:'__sub',  t:'标题旁型号字', ph:'AS500E5'},
+   {k:'title',  t:'大标题（留空=自动：工业机组 + 品牌带出）', ph:'Industrial Range Powered By X'},
    {k:'freq',   t:'频率 / 相数 / 功率因数', ph:'50Hz / 3P / PF0.8'},
    {k:'prp_kva',t:'PRP kVA'}, {k:'eps_kva',t:'EPS kVA'},
    {k:'prp_kw', t:'PRP kW'},  {k:'eps_kw', t:'EPS kW'},
    {k:'std_v',  t:'标准电压', ph:'400/230V'},
-   {k:'opt_v',  t:'可选电压', ph:'380/220V · 415/240V'},
+   {k:'opt_v',  t:'可用电压', ph:'380/220V · 415/240V'},
+   {sub:'外观尺寸'},
+   {k:'o_lwh',t:'开架 尺寸 L×W×H (mm)'},{k:'o_wt',t:'开架 重量 (kg)'},
+   {k:'o_tank',t:'开架 油箱 (L)'},
+   {k:'s_lwh',t:'静音 尺寸 L×W×H (mm)'},{k:'s_wt',t:'静音 重量 (kg)'},
+   {k:'s_tank',t:'静音 油箱 (L)'},
+   {sub:'声压级 dB(A)'},
+   {k:'o_db1',t:'开架 @75% load & 1m'},{k:'o_db7',t:'开架 @75% load & 7m'},
+   {k:'s_db1',t:'静音 @75% load & 1m'},{k:'s_db7',t:'静音 @75% load & 7m'},
  ]},
- {id:'perf', t:'⚙️ 发动机性能', open:true, fields:[
-   {sub:'发动机信息'},
+ {id:'perf', t:'🔧 动力', open:true, fields:[
+   {sub:'整机性能'},
    {k:'e_brand',t:'发动机品牌'},{k:'e_model',t:'发动机型号'},
    {k:'e_fuel',t:'燃料'},{k:'e_asp',t:'进气方式'},
    {k:'e_cool',t:'冷却方式'},{k:'e_gov',t:'调速器'},
-   {k:'e_cyl',t:'气缸排列'},{k:'e_app',t:'应用等级', ph:'Prime & Standby'},
+   {k:'e_cyl',t:'气缸排列'},
    {sub:'油耗 (L/H)'},
    {k:'fc_esp',t:'100% ESP'},{k:'fc_prp',t:'100% PRP'},
    {k:'fc_75',t:'75% PRP'},{k:'fc_50',t:'50% PRP'},
- ]},
- {id:'dim', t:'📐 外观尺寸', open:false, fields:[
-   {sub:'开架 OPEN'},
-   {k:'o_lwh',t:'尺寸 L×W×H (mm)'},{k:'o_wt',t:'重量 (kg)'},
-   {k:'o_tank',t:'油箱 (L)'},{k:'o_db1',t:'噪音 @1m dB(A)'},{k:'o_db7',t:'噪音 @7m dB(A)'},
-   {sub:'静音 SILENT'},
-   {k:'s_lwh',t:'尺寸 L×W×H (mm)'},{k:'s_wt',t:'重量 (kg)'},
-   {k:'s_tank',t:'油箱 (L)'},{k:'s_db1',t:'噪音 @1m dB(A)'},{k:'s_db7',t:'噪音 @7m dB(A)'},
- ]},
- {id:'engsys', t:'🔧 发动机系统', open:false, fields:[
    {sub:'基础数据'},
    {k:'displ',t:'排量', ph:'16.25L'},{k:'cyl_arr',t:'缸数 / 排列', ph:'6L'},
-   {k:'bore',t:'缸径×行程', ph:'142x171mm'},{k:'cr',t:'压缩比', ph:'18.7:1'},
-   {k:'rpm',t:'转速', ph:'1500rpm'},{k:'etype',t:'发动机类型', ph:'4-stroke diesel'},
+   {k:'bore',t:'缸径×行程', ph:'142x171mm'},{k:'rpm',t:'转速', ph:'1500rpm'},
    {sub:'排气系统'},
    {k:'ex_t',t:'排气温度 (max)', ph:'560°C'},{k:'ex_f',t:'排气流量 (max)', ph:'107.5m³/min'},
    {k:'ex_bp',t:'排气背压 (最大允许)', ph:'5.0kPa'},
@@ -140,24 +139,13 @@ const GROUPS = [
    {k:'in_flt',t:'空滤类型', ph:'Dry type'},{k:'in_res',t:'最大进气阻力', ph:'5.0kPa'},
    {k:'in_flow',t:'燃烧空气流量', ph:'560 L/S'},{k:'in_t',t:'最高进气温度', ph:'50°C'},
  ]},
- {id:'gen', t:'⚡ 发电机规格', open:false, fields:[
+ {id:'gen', t:'⚡ 电机', open:false, fields:[
    {sub:'基本数据'},
    {k:'g_insul',t:'绝缘 / 温升', ph:'Class H/H'},{k:'g_exc',t:'励磁方式', ph:'Self-excited'},
    {k:'g_lead',t:'绕组出线', ph:'12'},{k:'g_conn',t:'绕组接法(标准)', ph:'Star'},
    {k:'g_pitch',t:'绕组节距', ph:'Two thirds'},{k:'g_phase',t:'相数', ph:'Three phase'},
    {sub:'结构'},
-   {k:'g_type',t:'类型', ph:'Brushless'},{k:'g_brg',t:'轴承数', ph:'Single bearing'},
-   {k:'g_coup',t:'联轴方式', ph:'Flexible disc'},{k:'g_over',t:'最大超速', ph:'2250 RPM'},
-   {k:'g_coat',t:'涂层工艺', ph:'Vacuum impregnation'},{k:'g_ip',t:'防护等级', ph:'IP23'},
- ]},
- {id:'feat', t:'✅ 标准配置 / 选配项', open:false, fields:[
-   {sub:'标准配置 (STANDARD FEATURES)'},
-   {k:'std_feat',t:'标准配置文案', ta:true, ph:'每行一条，模板中会自动加 ◆'},
-   {sub:'选配项 (OPTIONAL FEATURES)'},
-   {k:'op_eng',t:'ENGINE 发动机', ta:true},
-   {k:'op_alt',t:'ALTERNATOR 发电机', ta:true},
-   {k:'op_ctrl',t:'CONTROL/SYSTEM 控制系统', ta:true},
-   {k:'op_set',t:'GENERATING/SET 机组', ta:true},
+   {k:'g_brg',t:'轴承数', ph:'Single bearing'},
  ]},
  {id:'img', t:'🖼️ 机组图片', open:true, fields:[
    {sub:'开架机组 OPEN'},
@@ -524,6 +512,8 @@ async function genFile(fmt){
   // 本地手选图片随 payload 带（dataURL -> 后端写临时文件）
   if(localImgs.open) data.__img_open_data = localImgs.open;
   if(localImgs.silent) data.__img_silent_data = localImgs.silent;
+  // 声压级符号框（模板 4 个格：开架/静音 @1m/@7m）；模板格已加了两行
+  data.sound_db = [data.o_db1||'', data.o_db7||'', data.s_db1||'', data.s_db7||''];
   const payload = { lang: lang, format: fmt,
                     title_sub: (m.common&&m.common.__sub) || '',
                     title: (m.common&&m.common.title) || '',

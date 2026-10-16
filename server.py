@@ -82,6 +82,19 @@ async def build(request: Request):
     if title_custom:
         # 用户手填大标题：覆盖模板串（支持 {engine_brand} 占位）
         data["__title_custom__"] = title_custom
+    # 右下角频率/燃料小格 + 声压级符号框（标 12345 的独立文本框）
+    for k in ("freq_tag", "fuel_tag", "sound_db"):
+        if k in data and data.get(k) not in (None, ""):
+            continue
+    freq = body.get("freq")
+    if freq and not data.get("freq_tag"):
+        data["freq_tag"] = freq
+    if not data.get("fuel_tag") and data.get("e_fuel"):
+        data["fuel_tag"] = data["e_fuel"]
+    if not data.get("sound_db"):
+        sd = [data.get("o_db1", ""), data.get("o_db7", "")]
+        if any(str(x).strip() for x in sd):
+            data["sound_db"] = sd
     if not data.get("model"):
         return JSONResponse({"ok": False, "error": "缺少 model（机组型号）"}, status_code=400)
     # 本地手选图片（dataURL）-> 写临时文件，供 build_pptx 使用
