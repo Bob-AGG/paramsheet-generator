@@ -78,6 +78,10 @@ async def build(request: Request):
     if title_sub:
         # slide1 顶部小标题（型号字，如 AS550E5）
         data["__title_sub__"] = title_sub
+    title_custom = (body.get("title") or "").strip()
+    if title_custom:
+        # 用户手填大标题：覆盖模板串（支持 {engine_brand} 占位）
+        data["__title_custom__"] = title_custom
     if not data.get("model"):
         return JSONResponse({"ok": False, "error": "缺少 model（机组型号）"}, status_code=400)
     # 本地手选图片（dataURL）-> 写临时文件，供 build_pptx 使用

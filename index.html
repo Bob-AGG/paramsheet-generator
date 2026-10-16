@@ -239,7 +239,8 @@ function applyCollect(m, vals){
   const fd = m.freqs[m.curFreq] = m.freqs[m.curFreq] || {};
   Object.keys(vals).forEach(k=>{
     if(k==='model'){ m.model = String(vals[k]||'').trim(); m.common.model = m.model; return; }
-    if(k.startsWith('__')) return;              // __sub/__img_* 等元字段不进数据
+    if(k==='__sub'){ m.common.__sub = vals[k]; return; }   // 标题旁型号字：存 common
+    if(k.startsWith('__')) return;              // __img_* 等元字段不进数据
     if(FREQ_FIELDS.includes(k)) fd[k]=vals[k]; else m.common[k]=vals[k];
   });
 }
@@ -507,10 +508,19 @@ async function genFile(fmt){
   const fd = curFreqData(m);
   const meta = {};   // 标题旁型号字等元字段（存在 common 下）
   const data = Object.assign({}, m.common, fd, { model: m.model, freq_sel: m.curFreq });
+  // 油耗：模板需要 fc_lines（多行），由 fc_* 组装成 "100% ESP(L/H): 值" 形式
+  const fcParts = [];
+  if(fd.fc_esp) fcParts.push('100% ESP(L/H): '+fd.fc_esp);
+  if(fd.fc_prp) fcParts.push('100% PRP(L/H): '+fd.fc_prp);
+  if(fd.fc_75)  fcParts.push('75% PRP(L/H): '+fd.fc_75);
+  if(fd.fc_50)  fcParts.push('50% PRP(L/H): '+fd.fc_50);
+  if(fcParts.length) data.fc_lines = fcParts;
   // 本地手选图片随 payload 带（dataURL -> 后端写临时文件）
   if(localImgs.open) data.__img_open_data = localImgs.open;
   if(localImgs.silent) data.__img_silent_data = localImgs.silent;
-  const payload = { lang: lang, format: fmt, title_sub: (m.common&&m.common.__sub) || m.__sub || '',
+  const payload = { lang: lang, format: fmt,
+                    title_sub: (m.common&&m.common.__sub) || '',
+                    title: (m.common&&m.common.title) || '',
                     freq: m.curFreq, data: data };
   toast(fmt==='pdf' ? '正在生成 PDF…' : '正在生成 PPTX…');
   try{
