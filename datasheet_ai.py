@@ -28,7 +28,26 @@ e_cool 冷却方式 / e_gov 调速器 / e_cyl 气缸排列 / e_app 应用等级(
 电气系统：el_v 起动机电压 / el_bat 启动电池 / el_alt 充电发电机
 进气系统：in_flt 空滤类型 / in_res 最大进气阻力 / in_flow 燃烧空气流量 / in_t 最高进气温度
 电气输出(若表中有)：prp_kva / eps_kva / prp_kw / eps_kw / freq 频率·相数·PF / std_v 标准电压 / opt_v 可选电压
+尺寸(如资料给出)：o_lwh/s_lwh 长宽高 · o_wt/s_wt 重量 · o_tank/s_tank 油箱
 """
+
+# ★ 合法字段白名单（AI 返回值只准含这些 key，防乱填/幻觉）
+VALID_FIELDS = {
+    "e_brand", "e_model", "e_fuel", "e_asp", "e_cool", "e_gov", "e_cyl", "e_app",
+    "fc_esp", "fc_prp", "fc_75", "fc_50",
+    "displ", "cyl_arr", "bore", "cr", "rpm", "etype",
+    "ex_t", "ex_f", "ex_bp", "fu_res", "fu_max",
+    "co_air", "co_oil", "co_cool", "el_v", "el_bat", "el_alt",
+    "in_flt", "in_res", "in_flow", "in_t",
+    "prp_kva", "eps_kva", "prp_kw", "eps_kw", "freq", "std_v", "opt_v",
+    "o_lwh", "s_lwh", "o_wt", "s_wt", "o_tank", "s_tank",
+    "o_db1", "o_db7", "s_db1", "s_db7",
+}
+# 频率专属字段（不许留在 common）
+FREQ_ONLY_FIELDS = {
+    "freq", "prp_kva", "eps_kva", "prp_kw", "eps_kw",
+    "rpm", "fc_esp", "fc_prp", "fc_75", "fc_50",
+}
 
 SYSTEM_PROMPT = """你是发电机组/发动机参数提取专家。用户会给你一份 Datasheet 的纯文本（从 PDF/Excel 抽出，可能有排版错乱）。
 
@@ -149,7 +168,8 @@ def parse_datasheet_ai(filename, content, model_hint=""):
                 if kk != "common" and isinstance(vv, dict):
                     freq_field_names |= set(vv.keys())
             out["common"] = {fk: fv for fk, fv in out["common"].items()
-                             if fk not in freq_field_names}
+                             if fk not in freq_field_names
+                             and fk not in FREQ_ONLY_FIELDS}
         ai_fields = sum(len(v) for v in out.values() if isinstance(v, dict))
     else:
         flat = {k: v for k, v in ai_obj.items()
@@ -159,11 +179,14 @@ def parse_datasheet_ai(filename, content, model_hint=""):
     meta["ai_fields"] = ai_fields
 
     # 规则兜底：只补 common 里缺的（规则不区分频率，避免污染频率键）
+    # ⚠️ 频率专属字段绝不从规则补进 common（会跟频率键打架）
     rule_fields = datasheet_parser.parse_text(text, model_hint)
     meta["rule_fields"] = len(rule_fields)
     if rule_fields:
         common = out.setdefault("common", {})
         for k, v in rule_fields.items():
+            if k in FREQ_ONLY_FIELDS:
+                continue
             common.setdefault(k, v)
 
     # 兜底：AI 没给出任何频率键时，用规则里的频率推断建一个
@@ -177,9 +200,55 @@ def parse_datasheet_ai(filename, content, model_hint=""):
             moved = {}
             common = out.get("common", {})
             for k in list(common.keys()):
-                if k in ("prp_kva", "eps_kva", "prp_kw", "eps_kw", "rpm",
-                         "fc_esp", "fc_prp", "fc_75", "fc_50"):
+                if k in FREQ_ONLY_FIELDS:
                     moved[k] = common.pop(k)
             out[freq] = moved
 
+    # ★ common 最终去重：清掉所有频率专属字段 + 与频率键重名的
+    if isinstance(out.get("common"), dict):
+        freq_names = set()
+        for kk, vv in out.items():
+            if kk != "common" and isinstance(vv, dict):
+                freq_names |= set(vv.keys())
+        out["common"] = {k: v for k, v in out["common"].items()
+                         if k not in FREQ_ONLY_FIELDS and k not in freq_names}
+        if not out["common"]:
+            out.pop("common", None)
+
+    # ★ 白名单过滤：清掉 AI 幻觉/乱填的非法 key
+    out = _sanitize(out, text)
     return out, meta
+
+
+def _sanitize(out, text=""):
+    """白名单过滤 + 简单值校验（型号不得当品牌、单位归一）。"""
+    clean = {}
+    for fk, data in out.items():
+        if not isinstance(data, dict):
+            continue
+        d = {}
+        for k, v in data.items():
+            if k not in VALID_FIELDS:
+                continue
+            sv = str(v).strip()
+            if not sv or sv.lower() in ("null", "n/a", "-", "none"):
+                continue
+            # 型号不能当品牌：品牌值若含数字+连字符/与型号相同 -> 丢弃
+            if k == "e_brand" and re.search(r"\d", sv) and len(sv) > 6:
+                continue
+            # fu_max 不允许压力单位（MPa/kPa/bar）
+            if k == "fu_max" and re.search(r"(mpa|kpa|bar)\s*$", sv, re.I):
+                continue
+            # 容量字段归一为 "13L"
+            if k in ("co_oil", "co_cool"):
+                mm = re.match(r"^([\d.]+)\s*(l|liter|litre|liters|litres)\b", sv, re.I)
+                if mm:
+                    sv = mm.group(1) + "L"
+            d[k] = sv
+        if d:
+            clean[fk] = d
+    # 若 e_brand 与 e_model 相同，丢掉 e_brand
+    for d in clean.values():
+        if d.get("e_brand") and d.get("e_model") and d["e_brand"] == d["e_model"]:
+            d.pop("e_brand", None)
+    return clean
