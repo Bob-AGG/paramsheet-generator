@@ -66,22 +66,36 @@ SYSTEM_PROMPT = """你是发电机组/发动机参数提取专家。用户会给
 - 会随频率变的字段（prp_kva/eps_kva/prp_kw/eps_kw/rpm/fc_*/功率相关，以及任何随转速变的流量）放各自的频率键下。
 - 如果某字段在 "common" 和频率键下都能放，优先放频率键（更精确）。
 
+★ 单位归一（必须执行，直接输出归一后的单位，不要保留原文单位）：
+- 压力（ex_bp 排气背压 / in_res 进气阻力 / fu_res 输油泵阻力）：一律转 **kPa**，保留 1 位小数
+  · 1 mmHg = 0.1333 kPa　· 1 inHg = 3.386 kPa　· 1 mmH2O = 0.00981 kPa
+  · 1 inH2O = 0.249 kPa　· 1 psi = 6.895 kPa　· 1 mbar = 0.1 kPa　· 1 bar = 100 kPa
+  · 纯 kPa 原样保留
+- 流量（ex_f 排气流量 / in_flow 燃烧空气流量 / co_air 散热器空气流量）：一律转 **m³/min**，保留 1 位小数
+  · 1 L/S = 0.06 m³/min　· 1 cfm = 0.02832 m³/min　· 1 m³/min 原样
+- 温度：一律 **°C**。°F -> °C：(F-32)*5/9，取整。例 "1094°F" -> "590°C"
+- 容量（co_oil 机油 / co_cool 冷却液）：一律 **L**，格式 "13L"。
+  · 1 US gal = 3.785 L　· 若给区间 "7.0-5.5"，取较大的总容量值或按原表主值
+- 功率：kW/kVA 保留原值；只给 BHP 时 BHP x 0.746 = kW（保留整数）
+- 排量 displ：如 "3.3L"；缸径行程 bore：如 "95x115mm"
+- 压缩比 cr：如 "18:1"　· 转速 rpm：如 "1500rpm"
+- 油耗 fc_*：只要数字（L/H），如 "13"
+- 最大燃油流量 fu_max：务必是油量单位（L/H）；若原文是 US gph，1 gph = 3.785 L/H
+
+★ 反幻觉（极重要，违反即失败）：
+- 只能从文本中提取，绝对不许编造、猜测、推算未写明的内容。找不到的字段一律不输出。
+- 特别注意以下陷阱，这些字段常被误填：
+  · co_air（散热器空气流量）：不要把「Radiated Heat to Ambient / Heat Rejection」的热量值（kW/BTU）填进来。
+  · in_t（最高进气温度）：不要把测试基准条件的「Air Temperature : 25°C」填进来，那是测试条件不是最高进气温度。找不到就空着。
+  · ex_t（排气温度）：填实际排气温度，不要填测试条件温度。
+  · 各字段不要跨行取相邻行的值。
+- 若某字段原文有多个档位（如进气阻力分「脏滤芯/正常/重载」），取**正常/标准工况**那一档，并在值后可加括号注明，如 "3.0kPa(正常)"。
+
 铁律：
-1. 只能从文本中提取，绝对不许编造、猜测、推算未写明的内容。找不到的字段直接不输出（不要写 null / "-" / 空字符串）。
-2. 单位为默认口径直接输出，不做多余换算：
-   - 功率：kW/kVA 保留原值
-   - 排量 displ：如 "8.9L"；缸径行程 bore：如 "108x124mm"
-   - 压缩比 cr：如 "16.6:1"
-   - 转速 rpm：如 "1500rpm"
-   - 温度：如 "560°C"；压力：如 "5.0kPa"（若原表 mbar，除以10转kPa）
-   - 容量（机油/冷却液）：统一用 "13L" 这种格式（数字+L）
-   - 流量：保留原单位（m³/min、L/S 等）
-   - 油耗 fc_*：只要数字（L/H），如 "12.5"
-   - 最大燃油流量 fu_max：必须是油量单位（L/H），不要写压力值（MPa/kPa）
-   - 转速 rpm：只带一种频率时不要带频率后缀
-3. 术语用标准英文：Diesel / Water-cooled / Turbocharged & Intercooled /
+1. 找不到的字段直接不输出（不要写 null / "-" / 空字符串）。
+2. 术语用标准英文：Diesel / Water-cooled / Turbocharged & Intercooled /
    Electronic Governor / Prime & Standby / 4-stroke diesel 等。
-4. 只返回一个 JSON 对象。不要 markdown 代码块，不要解释。
+3. 只返回一个 JSON 对象。不要 markdown 代码块，不要解释。
 
 字段表：
 %s
@@ -231,7 +245,11 @@ def _sanitize(out, text=""):
             if k not in VALID_FIELDS:
                 continue
             sv = str(v).strip()
-            if not sv or sv.lower() in ("null", "n/a", "-", "none"):
+            # 占位符/无效值一律丢弃（TBD / N.A. / N/A / - / 空）
+            if not sv or sv.lower() in ("null", "n/a", "na", "n.a.", "tbd", "-", "none", "—", "?"):
+                continue
+            # 纯占位符组合（如 "TBD/TBD"）
+            if re.fullmatch(r"(tbd|n\.?a\.?|—|-|\?)(\s*[/、,]\s*(tbd|n\.?a\.?|—|-|\?))*", sv, re.I):
                 continue
             # 型号不能当品牌：品牌值若含数字+连字符/与型号相同 -> 丢弃
             if k == "e_brand" and re.search(r"\d", sv) and len(sv) > 6:
