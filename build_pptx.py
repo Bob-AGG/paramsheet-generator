@@ -249,35 +249,44 @@ def fill_pictures(slide, img_map, pic_slots=None):
 
 
 def set_title_on_slide(slide, text, sub_text=None):
-    """替换 slide1 顶部主标题文本框 + 可选小标题（型号字）。
+    """替换 slide1 顶部主标题 + 小标题（型号字）。
 
-    主标题特征：top 0~2000000 EMU 且文本以 'Industrial Range' 或 '采用' 开头。
-    小标题特征：同区域但短、无 'Powered By'/'发动机' 字样（型号字，如 AS550E5 / WP715D5）。
+    模板结构（实测）：
+      - 小标题（型号字，如 AS500E5/WP715D5）：top ≈ 0.12in，文本不含标题关键词
+      - 主标题（大标题）：top ≈ 0.63~0.72in，文本含 'Industrial Range'/'Powered By'/'采用'
+    定位规则：先按文本关键词找主标题；小标题取“顶部且非主标题”的那个框。
     """
-    if text:
-        for sh in slide.shapes:
-            if not sh.has_text_frame:
-                continue
-            t = sh.text_frame.text.strip()
-            if not t:
-                continue
-            if sh.top is not None and sh.top < 2000000 and (
-                t.startswith("Industrial Range") or t.startswith("采用") or "Powered By" in t
-            ):
-                set_shape_text(sh, text)
-                break
-    if sub_text:
-        for sh in slide.shapes:
-            if not sh.has_text_frame:
-                continue
-            t = sh.text_frame.text.strip()
-            if not t:
-                continue
-            if sh.top is not None and sh.top < 2000000 and not (
-                t.startswith("Industrial Range") or t.startswith("采用") or "Powered By" in t
-            ):
-                set_shape_text(sh, sub_text)
-                break
+    MAIN_KEYS = ("Industrial Range", "Powered By", "采用")
+
+    def _is_main(t):
+        return any(k in t for k in MAIN_KEYS)
+
+    # 收集顶部（top < 2.0in）的文本框，按 top 升序
+    tops = []
+    for sh in slide.shapes:
+        if not sh.has_text_frame or not sh.text_frame.text.strip():
+            continue
+        if sh.top is not None and sh.top < 2000000:
+            tops.append(sh)
+    tops.sort(key=lambda sh: sh.top or 0)
+
+    main_sh = None
+    sub_sh = None
+    for sh in tops:
+        t = sh.text_frame.text.strip()
+        if _is_main(t):
+            main_sh = sh          # 含关键词 -> 主标题
+        elif sub_sh is None:
+            sub_sh = sh           # 其余最上面的 -> 小标题（型号字）
+
+    # 兜底：模板关键词变了，就按位置取（最上面=小标题，次上=主标题）
+    if main_sh is None and len(tops) >= 2:
+        sub_sh, main_sh = tops[0], tops[1]
+
+    if text and main_sh is not None:
+        set_shape_text(main_sh, text)
+    if sub_text and sub_sh is not None:
+        set_shape_text(sub_sh, sub_text)
 
 
 def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=True, pic_slots=None):
