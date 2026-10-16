@@ -127,9 +127,10 @@ def _para_prefix(p_el):
     return None
 
 
-def set_multiline(cell, lines, keep_prefix=False):
-    """多行写入一个单元格：清空后按模板首个段落样式重建所有行。
+def set_multiline(cell, lines, keep_prefix=False, keep_shape=False):
+    """多行写入：清空后按模板首个段落样式重建所有行。
 
+    cell 可为表格单元格，也可为 shape.text_frame（keep_shape=True 时）。
     必须先在副本上改文本、再整体替换原始 <a:p>，否则按 _p 查找会重复命中。
     空行也必须保留为独立段落（否则会多出/丢掉行，如油耗 4 行夹着空值）。
     keep_prefix=True 时，为每行自动补上模板的符号前缀（如 '◆ '），
@@ -138,7 +139,7 @@ def set_multiline(cell, lines, keep_prefix=False):
     if not lines:
         return
     lines = ["" if x is None else str(x) for x in lines]
-    tf = cell.text_frame
+    tf = cell if keep_shape else cell.text_frame
     base_p = tf.paragraphs[0]
     proto = copy.deepcopy(base_p._p)
     txBody = tf._txBody
@@ -386,6 +387,25 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
             else:
                 title_text = None
             set_title_on_slide(slide, title_text, sub_title)
+        # 独立文本框字段（如 slide1 右下角频率/燃料小格、声压级符号框）
+        for sdef in slide_def.get("shapes", []):
+            si = sdef.get("shape")
+            if si is None or si >= len(slide.shapes):
+                print("  ! slide%d shape idx=%s 不存在，跳过" % (s_idx + 1, si), file=sys.stderr)
+                continue
+            sh = slide.shapes[si]
+            if not sh.has_text_frame:
+                continue
+            fname = sdef.get("field")
+            val = data.get(fname)
+            if val in (None, ""):
+                continue
+            if sdef.get("mode") == "list":
+                lines = val if isinstance(val, (list, tuple)) else [x for x in str(val).split("\n")]
+                set_multiline(sh.text_frame, lines, keep_shape=True)
+            else:
+                set_shape_text(sh, translate(val, lang))
+
         shape_tables = [sh for sh in slide.shapes if sh.has_table]
         for t_def in slide_def.get("tables", []):
             if t_def["idx"] >= len(shape_tables):

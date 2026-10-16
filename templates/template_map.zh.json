@@ -77,10 +77,6 @@
             "e_cyl": [
               7,
               2
-            ],
-            "e_app": [
-              8,
-              2
             ]
           },
           "fuel_consumption": {
@@ -121,8 +117,42 @@
             "s_tank": [
               3,
               2
+            ],
+            "o_db1": [
+              4,
+              1
+            ],
+            "o_db7": [
+              5,
+              1
+            ],
+            "s_db1": [
+              4,
+              2
+            ],
+            "s_db7": [
+              5,
+              2
             ]
           }
+        }
+      ],
+      "shapes": [
+        {
+          "shape": 12,
+          "purpose": "sound_pressure",
+          "field": "sound_db",
+          "mode": "list"
+        },
+        {
+          "shape": 18,
+          "purpose": "freq_tag",
+          "field": "freq_tag"
+        },
+        {
+          "shape": 21,
+          "purpose": "fuel_tag",
+          "field": "fuel_tag"
         }
       ]
     },
@@ -155,16 +185,8 @@
               5,
               1
             ],
-            "cr": [
-              6,
-              1
-            ],
             "rpm": [
               7,
-              1
-            ],
-            "etype": [
-              8,
               1
             ]
           }
@@ -307,28 +329,8 @@
           "cols": 2,
           "purpose": "alternator_structure",
           "fields": {
-            "g_type": [
-              1,
-              1
-            ],
             "g_brg": [
               2,
-              1
-            ],
-            "g_coup": [
-              3,
-              1
-            ],
-            "g_over": [
-              4,
-              1
-            ],
-            "g_coat": [
-              5,
-              1
-            ],
-            "g_ip": [
-              6,
               1
             ]
           }
@@ -348,36 +350,14 @@
           "rows": 2,
           "cols": 1,
           "purpose": "standard_features",
-          "multiline_fields": {
-            "std_feat": [
-              1,
-              0
-            ]
-          }
+          "multiline_fields": {}
         },
         {
           "idx": 1,
           "rows": 5,
           "cols": 2,
           "purpose": "optional_features",
-          "multiline_fields": {
-            "op_eng": [
-              1,
-              1
-            ],
-            "op_alt": [
-              2,
-              1
-            ],
-            "op_ctrl": [
-              3,
-              1
-            ],
-            "op_set": [
-              4,
-              1
-            ]
-          }
+          "multiline_fields": {}
         }
       ]
     }
