@@ -410,21 +410,49 @@ async function uploadDatasheet(){
       const keys=Object.keys(fields);
       if(!keys.length) return alert('未提取到字段（可能是扫描件/格式不支持），请手动填写');
       applyFields(fields);
-      toast('已自动填入 '+keys.length+' 个字段（请核对补全）');
     }catch(err){ alert('解析失败：'+err.message); }
   };
   inp.click();
 }
 
+/* 应用提取结果：兼容双频结构 {"50Hz":{..},"60Hz":{..},"common":{..}} 与旧扁平结构 */
 function applyFields(fields){
   const m=findModel(cur); if(!m) return;
-  Object.keys(fields).forEach(k=>{
-    const el=document.querySelector('[data-k="'+k+'"]');
-    if(el){ el.value=fields[k]; }
-    m[k]=fields[k];
-  });
+  m.freqs = m.freqs || {};
+  m.common = m.common || {};
+  let n = 0;
+  const isFreqObj = f => /^(50|60)Hz$/.test(f);
+  const hasStruct = Object.keys(fields).some(isFreqObj) || ('common' in fields);
+  if(hasStruct){
+    Object.keys(fields).forEach(top=>{
+      const v = fields[top];
+      if(!v || typeof v!=='object') return;
+      if(isFreqObj(top)){
+        m.freqs[top] = Object.assign(m.freqs[top]||{}, v);
+        n += Object.keys(v).length;
+      } else if(top==='common'){
+        Object.assign(m.common, v);
+        Object.keys(v).forEach(k=>{ if(k!=='model'){} });
+        n += Object.keys(v).length;
+      }
+    });
+    // 从 common 里带出型号
+    if(m.common.model){ /* 保留原 model 名，不覆盖用户已填的机组型号 */ }
+    // 自动切到提取到的第一个频率
+    const got = Object.keys(m.freqs).filter(f=>Object.keys(m.freqs[f]).length);
+    if(got.length && !got.includes(m.curFreq)) m.curFreq = got[0];
+  } else {
+    // 旧扁平：按频率字段拆分
+    const fd = m.freqs[m.curFreq] = m.freqs[m.curFreq] || {};
+    Object.keys(fields).forEach(k=>{
+      if(k==='model'){ return; }
+      if(FREQ_FIELDS.includes(k)) fd[k]=fields[k]; else m.common[k]=fields[k];
+      n++;
+    });
+  }
   localStorage.setItem(LS_KEY, JSON.stringify(DB));
   renderForm();
+  toast('已自动填入 '+n+' 个字段（请核对补全）');
 }
 function toggle(id){ document.getElementById('grp-'+id).classList.toggle('collapsed'); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
