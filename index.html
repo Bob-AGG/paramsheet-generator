@@ -167,6 +167,13 @@ const GROUPS = [
  ]},
 ];
 
+/* API 基址：取当前页面所在目录（如 /paramsheet/），避免末尾无斜杠时相对路径解析错误 */
+const API_BASE = (function(){
+  let p = location.pathname;
+  if(!p.endsWith('/')) p = p.substring(0, p.lastIndexOf('/')+1);
+  return p;   // 形如 /paramsheet/
+})();
+
 /* ================= 存储 =================
    机型结构（V2 双频）：
    { model, curFreq:'50Hz'|'60Hz', freqs:{ '50Hz':{随频率字段}, '60Hz':{...} }, common:{其余字段} }
@@ -384,7 +391,7 @@ async function uploadImg(kind){
     const fd=new FormData(); fd.append('file',f); fd.append('model',cur); fd.append('kind',kind);
     toast('上传中…');
     try{
-      const r=await fetch('api/upload-image',{method:'POST',body:fd});
+      const r=await fetch(API_BASE+'api/upload-image',{method:'POST',body:fd});
       const j=await r.json();
       if(!j.ok) return alert(j.error||'上传失败');
       delete localImgs[kind];
@@ -403,21 +410,22 @@ async function uploadDatasheet(){
     const fd=new FormData(); fd.append('file',f); fd.append('model_hint', cur||'');
     toast('解析中…');
     try{
-      const r=await fetch('api/parse',{method:'POST',body:fd});
+      const r=await fetch(API_BASE+'api/parse',{method:'POST',body:fd});
       const j=await r.json();
+      console.log('[parse] 返回：', j);
       if(!j.ok) return alert(j.error||'解析失败');
       const fields=j.fields||{};
       const keys=Object.keys(fields);
       if(!keys.length) return alert('未提取到字段（可能是扫描件/格式不支持），请手动填写');
       applyFields(fields);
-    }catch(err){ alert('解析失败：'+err.message); }
+    }catch(err){ console.error('[parse] 失败：', err); alert('解析失败：'+err.message); }
   };
   inp.click();
 }
 
 /* 应用提取结果：兼容双频结构 {"50Hz":{..},"60Hz":{..},"common":{..}} 与旧扁平结构 */
 function applyFields(fields){
-  const m=findModel(cur); if(!m) return;
+  const m=findModel(cur); if(!m){ alert('先新建机型再上传'); return; }
   m.freqs = m.freqs || {};
   m.common = m.common || {};
   let n = 0;
@@ -432,15 +440,12 @@ function applyFields(fields){
         n += Object.keys(v).length;
       } else if(top==='common'){
         Object.assign(m.common, v);
-        Object.keys(v).forEach(k=>{ if(k!=='model'){} });
         n += Object.keys(v).length;
       }
     });
-    // 从 common 里带出型号
-    if(m.common.model){ /* 保留原 model 名，不覆盖用户已填的机组型号 */ }
-    // 自动切到提取到的第一个频率
+    // 自动切到提取到的第一个频率（优先有数据的）
     const got = Object.keys(m.freqs).filter(f=>Object.keys(m.freqs[f]).length);
-    if(got.length && !got.includes(m.curFreq)) m.curFreq = got[0];
+    if(got.length) m.curFreq = got[0];
   } else {
     // 旧扁平：按频率字段拆分
     const fd = m.freqs[m.curFreq] = m.freqs[m.curFreq] || {};
@@ -452,7 +457,8 @@ function applyFields(fields){
   }
   localStorage.setItem(LS_KEY, JSON.stringify(DB));
   renderForm();
-  toast('已自动填入 '+n+' 个字段（请核对补全）');
+  alert('✅ 已自动填入 '+n+' 个字段（频率：'+m.curFreq+'）\n请核对补全。');
+  toast('已填入 '+n+' 个字段');
 }
 function toggle(id){ document.getElementById('grp-'+id).classList.toggle('collapsed'); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -508,7 +514,7 @@ async function genFile(fmt){
                     freq: m.curFreq, data: data };
   toast(fmt==='pdf' ? '正在生成 PDF…' : '正在生成 PPTX…');
   try{
-    const resp = await fetch('api/build', {
+    const resp = await fetch(API_BASE+'api/build', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
