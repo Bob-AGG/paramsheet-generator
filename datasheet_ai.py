@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+★ AI Datasheet 提取器（DeepSeek）
+
+流程：PDF/Excel → 抽文本 → 丢给 DeepSeek 按固定字段表返回 JSON → 规则兜底/校验。
+
+设计：
+- AI 为主（跟对话里人工提取同效果），规则解析补 AI 漏读的字段
+- 字段表固定（与前端表单一致），AI 只能从文本里取，不得编造
+- 失败/无 key 时自动退回纯规则
+"""
+import json
+import os
+import re
+
+import datasheet_parser
+
+# 目标字段表（与前端 index.html GROUPS 一致）
+FIELD_SPEC = """
+发动机信息：e_brand 发动机品牌 / e_model 发动机型号 / e_fuel 燃料 / e_asp 进气方式 /
+e_cool 冷却方式 / e_gov 调速器 / e_cyl 气缸排列 / e_app 应用等级(Prime & Standby)
+油耗(L/H)：fc_esp 100%ESP / fc_prp 100%PRP / fc_75 75%PRP / fc_50 50%PRP
+基础数据：displ 排量 / cyl_arr 缸数/排列 / bore 缸径×行程 / cr 压缩比 / rpm 转速 / etype 发动机类型
+排气系统：ex_t 排气温度 / ex_f 排气流量 / ex_bp 排气背压
+燃油系统：fu_res 输油泵阻力 / fu_max 最大燃油流量
+冷却系统：co_air 散热器空气流量 / co_oil 机油容量 / co_cool 冷却液容量
+电气系统：el_v 起动机电压 / el_bat 启动电池 / el_alt 充电发电机
+进气系统：in_flt 空滤类型 / in_res 最大进气阻力 / in_flow 燃烧空气流量 / in_t 最高进气温度
+电气输出(若表中有)：prp_kva / eps_kva / prp_kw / eps_kw / freq 频率·相数·PF / std_v 标准电压 / opt_v 可选电压
+"""
+
+SYSTEM_PROMPT = """你是发电机组/发动机参数提取专家。用户会给你一份 Datasheet 的纯文本（从 PDF/Excel 抽出，可能有排版错乱）。
+
+任务：把数据按给定字段表提取成 JSON。
+
+★ 频率分流（最重要）：
+同一份 Datasheet 常常同时给出 50Hz 和 60Hz 两套数据（如功率、转速、油耗不同）。
+**必须把两个频率的数据分开输出**，结构如下：
+{
+  "50Hz": { 字段... },
+  "60Hz": { 字段... },
+  "common": { 两频率相同的字段... }
+}
+- 只在 Datasheet 中出现的频率才输出该键（比如只有 50Hz 数据，就只输出 "50Hz"）。
+- 两频率都相同的字段（品牌/缸数/缸径行程/压缩比/排量/排气/燃油/冷却/电气等）放 "common"。
+- 会随频率变的字段（prp_kva/eps_kva/prp_kw/eps_kw/rpm/fc_*/功率相关，以及任何随转速变的流量）放各自的频率键下。
+- 如果某字段在 "common" 和频率键下都能放，优先放频率键（更精确）。
+
+铁律：
+1. 只能从文本中提取，绝对不许编造、猜测、推算未写明的内容。找不到的字段直接不输出（不要写 null / "-" / 空字符串）。
+2. 单位为默认口径直接输出，不做多余换算：
+   - 功率：kW/kVA 保留原值
+   - 排量 displ：如 "8.9L"；缸径行程 bore：如 "108x124mm"
+   - 压缩比 cr：如 "16.6:1"
+   - 转速 rpm：如 "1500rpm"
+   - 温度：如 "560°C"；压力：如 "5.0kPa"（若原表 mbar，除以10转kPa）
+   - 容量（机油/冷却液）：统一用 "13L" 这种格式（数字+L）
+   - 流量：保留原单位（m³/min、L/S 等）
+   - 油耗 fc_*：只要数字（L/H），如 "12.5"
+   - 最大燃油流量 fu_max：必须是油量单位（L/H），不要写压力值（MPa/kPa）
+   - 转速 rpm：只带一种频率时不要带频率后缀
+3. 术语用标准英文：Diesel / Water-cooled / Turbocharged & Intercooled /
+   Electronic Governor / Prime & Standby / 4-stroke diesel 等。
+4. 只返回一个 JSON 对象。不要 markdown 代码块，不要解释。
+
+字段表：
+%s
+""" % FIELD_SPEC
+
+
+def _get_key():
+    key = os.environ.get("DEEPSEEK_API_KEY")
+    if key:
+        return key.strip()
+    # 复用 genset-ai 的 .env
+    for p in ("/root/genset-ai/.env", os.path.expanduser("~/.config/paramsheet/.env")):
+        if os.path.exists(p):
+            with open(p) as f:
+                for line in f:
+                    if line.startswith("DEEPSEEK_API_KEY"):
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return None
+
+
+def _call_deepseek(text, model="deepseek-chat", timeout=120):
+    import urllib.request
+    key = _get_key()
+    if not key:
+        return None
+    # 文本过长时截断（DeepSeek 上下文足够，但控成本）
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": text[:24000]},
+        ],
+        "temperature": 0,
+        "max_tokens": 2000,
+        "response_format": {"type": "json_object"},
+    }
+    req = urllib.request.Request(
+        "https://api.deepseek.com/chat/completions",
+        data=json.dumps(body).encode(),
+        headers={"Content-Type": "application/json",
+                 "Authorization": "Bearer " + key},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        resp = json.loads(r.read().decode())
+    return resp["choices"][0]["message"]["content"]
+
+
+def parse_datasheet_ai(filename, content, model_hint=""):
+    """AI 为主 + 规则兜底。返回 (freqs, meta)。
+
+    freqs 结构：{"50Hz": {..}, "60Hz": {..}, "common": {..}}
+    """
+    text = datasheet_parser.extract_text(filename, content)
+    meta = {"chars": len(text), "ai": False, "rule_fields": 0, "ai_fields": 0}
+    if not text.strip():
+        return {}, meta
+
+    ai_obj = {}
+    try:
+        raw = _call_deepseek(text)
+        if raw:
+            raw = raw.strip()
+            raw = re.sub(r"^```(?:json)?|```$", "", raw).strip()
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                ai_obj = parsed
+                meta["ai"] = True
+    except Exception as e:
+        meta["ai_error"] = str(e)[:200]
+
+    # 结构识别：新式（含频率键）还是扁平（全部当 common）
+    freq_keys = [k for k in ai_obj.keys() if re.match(r"^(50|60)\s*Hz$", str(k), re.I)]
+    if freq_keys or "common" in ai_obj:
+        out = {}
+        for k, v in ai_obj.items():
+            kk = re.sub(r"\s*Hz", "Hz", str(k), flags=re.I)
+            if isinstance(v, dict):
+                out[kk] = {fk: fv for fk, fv in v.items()
+                           if fv not in (None, "", "-", "null", "N/A")}
+        # common 去重：同名字段已在频率键下出现的，从 common 移除
+        if "common" in out and isinstance(out["common"], dict):
+            freq_field_names = set()
+            for kk, vv in out.items():
+                if kk != "common" and isinstance(vv, dict):
+                    freq_field_names |= set(vv.keys())
+            out["common"] = {fk: fv for fk, fv in out["common"].items()
+                             if fk not in freq_field_names}
+        ai_fields = sum(len(v) for v in out.values() if isinstance(v, dict))
+    else:
+        flat = {k: v for k, v in ai_obj.items()
+                if v not in (None, "", "-", "null", "N/A")}
+        out = {"common": flat} if flat else {}
+        ai_fields = len(flat)
+    meta["ai_fields"] = ai_fields
+
+    # 规则兜底：只补 common 里缺的（规则不区分频率，避免污染频率键）
+    rule_fields = datasheet_parser.parse_text(text, model_hint)
+    meta["rule_fields"] = len(rule_fields)
+    if rule_fields:
+        common = out.setdefault("common", {})
+        for k, v in rule_fields.items():
+            common.setdefault(k, v)
+
+    # 兜底：AI 没给出任何频率键时，用规则里的频率推断建一个
+    if not any(re.match(r"^(50|60)Hz$", k) for k in out):
+        freq = ""
+        m = re.search(r"\b(50|60)\s*Hz\b", text, re.I)
+        if m and "freq" in rule_fields:
+            freq = m.group(1) + "Hz"
+        if freq:
+            # 把 common 里「随频率变」的字段挪到频率键
+            moved = {}
+            common = out.get("common", {})
+            for k in list(common.keys()):
+                if k in ("prp_kva", "eps_kva", "prp_kw", "eps_kw", "rpm",
+                         "fc_esp", "fc_prp", "fc_75", "fc_50"):
+                    moved[k] = common.pop(k)
+            out[freq] = moved
+
+    return out, meta

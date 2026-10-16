@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>参数单生成器 · 数据管理</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#fff; --line:#e3e6ec; --txt:#1f2430; --sub:#6b7280;
+    --pri:#2563eb; --pri-d:#1d4ed8; --ok:#16a34a; --warn:#d97706; --danger:#dc2626;
+    --grp:#f0f4ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--txt);padding:0 0 60px}
+  header{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;flex-wrap:wrap}
+  header h1{font-size:16px;font-weight:700;margin-right:8px}
+  header .spacer{flex:1}
+  .btn{border:1px solid var(--line);background:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:13px;transition:.15s}
+  .btn:hover{border-color:#c7cdd8;background:#fafbfc}
+  .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+  .btn.pri:hover{background:var(--pri-d)}
+  .btn.danger{color:var(--danger);border-color:#fbc4c4}
+  .btn.danger:hover{background:#fef2f2}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  .bar{display:flex;align-items:center;gap:10px;padding:14px 20px;flex-wrap:wrap}
+  .bar select,.bar input[type=text]{padding:7px 11px;border:1px solid var(--line);border-radius:7px;font-size:14px;background:#fff;min-width:200px}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;flex-direction:column;gap:12px}
+  .grp{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .grp>.hd{background:var(--grp);padding:11px 16px;font-weight:600;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;border-bottom:1px solid var(--line)}
+  .grp>.hd .arw{font-size:11px;color:var(--sub);transition:.2s;display:inline-block}
+  .grp.collapsed>.hd .arw{transform:rotate(-90deg)}
+  .grp.collapsed>.bd{display:none}
+  .grp>.hd .cnt{margin-left:auto;font-weight:400;color:var(--sub);font-size:12px}
+  .bd{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px 18px}
+  .bd.one{grid-template-columns:1fr}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fld label{font-size:12px;color:var(--sub);font-weight:500}
+  .fld input,.fld textarea{padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:inherit;background:#fff;width:100%}
+  .fld input:focus,.fld textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+  .fld textarea{resize:vertical;min-height:64px;line-height:1.5}
+  .sub-h{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--pri);margin-top:6px;padding-bottom:4px;border-bottom:1px dashed var(--line)}
+  .sub-h:first-child{margin-top:0}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;grid-column:1/-1}
+  .imgbox{display:flex;gap:16px;align-items:center;grid-column:1/-1}
+  .imgbox .ph{width:150px;height:110px;border:2px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#b6bcc8;font-size:12px;background:#fafbfc;overflow:hidden}
+  .imgbox .ph img{width:100%;height:100%;object-fit:contain}
+  .hint{font-size:12px;color:var(--sub);line-height:1.7}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1f2430;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+  .toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+  .empty{text-align:center;color:var(--sub);padding:50px 0}
+  .badge{display:inline-block;background:#eef2ff;color:var(--pri);border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600}
+  .freqbar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13px;flex-wrap:wrap}
+  .fbtn{border:1px solid var(--line);background:#fff;padding:6px 16px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--sub)}
+  .fbtn.on{background:var(--pri);border-color:var(--pri);color:#fff}
+</style>
+</head>
+<body>
+<header>
+  <h1>参数单生成器</h1>
+  <span class="badge">V2 · 生成参数单</span>
+  <span class="spacer"></span>
+  <label class="hint" style="display:flex;align-items:center;gap:6px">语言
+    <select id="selLang" style="min-width:auto;padding:6px 10px">
+      <option value="en" selected>English</option>
+      <option value="zh">中文</option>
+    </select>
+  </label>
+  <button class="btn" onclick="importJson()">导入数据</button>
+  <button class="btn" onclick="exportJson()">导出数据</button>
+  <button class="btn" onclick="uploadDatasheet()">📎 上传 Datasheet</button>
+  <button class="btn" onclick="save()">保存</button>
+  <button class="btn pri" onclick="genFile('pptx')">⬇ 导出 PPTX</button>
+  <button class="btn pri" onclick="genFile('pdf')">⬇ 导出 PDF</button>
+</header>
+
+<div class="bar">
+  <select id="selModel" onchange="switchModel(this.value)"></select>
+  <button class="btn" onclick="newModel()">+ 新建机型</button>
+  <button class="btn" onclick="dupModel()">复制为新机型</button>
+  <button class="btn danger" onclick="delModel()">删除机型</button>
+  <span class="spacer"></span>
+  <span class="hint" id="status">数据保存在浏览器本地</span>
+</div>
+
+<div class="wrap" id="form"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 字段定义（分组 = 模板模块） ================= */
+/* 随频率变化的字段（放 freqs[频率]）；其余字段放 common */
+const FREQ_FIELDS = ['freq','prp_kva','eps_kva','prp_kw','eps_kw',
+                     'rpm','fc_esp','fc_prp','fc_75','fc_50'];
+
+const GROUPS = [
+ {id:'basic', t:'📋 基本参数', open:true, fields:[
+   {k:'model',  t:'机组型号', ph:'例: D17'},
+   {k:'__sub',  t:'标题旁型号字（如 AS550E5）', ph:'AS550E5'},
+   {k:'title',  t:'大标题（留空=自动：品牌带出）', ph:'Industrial Range Powered By X'},
+   {k:'freq',   t:'频率 / 相数 / 功率因数', ph:'50Hz / 3P / PF0.8'},
+   {k:'prp_kva',t:'PRP kVA'}, {k:'eps_kva',t:'EPS kVA'},
+   {k:'prp_kw', t:'PRP kW'},  {k:'eps_kw', t:'EPS kW'},
+   {k:'std_v',  t:'标准电压', ph:'400/230V'},
+   {k:'opt_v',  t:'可选电压', ph:'380/220V · 415/240V'},
+ ]},
+ {id:'perf', t:'⚙️ 发动机性能', open:true, fields:[
+   {sub:'发动机信息'},
+   {k:'e_brand',t:'发动机品牌'},{k:'e_model',t:'发动机型号'},
+   {k:'e_fuel',t:'燃料'},{k:'e_asp',t:'进气方式'},
+   {k:'e_cool',t:'冷却方式'},{k:'e_gov',t:'调速器'},
+   {k:'e_cyl',t:'气缸排列'},{k:'e_app',t:'应用等级', ph:'Prime & Standby'},
+   {sub:'油耗 (L/H)'},
+   {k:'fc_esp',t:'100% ESP'},{k:'fc_prp',t:'100% PRP'},
+   {k:'fc_75',t:'75% PRP'},{k:'fc_50',t:'50% PRP'},
+ ]},
+ {id:'dim', t:'📐 外观尺寸', open:false, fields:[
+   {sub:'开架 OPEN'},
+   {k:'o_lwh',t:'尺寸 L×W×H (mm)'},{k:'o_wt',t:'重量 (kg)'},
+   {k:'o_tank',t:'油箱 (L)'},{k:'o_db1',t:'噪音 @1m dB(A)'},{k:'o_db7',t:'噪音 @7m dB(A)'},
+   {sub:'静音 SILENT'},
+   {k:'s_lwh',t:'尺寸 L×W×H (mm)'},{k:'s_wt',t:'重量 (kg)'},
+   {k:'s_tank',t:'油箱 (L)'},{k:'s_db1',t:'噪音 @1m dB(A)'},{k:'s_db7',t:'噪音 @7m dB(A)'},
+ ]},
+ {id:'engsys', t:'🔧 发动机系统', open:false, fields:[
+   {sub:'基础数据'},
+   {k:'displ',t:'排量', ph:'16.25L'},{k:'cyl_arr',t:'缸数 / 排列', ph:'6L'},
+   {k:'bore',t:'缸径×行程', ph:'142x171mm'},{k:'cr',t:'压缩比', ph:'18.7:1'},
+   {k:'rpm',t:'转速', ph:'1500rpm'},{k:'etype',t:'发动机类型', ph:'4-stroke diesel'},
+   {sub:'排气系统'},
+   {k:'ex_t',t:'排气温度 (max)', ph:'560°C'},{k:'ex_f',t:'排气流量 (max)', ph:'107.5m³/min'},
+   {k:'ex_bp',t:'排气背压 (最大允许)', ph:'5.0kPa'},
+   {sub:'燃油系统'},
+   {k:'fu_res',t:'输油泵阻力', ph:'19.6kPa'},{k:'fu_max',t:'最大燃油流量', ph:'131L/H'},
+   {sub:'冷却系统'},
+   {k:'co_air',t:'散热器空气流量', ph:'540m³/min'},{k:'co_oil',t:'机油总容量', ph:'30L'},
+   {k:'co_cool',t:'冷却液总容量', ph:'27L'},
+   {sub:'电气系统'},
+   {k:'el_v',t:'起动机额定电压', ph:'DC24V'},{k:'el_bat',t:'启动电池', ph:'2x60Ah(580CCA)'},
+   {k:'el_alt',t:'充电发电机', ph:'DC24V/40A'},
+   {sub:'进气系统'},
+   {k:'in_flt',t:'空滤类型', ph:'Dry type'},{k:'in_res',t:'最大进气阻力', ph:'5.0kPa'},
+   {k:'in_flow',t:'燃烧空气流量', ph:'560 L/S'},{k:'in_t',t:'最高进气温度', ph:'50°C'},
+ ]},
+ {id:'gen', t:'⚡ 发电机规格', open:false, fields:[
+   {sub:'基本数据'},
+   {k:'g_insul',t:'绝缘 / 温升', ph:'Class H/H'},{k:'g_exc',t:'励磁方式', ph:'Self-excited'},
+   {k:'g_lead',t:'绕组出线', ph:'12'},{k:'g_conn',t:'绕组接法(标准)', ph:'Star'},
+   {k:'g_pitch',t:'绕组节距', ph:'Two thirds'},{k:'g_phase',t:'相数', ph:'Three phase'},
+   {sub:'结构'},
+   {k:'g_type',t:'类型', ph:'Brushless'},{k:'g_brg',t:'轴承数', ph:'Single bearing'},
+   {k:'g_coup',t:'联轴方式', ph:'Flexible disc'},{k:'g_over',t:'最大超速', ph:'2250 RPM'},
+   {k:'g_coat',t:'涂层工艺', ph:'Vacuum impregnation'},{k:'g_ip',t:'防护等级', ph:'IP23'},
+ ]},
+ {id:'feat', t:'✅ 标准配置 / 选配项', open:false, fields:[
+   {sub:'标准配置 (STANDARD FEATURES)'},
+   {k:'std_feat',t:'标准配置文案', ta:true, ph:'每行一条，模板中会自动加 ◆'},
+   {sub:'选配项 (OPTIONAL FEATURES)'},
+   {k:'op_eng',t:'ENGINE 发动机', ta:true},
+   {k:'op_alt',t:'ALTERNATOR 发电机', ta:true},
+   {k:'op_ctrl',t:'CONTROL/SYSTEM 控制系统', ta:true},
+   {k:'op_set',t:'GENERATING/SET 机组', ta:true},
+ ]},
+ {id:'img', t:'🖼️ 机组图片', open:true, fields:[
+   {sub:'开架机组 OPEN'},
+   {k:'__img_open', t:'开架图', imgv:'open'},
+   {sub:'静音机组 SILENT'},
+   {k:'__img_silent', t:'静音图', imgv:'silent'},
+ ]},
+];
+
+/* ================= 存储 =================
+   机型结构（V2 双频）：
+   { model, curFreq:'50Hz'|'60Hz', freqs:{ '50Hz':{随频率字段}, '60Hz':{...} }, common:{其余字段} }
+   兼容旧结构：{ model, ...扁平字段 } -> 自动迁移到 freqs['50Hz'] + common */
+const LS_KEY='paramsheet_db_v2';
+let DB = load();
+let cur = DB.models.length ? DB.models[0].model : null;
+
+function load(){
+  try{ const s=localStorage.getItem(LS_KEY); if(s) return migrate(JSON.parse(s)); }catch(e){}
+  // 尝试从旧 key 迁移
+  try{ const o=localStorage.getItem('paramsheet_db_v1'); if(o) return migrate(JSON.parse(o)); }catch(e){}
+  return {models:[{model:'D17', curFreq:'50Hz', freqs:{'50Hz':{}}, common:{model:'D17'}}]};
+}
+function migrate(db){
+  if(!db||!db.models) return db;
+  db.models.forEach(m=>{
+    if(!m.freqs){
+      const f={}, c={};
+      Object.keys(m).forEach(k=>{
+        if(k==='model'||k==='freqs'||k==='common'||k==='curFreq') return;
+        if(FREQ_FIELDS.includes(k)) f[k]=m[k]; else c[k]=m[k];
+      });
+      m.freqs={}; m.freqs[m.curFreq||'50Hz']=f; m.common=c; m.curFreq=m.curFreq||'50Hz';
+      Object.keys(m).forEach(k=>{ if(k!=='model'&&k!=='freqs'&&k!=='common'&&k!=='curFreq') delete m[k]; });
+    }
+    if(!m.common) m.common={};
+    if(!m.curFreq) m.curFreq=Object.keys(m.freqs)[0]||'50Hz';
+  });
+  return db;
+}
+function curFreqData(m){
+  m = m || findModel(cur);
+  if(!m) return {};
+  if(!m.freqs) return {};
+  if(!m.freqs[m.curFreq]){
+    // 当前频率没数据 -> 自动切到有的那个
+    const avail=Object.keys(m.freqs);
+    m.curFreq = avail[0] || '50Hz';
+  }
+  return m.freqs[m.curFreq] || {};
+}
+function availFreqs(m){ m=m||findModel(cur); return m && m.freqs ? Object.keys(m.freqs) : []; }
+
+function save(){
+  save_soft();
+  localStorage.setItem(LS_KEY, JSON.stringify(DB));
+  toast('已保存');
+}
+function findModel(name){ return DB.models.find(x=>x.model===name); }
+
+/* ================= 表单渲染 ================= */
+function collect(){
+  const o={};
+  document.querySelectorAll('[data-k]').forEach(el=>{ o[el.dataset.k]=el.value; });
+  return o;
+}
+/* 把表单值按频率/共用写回机型 */
+function applyCollect(m, vals){
+  if(!m) return;
+  m.freqs = m.freqs || {};
+  m.common = m.common || {};
+  const fd = m.freqs[m.curFreq] = m.freqs[m.curFreq] || {};
+  Object.keys(vals).forEach(k=>{
+    if(k==='model'){ m.model = String(vals[k]||'').trim(); m.common.model = m.model; return; }
+    if(k.startsWith('__')) return;              // __sub/__img_* 等元字段不进数据
+    if(FREQ_FIELDS.includes(k)) fd[k]=vals[k]; else m.common[k]=vals[k];
+  });
+}
+/* 型号唯一键：取 common.model 或旧 data.model；trim 防空格导致 findModel 失配 */
+function curModelName(m){
+  if(!m) return '';
+  const v = (m.common && m.common.model) || m.model || '';
+  return String(v).trim();
+}
+/* 从表单读「机组型号」输入框，实时同步给当前机型（关键修复） */
+function syncModelFromForm(){
+  const el = document.querySelector('[data-k="model"]');
+  if(!el) return;
+  const v = String(el.value||'').trim();
+  const m = findModel(cur);
+  if(!m) return;
+  if(v && v!==m.model && !findModel(v)){
+    m.model = v; m.common = m.common||{}; m.common.model = v;   // 改名（图片文件名也随 model 走）
+    cur = v;
+    const sel=document.getElementById('selModel');
+    if(sel){ sel.innerHTML = DB.models.map(x=>`<option ${x.model===cur?'selected':''}>${esc(x.model)}</option>`).join(''); }
+  }
+  renderListNames();
+}
+function renderListNames(){
+  ['open','silent'].forEach(k=>{});
+}
+/* 切换频率：先把当前表单存回，再换频率渲染 */
+function switchFreq(f){
+  const m=findModel(cur); if(!m) return;
+  applyCollect(m, collect());
+  m.curFreq = f;
+  localStorage.setItem(LS_KEY, JSON.stringify(DB));
+  renderForm();
+  toast('已切换到 '+f);
+}
+/* 添加频率（50Hz/60Hz 互斥，已有则不重复） */
+function addFreq(){
+  const m=findModel(cur); if(!m) return;
+  m.freqs = m.freqs || {};
+  const opts = ['50Hz','60Hz'].filter(f=>!m.freqs[f]);
+  if(!opts.length) return alert('50Hz 和 60Hz 都有了');
+  const f = opts.length===1 ? opts[0] : (prompt('添加频率（50Hz 或 60Hz）：', '60Hz')||'').trim();
+  if(!f) return;
+  if(!/^(50|60)Hz$/.test(f)) return alert('只能是 50Hz 或 60Hz');
+  if(m.freqs[f]) return alert(f+' 已存在');
+  applyCollect(m, collect());
+  m.freqs[f] = {};
+  m.curFreq = f;
+  localStorage.setItem(LS_KEY, JSON.stringify(DB));
+  renderForm();
+  toast('已添加 '+f);
+}
+function renderForm(){
+  const m = findModel(cur) || {model:''};
+  const fd = curFreqData(m);          // 当前频率数据
+  const cm = m.common || {};          // 共用数据
+  const valOf = k => FREQ_FIELDS.includes(k) ? (fd[k]||'') : (cm[k]||'');
+  const el = document.getElementById('form');
+  // 频率切换条
+  const freqs = availFreqs(m);
+  const freqBar = freqs.length ? `<div class="freqbar">频率：
+      ${freqs.map(f=>`<button type="button" class="fbtn ${f===m.curFreq?'on':''}"
+        onclick="switchFreq('${f}')">${esc(f)}</button>`).join('')}
+      <span class="hint">切换频率数据（两套独立填写）</span>
+      <button type="button" class="btn sm" style="margin-left:auto" onclick="addFreq()">+ 添加频率</button>
+    </div>` : `<div class="freqbar"><span class="hint">无频率数据</span>
+      <button type="button" class="btn sm" onclick="addFreq()">+ 添加频率</button></div>`;
+
+  el.innerHTML = freqBar + GROUPS.map(g=>{
+    const body = g.fields.map(f=>{
+      if(f.sub) return `<div class="sub-h">${f.sub}</div>`;
+      if(f.imgv) return `<div class="imgbox">
+        <div class="ph" id="imgph-${f.imgv}"><span style="color:#b6bcc8">…</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="hint">自动匹配：<code>${esc(m.model||'型号')}_${f.imgv.toUpperCase()}.png</code><br>
+            <span id="imgstat-${f.imgv}" style="color:#2563eb"></span></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn sm" type="button" onclick="pickLocalImg('${f.imgv}')">选择本地图</button>
+            <button class="btn sm" type="button" onclick="uploadImg('${f.imgv}')">上传到图片库</button>
+            <button class="btn sm" type="button" onclick="clearLocalImg('${f.imgv}')">恢复自动匹配</button>
+          </div></div></div>`;
+      const v = esc(valOf(f.k));
+      if(f.ta) return `<div class="fld" style="grid-column:1/-1"><label>${f.t}</label>
+        <textarea data-k="${f.k}" placeholder="${f.ph||''}">${v}</textarea></div>`;
+      const oninp = (f.k==='model') ? ' oninput="syncModelFromForm()"' : '';
+      return `<div class="fld"><label>${f.t}</label>
+        <input type="text" data-k="${f.k}" value="${v}" placeholder="${f.ph||''}"${oninp}></div>`;
+    }).join('');
+    return `<div class="grp ${g.open?'':'collapsed'}" id="grp-${g.id}">
+      <div class="hd" onclick="toggle('${g.id}')"><span class="arw">▼</span>${g.t}<span class="cnt"></span></div>
+      <div class="bd">${body}</div></div>`;
+  }).join('');
+  // 型号下拉
+  const sel=document.getElementById('selModel');
+  sel.innerHTML = DB.models.map(x=>`<option ${x.model===cur?'selected':''}>${esc(x.model)}</option>`).join('');
+  document.getElementById('status').textContent = `共 ${DB.models.length} 个机型 · 数据存浏览器本地`;
+  autoShowImg('open'); autoShowImg('silent');
+}
+
+/* ===== 图片：自动匹配 / 手动选择 / 上传 =====
+   优先级：本地手选(dataURL) > 图片库自动匹配 > 暂无
+   本地手选仅存浏览器，导出时随 payload 带给后端 */
+let localImgs = {};  // {open: dataURL, silent: dataURL}
+
+function autoShowImg(kind){
+  const p=document.getElementById('imgph-'+kind); if(!p) return;
+  const st=document.getElementById('imgstat-'+kind); if(st) st.textContent='';
+  // 本地手选优先
+  if(localImgs[kind]){
+    p.innerHTML='';
+    const im=new Image(); im.src=localImgs[kind]; p.appendChild(im);
+    if(st) st.textContent='（本地手选，未入库）';
+    return;
+  }
+  const model=cur;
+  if(!model){ p.innerHTML='<span style="color:#b6bcc8">无型号</span>'; return; }
+  p.innerHTML='<span style="color:#b6bcc8">…</span>';
+  const exts=['png','jpg'];
+  let i=0;
+  (function tryNext(){
+    if(i>=exts.length){ p.innerHTML='暂无图片<br><span style="font-size:10px;color:#b6bcc8">'+esc(model)+'_'+kind.toUpperCase()+'</span>';
+      if(st) st.textContent='未找到，可手动选择/上传'; return; }
+    const url='images/'+encodeURIComponent(model)+'_'+kind.toUpperCase()+'.'+exts[i];
+    const img=new Image();
+    img.onload=()=>{ p.innerHTML=''; p.appendChild(img); if(st) st.textContent='已匹配 '+model+'_'+kind.toUpperCase()+'.'+exts[i]; };
+    img.onerror=()=>{ i++; tryNext(); };
+    img.src=url+'?t='+Date.now();
+  })();
+}
+
+function pickLocalImg(kind){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{ localImgs[kind]=r.result; autoShowImg(kind); toast('已选本地图（未入库）'); };
+    r.readAsDataURL(f);
+  };
+  inp.click();
+}
+function clearLocalImg(kind){ delete localImgs[kind]; autoShowImg(kind); toast('已恢复自动匹配'); }
+
+async function uploadImg(kind){
+  if(!cur) return alert('请先选机型');
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const fd=new FormData(); fd.append('file',f); fd.append('model',cur); fd.append('kind',kind);
+    toast('上传中…');
+    try{
+      const r=await fetch('api/upload-image',{method:'POST',body:fd});
+      const j=await r.json();
+      if(!j.ok) return alert(j.error||'上传失败');
+      delete localImgs[kind];
+      toast('已存入图片库：'+j.file); autoShowImg(kind);
+    }catch(err){ alert('上传失败：'+err.message); }
+  };
+  inp.click();
+}
+
+/* ===== 上传 Datasheet 自动提取 ===== */
+async function uploadDatasheet(){
+  const inp=document.createElement('input'); inp.type='file';
+  inp.accept='.pdf,.xlsx,.xls,.txt';
+  inp.onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const fd=new FormData(); fd.append('file',f); fd.append('model_hint', cur||'');
+    toast('解析中…');
+    try{
+      const r=await fetch('api/parse',{method:'POST',body:fd});
+      const j=await r.json();
+      if(!j.ok) return alert(j.error||'解析失败');
+      const fields=j.fields||{};
+      const keys=Object.keys(fields);
+      if(!keys.length) return alert('未提取到字段（可能是扫描件/格式不支持），请手动填写');
+      applyFields(fields);
+      toast('已自动填入 '+keys.length+' 个字段（请核对补全）');
+    }catch(err){ alert('解析失败：'+err.message); }
+  };
+  inp.click();
+}
+
+function applyFields(fields){
+  const m=findModel(cur); if(!m) return;
+  Object.keys(fields).forEach(k=>{
+    const el=document.querySelector('[data-k="'+k+'"]');
+    if(el){ el.value=fields[k]; }
+    m[k]=fields[k];
+  });
+  localStorage.setItem(LS_KEY, JSON.stringify(DB));
+  renderForm();
+}
+function toggle(id){ document.getElementById('grp-'+id).classList.toggle('collapsed'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function renderList(){ /* 占位：列表视图后续加 */ }
+
+function switchModel(name){ save_soft(); cur=name; renderForm(); }
+function save_soft(){ const m=findModel(cur); if(m) applyCollect(m, collect()); syncModelFromForm(); localStorage.setItem(LS_KEY,JSON.stringify(DB)); }
+
+function newModel(){
+  const n = (prompt('新机组型号（也是图片文件名）：')||'').trim();
+  if(!n) return;
+  if(findModel(n)) return alert('型号已存在');
+  save_soft();
+  DB.models.push({model:n, curFreq:'50Hz', freqs:{'50Hz':{}}, common:{model:n}});
+  cur=n; localStorage.setItem(LS_KEY,JSON.stringify(DB)); renderForm(); toast('已新建 '+n);
+}
+function dupModel(){
+  save_soft();
+  const n = (prompt('复制为新型号名：', cur+'-COPY')||'').trim();
+  if(!n) return;
+  if(findModel(n)) return alert('型号已存在');
+  const src=findModel(cur)||{};
+  const c=JSON.parse(JSON.stringify(src)); c.model=n; c.common=c.common||{}; c.common.model=n;
+  DB.models.push(c); cur=n; localStorage.setItem(LS_KEY,JSON.stringify(DB)); renderForm(); toast('已复制');
+}
+function delModel(){
+  if(!confirm('确认删除机型 '+cur+' ？')) return;
+  DB.models = DB.models.filter(x=>x.model!==cur);
+  cur = DB.models.length? DB.models[0].model : null;
+  localStorage.setItem(LS_KEY,JSON.stringify(DB)); renderForm(); toast('已删除');
+}
+function pickImg(){ autoShowImg('open'); autoShowImg('silent'); }
+function exportJson(){
+  save_soft();
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='paramsheet_data.json'; a.click(); toast('已导出');
+}
+
+/* ===== 导出 PPTX / PDF：调后端 /api/build ===== */
+async function genFile(fmt){
+  save_soft();
+  const m = findModel(cur);
+  if(!m){ return alert('请先新建机型（或检查「机组型号」是否为空）'); }
+  const lang = document.getElementById('selLang').value || 'en';
+  const fd = curFreqData(m);
+  const meta = {};   // 标题旁型号字等元字段（存在 common 下）
+  const data = Object.assign({}, m.common, fd, { model: m.model, freq_sel: m.curFreq });
+  // 本地手选图片随 payload 带（dataURL -> 后端写临时文件）
+  if(localImgs.open) data.__img_open_data = localImgs.open;
+  if(localImgs.silent) data.__img_silent_data = localImgs.silent;
+  const payload = { lang: lang, format: fmt, title_sub: (m.common&&m.common.__sub) || m.__sub || '',
+                    freq: m.curFreq, data: data };
+  toast(fmt==='pdf' ? '正在生成 PDF…' : '正在生成 PPTX…');
+  try{
+    const resp = await fetch('api/build', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!resp.ok){
+      let msg='生成失败';
+      try{ const j=await resp.json(); msg=j.error||msg; }catch(e){}
+      return alert(msg);
+    }
+    const blob = await resp.blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=(m.model||'paramsheet')+'_paramsheet_'+lang+'.'+fmt;
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('已生成并下载');
+  }catch(e){
+    alert('无法连接后端（请确认 server.py 已启动）：'+e.message);
+  }
+}
+function importJson(){
+  const i=document.createElement('input'); i.type='file'; i.accept='.json';
+  i.onchange=e=>{ const f=e.target.files[0]; const r=new FileReader();
+    r.onload=()=>{ try{ DB=JSON.parse(r.result); cur=DB.models.length?DB.models[0].model:null;
+      localStorage.setItem(LS_KEY,JSON.stringify(DB)); renderForm(); toast('已导入'); }catch(err){ alert('文件格式错误'); } };
+    r.readAsText(f); };
+  i.click();
+}
+let tt;
+function toast(s){ const t=document.getElementById('toast'); t.textContent=s; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),1800); }
+
+renderForm();
+</script>
+</body>
+</html>

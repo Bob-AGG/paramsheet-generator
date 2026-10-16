@@ -1,0 +1,24 @@
+# 数据/运行时产物（不进仓库）
+output/
+images/
+data/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# 密钥（绝不进仓库）
+.env
+*.env
+
+# 备份
+_bak_*/
+*.bak*
+
+# 系统/编辑器
+.DS_Store
+._*
+swp
+*.swp
