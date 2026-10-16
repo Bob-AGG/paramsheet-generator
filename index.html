@@ -226,9 +226,16 @@ function save(){
 function findModel(name){ return DB.models.find(x=>x.model===name); }
 
 /* ================= 表单渲染 ================= */
+function cleanVal(v){
+  // 统一清洗：去首尾空白、多空格压成一个、去空行（保留换行使多行字段正常）
+  return String(v==null?'':v)
+    .split('\n').map(x=>x.replace(/[ \t\u00a0]+/g,' ').trim())
+    .filter((x,i,arr)=> !(x==='' && (i===0||i===arr.length-1)) )   // 只去首尾空行
+    .join('\n');
+}
 function collect(){
   const o={};
-  document.querySelectorAll('[data-k]').forEach(el=>{ o[el.dataset.k]=el.value; });
+  document.querySelectorAll('[data-k]').forEach(el=>{ o[el.dataset.k]=cleanVal(el.value); });
   return o;
 }
 /* 把表单值按频率/共用写回机型 */

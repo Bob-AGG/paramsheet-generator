@@ -12,6 +12,7 @@ import copy
 import io
 import json
 import os
+import re
 import sys
 
 from pptx import Presentation
@@ -79,18 +80,60 @@ def translate(val, lang):
     return val
 
 
+def _clean_value(v):
+    """轻度清洗写入值：保留行首 `◆`/缩进等排版符号，只把制表符与不换行空格归一。
+
+    注意：绝不能 strip 行首 —— features 行的 `◆ `、缩进都是模板设计要求，
+    去掉会让文字挤成一团、断行错乱。只做：\xa0->空格、去行尾空白、去空行。
+    """
+    if v is None:
+        return None
+    s = str(v).replace("\u00a0", " ")
+    lines = []
+    for x in s.split("\n"):
+        x = x.rstrip()          # 只去行尾空白，保留行首
+        lines.append(x)
+    # 去首尾空行，保留中间空行
+    while lines and lines[0] == "":
+        lines.pop(0)
+    while lines and lines[-1] == "":
+        lines.pop()
+    return "\n".join(lines)
+
+
 def set_cell(cell, text):
     """写单元格，保留原格式（清空多余 run/段落）"""
     if text is None:
         return
+    text = _clean_value(text)
     set_multiline(cell, [str(text)])
 
 
-def set_multiline(cell, lines):
+def _para_prefix(p_el):
+    """读出模板段落首个 run 的『符号前缀』（如 '◆ '）。
+
+    模板 features 行首个 run 常是 '◆ '（符号单独成 run）；重建段落时必须
+    原样保留，否则 ◆ 会被用户数据覆盖掉，导致文字挤成一团、断行错乱。
+    判定：首个 run 文本去掉符号/空白后为空 → 视为纯前缀，返回 (前缀, 是否独立)。
+    """
+    ts = p_el.findall(qn("a:r"))
+    if not ts:
+        return None
+    t = ts[0].find(qn("a:t"))
+    txt = t.text if (t is not None and t.text) else ""
+    core = txt.replace("◆", "").replace("●", "").replace("•", "").strip()
+    if core == "":           # 纯符号/空白前缀
+        return txt
+    return None
+
+
+def set_multiline(cell, lines, keep_prefix=False):
     """多行写入一个单元格：清空后按模板首个段落样式重建所有行。
 
     必须先在副本上改文本、再整体替换原始 <a:p>，否则按 _p 查找会重复命中。
     空行也必须保留为独立段落（否则会多出/丢掉行，如油耗 4 行夹着空值）。
+    keep_prefix=True 时，为每行自动补上模板的符号前缀（如 '◆ '），
+    用于 features 这类「每行一个 ◆」的单元格。
     """
     if not lines:
         return
@@ -100,21 +143,36 @@ def set_multiline(cell, lines):
     proto = copy.deepcopy(base_p._p)
     txBody = tf._txBody
 
+    # 探测模板行前缀（如 '◆ '）：优先取"首个 run 为纯符号"的段落
+    prefix = None
+    if keep_prefix:
+        for para in tf.paragraphs:
+            pf = _para_prefix(para._p)
+            if pf:
+                prefix = pf
+                break
+        if prefix is None:
+            # 回退：直接取第一段首个 run 里的符号字符
+            pts = proto.findall(qn("a:r"))
+            if pts:
+                tn = pts[0].find(qn("a:t"))
+                if tn is not None and tn.text:
+                    m = re.match(r"^[◆●•►▶·]\s*", tn.text)
+                    if m:
+                        prefix = m.group(0)
+
     def set_para_text(p_el, txt):
         ts = p_el.findall(qn("a:r"))
         if ts:
             first = ts[0]
-            # 第一个 run 保留，写文本
             tnode = first.find(qn("a:t"))
             if tnode is None:
                 tnode = first.makeelement(qn("a:t"), {})
                 first.append(tnode)
             tnode.text = txt
-            # 其余 run 删除
             for r in ts[1:]:
                 p_el.remove(r)
         else:
-            # 没有 run，就不要写文本（保持空段落）
             pass
 
     new_ps = []
@@ -122,6 +180,30 @@ def set_multiline(cell, lines):
         pel = copy.deepcopy(proto)
         set_para_text(pel, ln)
         new_ps.append(pel)
+
+    # 为每行补前缀：把前缀作为独立 run 插到段首（保持与模板同构）
+    if prefix:
+        for pel in new_ps:
+            ts = pel.findall(qn("a:r"))
+            if not ts:
+                continue
+            first = ts[0]
+            tnode = first.find(qn("a:t"))
+            cur = tnode.text if (tnode is not None and tnode.text is not None) else ""
+            if cur.strip() == "":
+                # 空行不补前缀
+                continue
+            # 若内容本身已带符号则不重复
+            if re.match(r"^[◆●•►▶·]", cur.lstrip()):
+                continue
+            # 复制首个 run 的样式作为前缀 run
+            pref_run = copy.deepcopy(first)
+            pt = pref_run.find(qn("a:t"))
+            if pt is None:
+                pt = pref_run.makeelement(qn("a:t"), {})
+                pref_run.append(pt)
+            pt.text = prefix
+            first.addprevious(pref_run)
 
     for old in txBody.findall(qn("a:p")):
         txBody.remove(old)
@@ -334,7 +416,8 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                 lines = [x for x in str(raw).split("\n") if x.strip()]
                 if lines:
                     r, c = coord
-                    set_multiline(table.cell(r, c), [translate(x, lang) for x in lines])
+                    set_multiline(table.cell(r, c), [translate(x, lang) for x in lines],
+                                  keep_prefix=True)
 
     os.makedirs(os.path.join(HERE, outdir) if not os.path.isabs(outdir) else outdir, exist_ok=True)
     model = data.get("model", "model")
