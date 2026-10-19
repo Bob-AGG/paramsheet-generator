@@ -27,6 +27,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUTPUT = os.path.join(HERE, "output")
 IMAGES = os.path.join(HERE, "images")
 
+# 2026-10-19 用户反馈「点导出卡住」：
+# ①把同步生成+LibreOffice 转换放到线程池，别阻塞事件循环（原来 async def 里做同步长任务，
+#   期间整个服务连静态文件都发不出去，前端看着就是「卡住」）
+# ②同一时刻只允许一个 soffice（并发会抢锁，每次变慢甚至超时）
+import asyncio
+_BUILD_LOCK = asyncio.Lock()
+
 app = FastAPI(title="ParamSheet Generator")
 app.add_middleware(
     CORSMiddleware,
@@ -112,13 +119,21 @@ async def build(request: Request):
             except Exception:
                 pass
     fmt = (body.get("format") or "pptx").lower()
-    try:
+
+    def _slow_work():
+        """build + pdf 转换都放到线程里跑（CPU 重活 + 起 soffice）"""
         os.makedirs(OUTPUT, exist_ok=True)
-        out = build_pptx.build(data, lang, None, OUTPUT)
+        out_path = build_pptx.build(data, lang, None, OUTPUT)
+        if fmt == "pdf":
+            return out_path, pptx_to_pdf(out_path, OUTPUT)
+        return out_path, None
+
+    try:
+        async with _BUILD_LOCK:
+            out, pdf = await asyncio.to_thread(_slow_work)
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
     if fmt == "pdf":
-        pdf = pptx_to_pdf(out, OUTPUT)
         if pdf:
             return FileResponse(pdf, media_type="application/pdf",
                                 filename=os.path.basename(pdf))

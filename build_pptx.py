@@ -526,6 +526,64 @@ def _strip_embedded_fonts(pptx_path):
         print("  警告: 剥离内嵌字体失败(%s)，保留原文件" % e)
 
 
+# 2026-10-19 用户反馈「导出还卡」：模板第3/4页背景图 + 机组照片全是原始大图，
+# 单张 11MB。出件前统一压到长边 1600px / JPEG q88（A4 打印 300dpi 绰绰有余），
+# 文件从 22.8MB 降到几 MB，下载和转换都快。
+def _compress_media(pptx_path, max_side=1600, quality=88):
+    import zipfile as _zf, shutil as _sh, os as _os, io as _io
+    try:
+        from PIL import Image
+    except Exception:
+        return
+    try:
+        zin = _zf.ZipFile(pptx_path)
+    except Exception:
+        return
+    tmp = pptx_path + ".small.tmp"
+    changed = 0
+    try:
+        zout = _zf.ZipFile(tmp, "w", _zf.ZIP_DEFLATED)
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            low = item.filename.lower()
+            if low.startswith("ppt/media/") and low.endswith((".png", ".jpg", ".jpeg")):
+                try:
+                    im = Image.open(_io.BytesIO(data))
+                    im.load()
+                    w, h = im.size
+                    if max(w, h) > max_side or len(data) > 600 * 1024:
+                        if im.mode in ("RGBA", "LA", "P"):
+                            bg = Image.new("RGB", im.size, (255, 255, 255))
+                            conv = im.convert("RGBA")
+                            bg.paste(conv, mask=conv.split()[-1])
+                            im = bg
+                        else:
+                            im = im.convert("RGB")
+                        im.thumbnail((max_side, max_side), Image.LANCZOS)
+                        buf = _io.BytesIO()
+                        im.save(buf, "JPEG", quality=quality, optimize=True)
+                        new = buf.getvalue()
+                        if len(new) < len(data):
+                            data = new
+                            changed += 1
+                except Exception:
+                    pass
+            zout.writestr(item, data)
+        zout.close()
+        zin.close()
+        _sh.move(tmp, pptx_path)
+        if changed:
+            print("  压缩媒体 %d 张" % changed)
+    except Exception as e:
+        try:
+            zin.close()
+        except Exception:
+            pass
+        if _os.path.exists(tmp):
+            _os.remove(tmp)
+        print("  警告: 媒体压缩失败(%s)" % e)
+
+
 def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=False, pic_slots=None):
     tmap = load_map(lang)
     tpl = template or os.path.join(HERE, tmap["template"])
@@ -659,6 +717,8 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
     prs.save(outpath)
     # 剥掉模板内嵌字体（约 28MB），加速前端下载与服务器转换
     _strip_embedded_fonts(outpath)
+    # 压缩媒体大图（单张 11MB -> 几百 KB）
+    _compress_media(outpath)
     return outpath
 
 
