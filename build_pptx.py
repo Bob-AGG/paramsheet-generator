@@ -280,25 +280,26 @@ def fill_pictures(slide, img_map, pic_slots=None):
         big = sorted(big, key=lambda s: s.left)
         left_pic, right_pic = big[0], big[1]
 
+    def _hide(shape):
+        """不删除形状（删了模板里盒子位置会变），只清空图片引用。"""
+        try:
+            blip = shape._element.blipFill.blip
+            blip.getparent().remove(blip)
+        except Exception:
+            pass
+
     o, s = img_map.get("open"), img_map.get("silent")
     if o and s:
         replace_picture(slide, left_pic, o)
         replace_picture(slide, right_pic, s)
     elif s and not o:
-        # 只有静音图 -> 居中（跨两框合并位置 + 居中）
-        l = min(left_pic.left, right_pic.left)
-        r = max(left_pic.left + left_pic.width, right_pic.left + right_pic.width)
-        t = min(left_pic.top, right_pic.top)
-        h = max(left_pic.height, right_pic.height)
-        w = r - l
-        # 居中放置：宽度用两框合并、高度不变、水平居中
-        replace_picture(slide, left_pic, s)
-        left_pic.left = l + (w - left_pic.width) // 2
-        # 隐藏右框（设为极简空图占位？直接删除形状）
-        right_pic._element.getparent().remove(right_pic._element)
+        # 只有静音图 -> 放进右框，左框留空（不删形状、不改位置）
+        replace_picture(slide, right_pic, s)
+        _hide(left_pic)
     elif o and not s:
+        # 只有开架图 -> 放进左框，右框留空
         replace_picture(slide, left_pic, o)
-        right_pic._element.getparent().remove(right_pic._element)
+        _hide(right_pic)
 
 
 def set_title_on_slide(slide, text, sub_text=None):
