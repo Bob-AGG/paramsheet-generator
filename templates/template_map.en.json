@@ -120,10 +120,6 @@
               2
             ]
           },
-          "cell_size": {
-            "o_lwh": 7,
-            "s_lwh": 7
-          },
           "cell_suffix": {
             "o_wt": "kg",
             "s_wt": "kg",
