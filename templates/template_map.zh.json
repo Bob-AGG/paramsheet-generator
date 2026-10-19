@@ -123,22 +123,6 @@
             "s_tank": [
               3,
               2
-            ],
-            "o_db1": [
-              4,
-              1
-            ],
-            "o_db7": [
-              5,
-              1
-            ],
-            "s_db1": [
-              4,
-              2
-            ],
-            "s_db7": [
-              5,
-              2
             ]
           },
           "nowrap_fields": [
@@ -351,13 +335,11 @@
       "slide": 3,
       "tables": [],
       "note": "2026-10-19 用户指示：第3页直接用成品整页图替代，不参与数据填充",
-      "background": "templates/page_bg/p3.jpg",
       "shapes": []
     },
     {
       "slide": 4,
       "tables": [],
-      "background": "templates/page_bg/p4.jpg",
       "shapes": [],
       "note": "2026-10-19 用户指示：第4页直接用成品整页图替代，不参与数据填充"
     }
