@@ -38,6 +38,13 @@
   .fld input,.fld textarea{padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:inherit;background:#fff;width:100%}
   .fld input:focus,.fld textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
   .fld textarea{resize:vertical;min-height:64px;line-height:1.5}
+  /* 单位固定：输入框右侧(或左侧)常显单位，用户只填数字 */
+  .urow{display:flex;align-items:center;gap:6px}
+  .urow input{flex:1;min-width:0}
+  .upre{font-size:13px;color:#464B52;font-weight:600;white-space:nowrap}
+  .usuf{font-size:13px;color:#464B52;font-weight:600;white-space:nowrap;min-width:18px}
+  .fld select{padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:inherit;background:#fff;width:100%}
+  .fld select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
   .sub-h{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--pri);margin-top:6px;padding-bottom:4px;border-bottom:1px dashed var(--line)}
   .sub-h:first-child{margin-top:0}
   .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;grid-column:1/-1}
@@ -104,10 +111,10 @@ const GROUPS = [
    {k:'std_v',  t:'标准电压', ph:'400/230V'},
    {k:'opt_v',  t:'可用电压', ph:'380/220V · 415/240V'},
    {sub:'外观尺寸'},
-   {k:'o_lwh',t:'开架 尺寸 L×W×H (mm)'},{k:'o_wt',t:'开架 重量 (kg)'},
-   {k:'o_tank',t:'开架 油箱 (L)'},
-   {k:'s_lwh',t:'静音 尺寸 L×W×H (mm)'},{k:'s_wt',t:'静音 重量 (kg)'},
-   {k:'s_tank',t:'静音 油箱 (L)'},
+   {k:'o_lwh',t:'开架 尺寸 L×W×H'},{k:'o_wt',t:'开架 重量',unit:'kg'},
+   {k:'o_tank',t:'开架 油箱',unit:'L'},
+   {k:'s_lwh',t:'静音 尺寸 L×W×H'},{k:'s_wt',t:'静音 重量',unit:'kg'},
+   {k:'s_tank',t:'静音 油箱',unit:'L'},
    {sub:'声压级 dB(A)'},
    {k:'o_db1',t:'开架 @75% load & 1m'},{k:'o_db7',t:'开架 @75% load & 7m'},
    {k:'s_db1',t:'静音 @75% load & 1m'},{k:'s_db7',t:'静音 @75% load & 7m'},
@@ -122,30 +129,34 @@ const GROUPS = [
    {k:'fc_esp',t:'100% ESP'},{k:'fc_prp',t:'100% PRP'},
    {k:'fc_75',t:'75% PRP'},{k:'fc_50',t:'50% PRP'},
    {sub:'基础数据'},
-   {k:'displ',t:'排量', ph:'16.25L'},{k:'cyl_arr',t:'缸数 / 排列', ph:'6L'},
-   {k:'bore',t:'缸径×行程', ph:'142x171mm'},{k:'rpm',t:'转速', ph:'1500rpm'},
+   {k:'displ',t:'排量', ph:'16.25',unit:'L'},{k:'cyl_arr',t:'缸数 / 排列', ph:'6L'},
+   {k:'bore',t:'缸径×行程', ph:'142x171'},{k:'rpm',t:'转速', ph:'1500',unit:'rpm'},
    {sub:'排气系统'},
-   {k:'ex_t',t:'排气温度 (max)', ph:'560°C'},{k:'ex_f',t:'排气流量 (max)', ph:'107.5m³/min'},
-   {k:'ex_bp',t:'排气背压 (最大允许)', ph:'5.0kPa'},
+   {k:'ex_t',t:'排气温度 (max)', ph:'560',unit:'°C'},{k:'ex_f',t:'排气流量 (max) — 请连单位一起输入', ph:'107.5m³/min'},
+   {k:'ex_bp',t:'排气背压 (最大允许) — 请连单位一起输入', ph:'5.0kPa'},
    {sub:'燃油系统'},
-   {k:'fu_res',t:'输油泵阻力', ph:'19.6kPa'},{k:'fu_max',t:'最大燃油流量', ph:'131L/H'},
+   {k:'fu_res',t:'输油泵阻力 — 请连单位一起输入', ph:'19.6kPa'},{k:'fu_max',t:'最大燃油流量 — 请连单位一起输入', ph:'131L/H'},
    {sub:'冷却系统'},
-   {k:'co_air',t:'散热器空气流量', ph:'540m³/min'},{k:'co_oil',t:'机油总容量', ph:'30L'},
-   {k:'co_cool',t:'冷却液总容量', ph:'27L'},
+   {k:'co_air',t:'散热器空气流量 — 请连单位一起输入', ph:'540m³/min'},{k:'co_oil',t:'机油总容量', ph:'30',unit:'L'},
+   {k:'co_cool',t:'冷却液总容量', ph:'27',unit:'L'},
    {sub:'电气系统'},
-   {k:'el_v',t:'起动机额定电压', ph:'DC24V'},{k:'el_bat',t:'启动电池', ph:'2x60Ah(580CCA)'},
-   {k:'el_alt',t:'充电发电机', ph:'DC24V/40A'},
+   {k:'el_v',t:'起动机额定电压', ph:'24',unit:'DC',unitPos:'pre'},
+   {k:'el_bat',t:'启动电池（个数 / 容量Ah / CCA）', ph:'2 / 60 / 720',va:'batt'},
+   {k:'el_alt',t:'充电发电机（电压 / 电流A）', ph:'24 / 40',unit:'DC',unitPos:'pre',amp:true},
    {sub:'进气系统'},
-   {k:'in_flt',t:'空滤类型', ph:'Dry type'},{k:'in_res',t:'最大进气阻力', ph:'5.0kPa'},
-   {k:'in_flow',t:'燃烧空气流量', ph:'560 L/S'},{k:'in_t',t:'最高进气温度', ph:'50°C'},
+   {k:'in_flt',t:'空滤类型', ph:'Dry type'},{k:'in_res',t:'最大进气阻力 — 请连单位一起输入', ph:'5.0kPa'},
+   {k:'in_flow',t:'燃烧空气流量 — 请连单位一起输入', ph:'560L/S'},{k:'in_t',t:'最高进气温度', ph:'50',unit:'°C'},
  ]},
  {id:'gen', t:'⚡ 电机', open:false, fields:[
    {sub:'基本数据'},
-   {k:'g_insul',t:'绝缘 / 温升', ph:'Class H/H'},{k:'g_exc',t:'励磁方式', ph:'Self-excited'},
-   {k:'g_lead',t:'绕组出线', ph:'12'},{k:'g_conn',t:'绕组接法(标准)', ph:'Star'},
-   {k:'g_pitch',t:'绕组节距', ph:'Two thirds'},{k:'g_phase',t:'相数', ph:'Three phase'},
+   {k:'g_insul',t:'绝缘 / 温升', ph:'H',unit:'Class ',unitPos:'pre',suffix:'/H',tsuf:true},
+   {k:'g_exc',t:'励磁方式', ph:'请选择',opts:['Self-excited','PMG','Separately excited']},
+   {k:'g_lead',t:'绕组出线', ph:'12'},
+   {k:'g_conn',t:'绕组接法(标准)', ph:'请选择',opts:['Star','Delta']},
+   {k:'g_pitch',t:'绕组节距', ph:'请选择',opts:['Two thirds','Five sixths'],defv:'Two thirds'},
+   {k:'g_phase',t:'相数', ph:'请选择',opts:['Single phase','Three phase'],defv:'Three phase'},
    {sub:'结构'},
-   {k:'g_brg',t:'轴承数', ph:'Single bearing'},
+   {k:'g_brg',t:'轴承数', ph:'请选择',opts:['Single bearing','Double bearing'],defv:'Single bearing'},
  ]},
  {id:'img', t:'🖼️ 机组图片', open:true, fields:[
    {sub:'开架机组 OPEN'},
@@ -224,7 +235,72 @@ function cleanVal(v){
 function collect(){
   const o={};
   document.querySelectorAll('[data-k]').forEach(el=>{ o[el.dataset.k]=cleanVal(el.value); });
+  // 组合字段拼回：电池三段 / 充电发电机两段
+  const g = k => String(o[k]||'').trim();
+  const n=g('el_bat_n'), ah=g('el_bat_ah'), cca=g('el_bat_cca');
+  if(n||ah||cca) o.el_bat = `${n||''}x${ah||''}Ah(${cca||''}CCA)`;
+  delete o.el_bat_n; delete o.el_bat_ah; delete o.el_bat_cca;
+  const av=g('el_alt_v'), aa=g('el_alt_a');
+  if(av||aa) o.el_alt = `DC${av||''}V/${aa||''}A`;
+  delete o.el_alt_v; delete o.el_alt_a;
   return o;
+}
+
+/* ===== 出件前归一：把"数字 + 固定单位"拼成模板要的完整字符串 =====
+   只在导出时使用，不改用户填的原始数字，重复导出不会叠加单位。 */
+function normalizeUnits(src){
+  const d = Object.assign({}, src||{});
+  const set = (k, unit, opt) => {
+    let v = String(d[k]==null?'':d[k]).trim();
+    if(!v) return;
+    if(v.replace(/\s/g,'')==='TBA') return;                 // TBA 不补单位
+    if(opt && opt.upper) v = v.toUpperCase();
+    if(opt && opt.alreadyRe && opt.alreadyRe.test(v)) return; // 已带单位不重复补
+    d[k] = v + (opt && opt.space ? ' ' : '') + unit;
+  };
+  // 后缀固定
+  set('o_wt','kg',{space:true,upper:true,alreadyRe:/kg$/i});
+  set('s_wt','kg',{space:true,upper:true,alreadyRe:/kg$/i});
+  set('o_tank','L',{space:true,lower:true,alreadyRe:/L$/});
+  set('s_tank','L',{space:true,lower:true,alreadyRe:/L$/});
+  set('displ','L',{space:true,alreadyRe:/L$/});
+  set('rpm','rpm',{space:true,alreadyRe:/rpm$/i});
+  set('ex_t','°C',{space:true,alreadyRe:/(°C|℃)$/});
+  set('in_t','°C',{space:true,alreadyRe:/(°C|℃)$/});
+  set('co_oil','L',{space:true,alreadyRe:/L$/});
+  set('co_cool','L',{space:true,alreadyRe:/L$/});
+  // 前缀固定
+  const pre = (k, prefix) => {
+    let v = String(d[k]==null?'':d[k]).trim();
+    if(!v) return;
+    if(/^DC/i.test(v) || /^Class/i.test(v)) return;
+    d[k] = prefix + v;
+  };
+  // 起动机电压：24 -> DC24V
+  {
+    let v = String(d.el_v==null?'':d.el_v).trim().toUpperCase().replace(/\s/g,'');
+    if(v){ if(!/^DC/.test(v)) v='DC'+v; if(!/V$/.test(v)) v+='V'; d.el_v=v; }
+  }
+  pre('g_insul','Class ');                // H -> Class H/H
+  if(/^Class\s+/i.test(String(d.g_insul||'').trim()) && !/\//.test(String(d.g_insul))) d.g_insul = String(d.g_insul).trim()+'/H';
+  return d;
+}
+
+/* 下拉选项：中文环境转中文，英文环境用英文（模板是英文） */
+const OPT_ZH = {
+  'Self-excited':'自励磁', 'PMG':'永磁(PMG)', 'Separately excited':'他励',
+  'Star':'星形(Y)', 'Delta':'三角形(Δ)',
+  'Two thirds':'2/3', 'Five sixths':'5/6',
+  'Single phase':'单相', 'Three phase':'三相',
+  'Single bearing':'单轴承', 'Double bearing':'双轴承'
+};
+function optLabel(v, lang){
+  if(!v) return v;
+  if(lang==='zh' && OPT_ZH[v]) return OPT_ZH[v];
+  if(lang==='en'){   // 中文存量值反查英文
+    for(const k in OPT_ZH){ if(OPT_ZH[k]===v) return k; }
+  }
+  return v;
 }
 /* 把表单值按频率/共用写回机型 */
 function applyCollect(m, vals){
@@ -236,6 +312,8 @@ function applyCollect(m, vals){
     if(k==='model'){ m.model = String(vals[k]||'').trim(); m.common.model = m.model; return; }
     if(k==='__sub'){ m.common.__sub = vals[k]; return; }   // 标题旁型号字：存 common
     if(k.startsWith('__')) return;              // __img_* 等元字段不进数据
+    // 组合字段的中间键（电池三段 / 充电机两段）：不进数据，由 collect() 拼成 el_bat / el_alt
+    if(['el_bat_n','el_bat_ah','el_bat_cca','el_alt_v','el_alt_a'].includes(k)) return;
     if(FREQ_FIELDS.includes(k)) fd[k]=vals[k]; else m.common[k]=vals[k];
   });
 }
@@ -289,6 +367,29 @@ function addFreq(){
   renderForm();
   toast('已添加 '+f);
 }
+
+/* ===== 单位固定：显示层辅助 =====
+   原则：输入框右侧（或左侧）单位常显，用户只填数字；
+   出件前由 normalizeUnits() 统一拼回 "值+单位" 再交给后端。 */
+function battHTML(v){
+  // 兼容旧值：2x60Ah(720CCA) / 2x60Ah(580CCA)
+  let n='',ah='',cca='';
+  const m=String(v||'').replace(/\s/g,'').match(/^(\d+)[xX×](\d+)[Aa][Hh]?\(?(\d+)[Cc][Cc][Aa]?\)?$/);
+  if(m){ n=m[1]; ah=m[2]; cca=m[3]; }
+  else { const parts=String(v||'').split('/').map(x=>x.trim()); n=parts[0]||''; ah=parts[1]||''; cca=parts[2]||''; }
+  return `<input type="text" data-k="el_bat_n" value="${esc(n)}" placeholder="2" style="flex:1">
+    <span class="usuf">x</span>
+    <input type="text" data-k="el_bat_ah" value="${esc(ah)}" placeholder="60" style="flex:1">
+    <span class="usuf">Ah(</span>
+    <input type="text" data-k="el_bat_cca" value="${esc(cca)}" placeholder="720" style="flex:1">
+    <span class="usuf">CCA)</span>`;
+}
+function altPart(v, which){
+  const m=String(v||'').replace(/^DC/i,'').replace(/\s/g,'').match(/^(\d+)[Vv]?[\/]?(\d*)/);
+  if(!m) return '';
+  return which==='v' ? m[1] : (m[2]||'');
+}
+
 function renderForm(){
   const m = findModel(cur) || {model:''};
   const fd = curFreqData(m);          // 当前频率数据
@@ -322,6 +423,35 @@ function renderForm(){
       if(f.ta) return `<div class="fld" style="grid-column:1/-1"><label>${f.t}</label>
         <textarea data-k="${f.k}" placeholder="${f.ph||''}">${v}</textarea></div>`;
       const oninp = (f.k==='model') ? ' oninput="syncModelFromForm()"' : '';
+      // 下拉框（固定选项，出件时按语言映射成英文/中文）
+      if(f.opts){
+        const cur0 = (valOf(f.k)||'').trim() || (f.defv||'');
+        const opts = f.opts.map(o=>`<option value="${esc(o)}"${o===cur0?' selected':''}>${esc(o)}</option>`).join('');
+        return `<div class="fld"><label>${f.t}</label>
+          <select data-k="${f.k}" data-opts="1"><option value="">—</option>${opts}</select></div>`;
+      }
+      // 电池：个数 / 容量Ah / CCA 三段
+      if(f.va==='batt') return `<div class="fld"><label>${f.t}</label>
+        <div class="urow">${battHTML(v)}</div></div>`;
+      // 带前缀单位（DCxxV / Class X/H）
+      if(f.unit && f.unitPos==='pre'){
+        if(f.amp){  // 充电发电机：DC[电压]V/[电流]A
+          return `<div class="fld"><label>${f.t}</label>
+            <div class="urow"><span class="upre">${esc(f.unit)}</span>
+              <input type="text" data-k="${f.k}_v" value="${esc(altPart(v,'v'))}" placeholder="24" style="flex:1">
+              <span class="usuf">V /</span>
+              <input type="text" data-k="${f.k}_a" value="${esc(altPart(v,'a'))}" placeholder="40" style="flex:1">
+              <span class="usuf">A</span></div></div>`;
+        }
+        const suf = f.tsuf ? `<span class="usuf">${esc(f.suffix||'')}</span>` : '';
+        return `<div class="fld"><label>${f.t}</label>
+          <div class="urow"><span class="upre">${esc(f.unit)}</span>
+            <input type="text" data-k="${f.k}" value="${v}" placeholder="${f.ph||''}"${oninp}>${suf}</div></div>`;
+      }
+      // 后缀单位常显（kg / L / rpm / °C）
+      if(f.unit) return `<div class="fld"><label>${f.t}</label>
+        <div class="urow"><input type="text" data-k="${f.k}" value="${v}" placeholder="${f.ph||''}"${oninp}>
+          <span class="usuf">${esc(f.unit)}</span></div></div>`;
       return `<div class="fld"><label>${f.t}</label>
         <input type="text" data-k="${f.k}" value="${v}" placeholder="${f.ph||''}"${oninp}></div>`;
     }).join('');
@@ -502,7 +632,13 @@ async function genFile(fmt){
   const lang = document.getElementById('selLang').value || 'en';
   const fd = curFreqData(m);
   const meta = {};   // 标题旁型号字等元字段（存在 common 下）
-  const data = Object.assign({}, m.common, fd, { model: m.model, freq_sel: m.curFreq });
+  let data = Object.assign({}, m.common, fd, { model: m.model, freq_sel: m.curFreq });
+  // 单位归一：数字 -> 完整字符串（kg / L / rpm / °C / DC24V / Class H/H）
+  data = normalizeUnits(data);
+  // 下拉选项按语言转换（模板为英文，中文环境出中文件时用中文）
+  ['g_exc','g_conn','g_pitch','g_phase','g_brg'].forEach(k=>{
+    if(data[k]) data[k] = optLabel(data[k], lang);
+  });
   // 油耗：模板左列已有标签(100% ESP(L/H) 等)，右列只要纯数字，按同顺序拼多行
   const fcParts = [];
   if(fd.fc_esp || fd.fc_prp || fd.fc_75 || fd.fc_50){
