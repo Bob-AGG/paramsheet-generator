@@ -248,12 +248,28 @@ def get_path(obj, path):
 
 
 def replace_picture(slide, old_pic_shape, img_stream):
-    """把已有图片形状换为新图，保持原位置/尺寸。"""
+    """把已有图片形状换为新图，保持原位置/尺寸。
+
+    ⚠️ 必须用 lxml + QName 直接写 r:embed：
+    python-pptx 的 blip.embed setter 对这种模板里的 blip 节点会静默失败
+    （赋值不报错但 XML 不变），导致生成的 PPTX 里仍是模板原图。
+    """
     try:
         blip = old_pic_shape._element.blipFill.blip
         part = slide.part
         image_part, new_rId = part.get_or_add_image_part(img_stream)
-        blip.embed = new_rId
+        # 直接操作 XML 属性，绕开 python-pptx 的 setter
+        R_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+        blip.set("{%s}embed" % R_NS, new_rId)
+        # 去掉可能存在的外链，避免显示旧图
+        for attr in ("{%s}link" % R_NS,):
+            if attr in blip.attrib:
+                del blip.attrib[attr]
+        # 顺便清掉模板的裁切偏移（srcRect），让整图完整显示、不被裁掉一截
+        blipFill = old_pic_shape._element.blipFill
+        for src in blipFill.findall(
+                "{http://schemas.openxmlformats.org/drawingml/2006/main}srcRect"):
+            blipFill.remove(src)
         return True
     except Exception as e:
         print("  ! 图片替换失败:", e, file=sys.stderr)
