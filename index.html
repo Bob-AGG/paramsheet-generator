@@ -499,7 +499,8 @@ async function genFile(fmt){
   save_soft();
   const m = findModel(cur);
   if(!m){ return alert('请先新建机型（或检查「机组型号」是否为空）'); }
-  const lang = document.getElementById('selLang').value || 'en';
+  const _lt = document.getElementById('selLang');   // 2026-10-19 模板仅一份（中英同版），语言由模板决定
+  const lang = _lt ? (_lt.value || 'zh') : 'zh';
   const fd = curFreqData(m);
   const meta = {};   // 标题旁型号字等元字段（存在 common 下）
   const data = Object.assign({}, m.common, fd, { model: m.model, freq_sel: m.curFreq });
