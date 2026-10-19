@@ -106,8 +106,8 @@ const GROUPS = [
    {k:'__sub',  t:'标题旁型号字', ph:'AS500E5'},
    {k:'title',  t:'大标题（留空=自动：工业机组 + 品牌带出）', ph:'Industrial Range Powered By X'},
    {k:'freq',   t:'频率 / 相数 / 功率因数', ph:'50Hz / 3P / PF0.8'},
-   {k:'prp_kva',t:'PRP kVA'}, {k:'eps_kva',t:'EPS kVA'},
-   {k:'prp_kw', t:'PRP kW'},  {k:'eps_kw', t:'EPS kW'},
+   {k:'prp_kva',t:'PRP 功率', unit:'kVA'}, {k:'eps_kva',t:'EPS 功率', unit:'kVA'},
+   {k:'prp_kw', t:'PRP 功率', unit:'kW'},  {k:'eps_kw', t:'EPS 功率', unit:'kW'},
    {k:'std_v',  t:'标准电压', ph:'400/230V'},
    {k:'opt_v',  t:'可用电压', ph:'380/220V · 415/240V'},
    {sub:'外观尺寸'},
@@ -259,6 +259,10 @@ function normalizeUnits(src){
     d[k] = v + (opt && opt.space ? ' ' : '') + unit;
   };
   // 后缀固定
+  set('prp_kva','kVA',{space:true,alreadyRe:/kVA$/i});
+  set('eps_kva','kVA',{space:true,alreadyRe:/kVA$/i});
+  set('prp_kw','kW',{space:true,alreadyRe:/kW$/i});
+  set('eps_kw','kW',{space:true,alreadyRe:/kW$/i});
   set('o_wt','kg',{space:true,upper:true,alreadyRe:/kg$/i});
   set('s_wt','kg',{space:true,upper:true,alreadyRe:/kg$/i});
   set('o_tank','L',{space:true,lower:true,alreadyRe:/L$/});
