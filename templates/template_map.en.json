@@ -118,23 +118,17 @@
             "s_tank": [
               3,
               2
-            ],
-            "o_db1": [
-              4,
-              1
-            ],
-            "o_db7": [
-              5,
-              1
-            ],
-            "s_db1": [
-              4,
-              2
-            ],
-            "s_db7": [
-              5,
-              2
             ]
+          },
+          "cell_size": {
+            "o_lwh": 7,
+            "s_lwh": 7
+          },
+          "cell_suffix": {
+            "o_wt": "kg",
+            "s_wt": "kg",
+            "o_tank": "L",
+            "s_tank": "L"
           }
         }
       ],
@@ -149,11 +143,6 @@
           "shape": 20,
           "purpose": "freq_tag",
           "field": "freq_tag"
-        },
-        {
-          "shape": 23,
-          "purpose": "fuel_tag",
-          "field": "fuel_tag"
         }
       ]
     },

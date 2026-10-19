@@ -17,6 +17,7 @@ import sys
 
 from pptx import Presentation
 from pptx.oxml.ns import qn
+from pptx.util import Pt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -101,12 +102,19 @@ def _clean_value(v):
     return "\n".join(lines)
 
 
-def set_cell(cell, text):
-    """写单元格，保留原格式（清空多余 run/段落）"""
+def set_cell(cell, text, size_pt=None):
+    """写单元格，保留原格式（清空多余 run/段落）
+
+    size_pt: 可选，覆盖字号（如尺寸列 13 字符在 1.1in 宽 8pt 下会折行，降到 7pt）。
+    """
     if text is None:
         return
     text = _clean_value(text)
     set_multiline(cell, [str(text)])
+    if size_pt:
+        for para in cell.text_frame.paragraphs:
+            for r in para.runs:
+                r.font.size = Pt(size_pt)
 
 
 def _para_prefix(p_el):
@@ -341,7 +349,7 @@ def _replace_slide_with_bg(slide, img_path, blank_layout_idx=None):
     做法：清掉该页所有 shapes，插入一张铺满整页的图片（位置/尺寸与用户成品一致）。
     这样导出 PDF 时不会因为往文本框写数据而破坏排版（折行/两端对齐/◆ 前缀）。
     """
-    from pptx.util import Emu
+    from pptx.util import Emu, Pt
     W, H = 8.27, 11.69          # 英寸：用户成品页图片尺寸（A4）
     sp_tree = slide.shapes._spTree
     for sh in list(slide.shapes):
@@ -441,7 +449,13 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                 if val in (None, ""):
                     continue
                 r, c = coord
-                set_cell(table.cell(r, c), translate(val, lang))
+                size_pt = (t_def.get("cell_size") or {}).get(fname)
+                txt = translate(val, lang)
+                # 带单位字段：数字后自动补单位（如重量 kg / 油箱 L）
+                usfx = (t_def.get("cell_suffix") or {}).get(fname)
+                if usfx and str(txt).strip() and not re.search(r"[A-Za-z℃°]$", str(txt).strip()):
+                    txt = "%s %s" % (str(txt).strip(), usfx)
+                set_cell(table.cell(r, c), txt, size_pt=size_pt)
             # 多行字段（油耗）
             if "fuel_consumption" in t_def:
                 fc = t_def["fuel_consumption"]
