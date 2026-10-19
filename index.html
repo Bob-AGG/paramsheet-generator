@@ -59,35 +59,74 @@
   .freqbar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13px;flex-wrap:wrap}
   .fbtn{border:1px solid var(--line);background:#fff;padding:6px 16px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--sub)}
   .fbtn.on{background:var(--pri);border-color:var(--pri);color:#fff}
+  /* ===== UI 优化 2026-10-19 ===== */
+  .vsep{width:1px;height:22px;background:var(--line);margin:0 2px}
+  .hdr-lang{display:flex;align-items:center;gap:6px}
+  .btn.pri2{background:#eef2ff;border-color:#c7d2fe;color:var(--pri-d);font-weight:600}
+  .btn.pri2:hover{background:#e0e7ff}
+  .barlbl{font-size:12px;color:var(--sub);font-weight:600}
+  /* 进度条 */
+  .prog{max-width:1100px;margin:0 auto 4px;padding:0 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .prog .pbar{flex:1;min-width:180px;height:8px;background:#e6e9f0;border-radius:5px;overflow:hidden}
+  .prog .pbar i{display:block;height:100%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:5px;transition:width .3s}
+  .prog .pbar.full i{background:linear-gradient(90deg,#4ade80,#16a34a)}
+  .prog .txt{font-size:12px;color:var(--sub);white-space:nowrap}
+  .prog .txt b{color:var(--pri);font-size:13px}
+  .prog .miss{font-size:11.5px;color:var(--warn);cursor:pointer;text-decoration:underline dotted}
+  /* 分组头：序号徽标 + 页签提示 */
+  .grp>.hd .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--pri);color:#fff;font-size:11px;font-weight:700}
+  .grp>.hd .pg{margin-left:6px;font-size:11px;font-weight:500;color:var(--sub);background:#fff;border:1px solid var(--line);border-radius:4px;padding:0 6px}
+  /* 子标题更轻 */
+  .sub-h{display:flex;align-items:center;gap:6px}
+  .sub-h::before{content:"";width:3px;height:12px;background:var(--pri);border-radius:2px}
+  /* 必填提示 */
+  .fld.req label::after{content:"*";color:var(--danger);margin-left:3px}
+  /* 聚焦高亮分组 */
+  .grp.flash{box-shadow:0 0 0 2px rgba(37,99,235,.35)}
+  @media (max-width:720px){
+    header{gap:8px;padding:10px 12px}
+    header h1{font-size:15px}
+    .bar{padding:10px 12px;gap:8px}
+    .bar select{min-width:140px}
+    .wrap,.prog{padding:0 12px}
+    .bd{grid-template-columns:1fr;padding:12px}
+    .imgbox{flex-direction:column;align-items:flex-start}
+  }
 </style>
 </head>
 <body>
 <header>
   <h1>参数单生成器</h1>
-  <span class="badge">V2 · 生成参数单</span>
+  <span class="badge">V2</span>
   <span class="spacer"></span>
-  <label class="hint" style="display:flex;align-items:center;gap:6px">语言
+  <label class="hint hdr-lang">语言
     <select id="selLang" style="min-width:auto;padding:6px 10px">
       <option value="en" selected>English</option>
       <option value="zh">中文</option>
     </select>
   </label>
-  <button class="btn" onclick="importJson()">导入数据</button>
-  <button class="btn" onclick="exportJson()">导出数据</button>
-  <button class="btn" onclick="uploadDatasheet()">📎 上传 Datasheet</button>
+  <span class="vsep"></span>
+  <button class="btn" onclick="uploadDatasheet()" title="上传 PDF/图片自动识别">📎 Datasheet</button>
+  <button class="btn" onclick="importJson()">导入</button>
+  <button class="btn" onclick="exportJson()">导出</button>
   <button class="btn" onclick="save()">保存</button>
-  <button class="btn pri" onclick="genFile('pptx')">⬇ 导出 PPTX</button>
+  <span class="vsep"></span>
   <button class="btn pri" onclick="genFile('pdf')">⬇ 导出 PDF</button>
+  <button class="btn pri2" onclick="genFile('pptx')">PPTX</button>
 </header>
 
 <div class="bar">
+  <span class="barlbl">机型</span>
   <select id="selModel" onchange="switchModel(this.value)"></select>
-  <button class="btn" onclick="newModel()">+ 新建机型</button>
-  <button class="btn" onclick="dupModel()">复制为新机型</button>
-  <button class="btn danger" onclick="delModel()">删除机型</button>
+  <button class="btn sm" onclick="newModel()">+ 新建</button>
+  <button class="btn sm" onclick="dupModel()">复制</button>
+  <button class="btn sm danger" onclick="delModel()">删除</button>
   <span class="spacer"></span>
   <span class="hint" id="status">数据保存在浏览器本地</span>
 </div>
+
+<!-- 填充进度：一眼看出还差哪些必填项 -->
+<div class="prog" id="prog"></div>
 
 <div class="wrap" id="form"></div>
 <div class="toast" id="toast"></div>
@@ -101,26 +140,26 @@ const FREQ_FIELDS = ['freq','prp_kva','eps_kva','prp_kw','eps_kw',
 /* 只保留模板中标注了 12345 的格子；其余格子（含第3、4页）一律保持模板原值不动。
    分三类：机组 / 动力 / 电机 */
 const GROUPS = [
- {id:'basic', t:'🏭 机组', open:true, fields:[
+ /* 顺序严格对应模板：第1页(功率→排量尺寸→声压级→动力概览) → 第2页(动力详参→电机) → 图片 */
+ {id:'basic', t:'① 机组 · 第1页', open:true, fields:[
    {k:'model',  t:'机组型号（图片文件名）', ph:'例: D17'},
    {k:'__sub',  t:'标题旁型号字', ph:'AS500E5'},
-   {k:'title',  t:'大标题（留空=自动：工业机组 + 品牌带出）', ph:'Industrial Range Powered By X'},
-   {k:'freq',   t:'频率 / 相数 / 功率因数', ph:'50Hz / 3P / PF0.8'},
+   {k:'title',  t:'大标题（留空=自动）', ph:'Industrial Range Powered By X'},
+   {sub:'功率 (Power)'},
    {k:'prp_kva',t:'PRP 功率', unit:'kVA'}, {k:'eps_kva',t:'EPS 功率', unit:'kVA'},
    {k:'prp_kw', t:'PRP 功率', unit:'kW'},  {k:'eps_kw', t:'EPS 功率', unit:'kW'},
+   {k:'freq',   t:'频率 / 相数 / 功率因数', ph:'50Hz / 3P / PF0.8'},
    {k:'std_v',  t:'标准电压', ph:'400/230V'},
    {k:'opt_v',  t:'可用电压', ph:'380/220V · 415/240V'},
-   {sub:'外观尺寸'},
+   {sub:'外观尺寸 (Dimension / Weight / Fuel tank)'},
    {k:'o_lwh',t:'开架 尺寸 L×W×H'},{k:'o_wt',t:'开架 重量',unit:'kg'},
    {k:'o_tank',t:'开架 油箱',unit:'L'},
    {k:'s_lwh',t:'静音 尺寸 L×W×H'},{k:'s_wt',t:'静音 重量',unit:'kg'},
    {k:'s_tank',t:'静音 油箱',unit:'L'},
-   {sub:'声压级 dB(A)'},
-   {k:'o_db1',t:'开架 @75% load & 1m'},{k:'o_db7',t:'开架 @75% load & 7m'},
-   {k:'s_db1',t:'静音 @75% load & 1m'},{k:'s_db7',t:'静音 @75% load & 7m'},
- ]},
- {id:'perf', t:'🔧 动力', open:true, fields:[
-   {sub:'整机性能'},
+   {sub:'声压级 dB(A) @75% load'},
+   {k:'o_db1',t:'开架 1m'},{k:'o_db7',t:'开架 7m'},
+   {k:'s_db1',t:'静音 1m'},{k:'s_db7',t:'静音 7m'},
+   {sub:'动力概览 (Performance data)'},
    {k:'e_brand',t:'发动机品牌'},{k:'e_model',t:'发动机型号'},
    {k:'e_fuel',t:'燃料'},{k:'e_asp',t:'进气方式'},
    {k:'e_cool',t:'冷却方式'},{k:'e_gov',t:'调速器'},
@@ -128,37 +167,44 @@ const GROUPS = [
    {sub:'油耗 (L/H)'},
    {k:'fc_esp',t:'100% ESP'},{k:'fc_prp',t:'100% PRP'},
    {k:'fc_75',t:'75% PRP'},{k:'fc_50',t:'50% PRP'},
-   {sub:'基础数据'},
+ ]},
+ {id:'perf', t:'② 动力详参 · 第2页', open:true, fields:[
+   {sub:'基础数据 (Basic data)'},
    {k:'displ',t:'排量', ph:'16.25',unit:'L'},{k:'cyl_arr',t:'缸数 / 排列', ph:'6L'},
    {k:'bore',t:'缸径×行程', ph:'142x171'},{k:'rpm',t:'转速', ph:'1500',unit:'rpm'},
-   {sub:'排气系统'},
-   {k:'ex_t',t:'排气温度 (max)', ph:'560',unit:'°C'},{k:'ex_f',t:'排气流量 (max) — 请连单位一起输入', ph:'107.5m³/min'},
-   {k:'ex_bp',t:'排气背压 (最大允许) — 请连单位一起输入', ph:'5.0kPa'},
-   {sub:'燃油系统'},
-   {k:'fu_res',t:'输油泵阻力 — 请连单位一起输入', ph:'19.6kPa'},{k:'fu_max',t:'最大燃油流量 — 请连单位一起输入', ph:'131L/H'},
-   {sub:'冷却系统'},
-   {k:'co_air',t:'散热器空气流量 — 请连单位一起输入', ph:'540m³/min'},{k:'co_oil',t:'机油总容量', ph:'30',unit:'L'},
+   {sub:'排气系统 (Exhaust)'},
+   {k:'ex_t',t:'排气温度 (max)', ph:'560',unit:'°C'},
+   {k:'ex_f',t:'排气流量 (max) — 连单位输入', ph:'107.5m³/min'},
+   {k:'ex_bp',t:'排气背压 (最大允许) — 连单位输入', ph:'5.0kPa'},
+   {sub:'燃油系统 (Fuel)'},
+   {k:'fu_res',t:'输油泵阻力 — 连单位输入', ph:'19.6kPa'},
+   {k:'fu_max',t:'最大燃油流量 — 连单位输入', ph:'131L/H'},
+   {sub:'冷却系统 (Cooling)'},
+   {k:'co_air',t:'散热器空气流量 — 连单位输入', ph:'540m³/min'},
+   {k:'co_oil',t:'机油总容量', ph:'30',unit:'L'},
    {k:'co_cool',t:'冷却液总容量', ph:'27',unit:'L'},
-   {sub:'电气系统'},
+   {sub:'进气系统 (Inlet air)'},
+   {k:'in_flt',t:'空滤类型', ph:'Dry type'},
+   {k:'in_res',t:'最大进气阻力 — 连单位输入', ph:'5.0kPa'},
+   {k:'in_flow',t:'燃烧空气流量 — 连单位输入', ph:'560L/S'},
+   {k:'in_t',t:'最高进气温度', ph:'50',unit:'°C'},
+   {sub:'电气系统 (Electrical)'},
    {k:'el_v',t:'起动机额定电压', ph:'24',unit:'DC',unitPos:'pre'},
    {k:'el_bat',t:'启动电池（个数 / 容量Ah / CCA）', ph:'2 / 60 / 720',va:'batt'},
    {k:'el_alt',t:'充电发电机（电压 / 电流A）', ph:'24 / 40',unit:'DC',unitPos:'pre',amp:true},
-   {sub:'进气系统'},
-   {k:'in_flt',t:'空滤类型', ph:'Dry type'},{k:'in_res',t:'最大进气阻力 — 请连单位一起输入', ph:'5.0kPa'},
-   {k:'in_flow',t:'燃烧空气流量 — 请连单位一起输入', ph:'560L/S'},{k:'in_t',t:'最高进气温度', ph:'50',unit:'°C'},
  ]},
- {id:'gen', t:'⚡ 电机', open:false, fields:[
-   {sub:'基本数据'},
+ {id:'gen', t:'③ 电机 · 第2页', open:false, fields:[
+   {sub:'基本数据 (Basic data)'},
    {k:'g_insul',t:'绝缘 / 温升', ph:'H',unit:'Class ',unitPos:'pre',suffix:'/H',tsuf:true},
    {k:'g_exc',t:'励磁方式', ph:'请选择',opts:['Self-excited','PMG','Separately excited']},
    {k:'g_lead',t:'绕组出线', ph:'12'},
    {k:'g_conn',t:'绕组接法(标准)', ph:'请选择',opts:['Star','Delta']},
    {k:'g_pitch',t:'绕组节距', ph:'请选择',opts:['Two thirds','Five sixths'],defv:'Two thirds'},
    {k:'g_phase',t:'相数', ph:'请选择',opts:['Single phase','Three phase'],defv:'Three phase'},
-   {sub:'结构'},
+   {sub:'结构 (Structure)'},
    {k:'g_brg',t:'轴承数', ph:'请选择',opts:['Single bearing','Double bearing'],defv:'Single bearing'},
  ]},
- {id:'img', t:'🖼️ 机组图片', open:true, fields:[
+ {id:'img', t:'④ 机组图片', open:true, fields:[
    {sub:'开架机组 OPEN'},
    {k:'__img_open', t:'开架图', imgv:'open'},
    {sub:'静音机组 SILENT'},
@@ -459,8 +505,18 @@ function renderForm(){
       return `<div class="fld"><label>${f.t}</label>
         <input type="text" data-k="${f.k}" value="${v}" placeholder="${f.ph||''}"${oninp}></div>`;
     }).join('');
+    const nFill = g.fields.filter(f=>!f.sub && !f.imgv && String(valOf(f.k)||'').trim()).length;
+    const nAll  = g.fields.filter(f=>!f.sub && !f.imgv).length;
+    const titleTxt = g.t.replace(/^[①②③④⑤]\s*/, '').replace(/\s*·\s*第\d页\s*$/, '');
+    const num = (g.t.match(/^([①②③④⑤])/)||[])[1] || '';
+    const pg  = (g.t.match(/·\s*(第\d页)/)||[])[1] || '';
     return `<div class="grp ${g.open?'':'collapsed'}" id="grp-${g.id}">
-      <div class="hd" onclick="toggle('${g.id}')"><span class="arw">▼</span>${g.t}<span class="cnt"></span></div>
+      <div class="hd" onclick="toggle('${g.id}')">
+        <span class="arw">▼</span>
+        ${num?`<span class="num">${num}</span>`:''}
+        ${esc(titleTxt)}${pg?`<span class="pg">${pg}</span>`:''}
+        <span class="cnt">${nFill}/${nAll} 已填</span>
+      </div>
       <div class="bd">${body}</div></div>`;
   }).join('');
   // 型号下拉
@@ -468,6 +524,77 @@ function renderForm(){
   sel.innerHTML = DB.models.map(x=>`<option ${x.model===cur?'selected':''}>${esc(x.model)}</option>`).join('');
   document.getElementById('status').textContent = `共 ${DB.models.length} 个机型 · 数据存浏览器本地`;
   autoShowImg('open'); autoShowImg('silent');
+  updateProgress();
+  // 事件委托：任何字段变动 -> 刷新进度条 + 标记未保存（不重渲染表单，避免丢焦点）
+  if(!el._bound){
+    el._bound = true;
+    el.addEventListener('input', onFieldChange);
+    el.addEventListener('change', onFieldChange);
+  }
+}
+
+let _dirtyTimer = null;
+function onFieldChange(){
+  // 先把当前表单写回内存数据，否则进度条读到的还是旧数据
+  const m0 = findModel(cur);
+  if(m0){ try{ applyCollect(m0, collect()); }catch(e){} }
+  updateProgress();
+  const st = document.getElementById('status');
+  if(st && !st.dataset.orig) st.dataset.orig = st.textContent;
+  if(st){ st.textContent = '● 有改动未保存'; st.style.color = 'var(--warn)'; }
+  clearTimeout(_dirtyTimer);
+  _dirtyTimer = setTimeout(()=>{ try{ save_soft(); }catch(e){} }, 1500);  // 1.5s 后自动暂存
+  setTimeout(()=>{
+    const s2=document.getElementById('status');
+    if(s2 && s2.textContent.startsWith('●')){ s2.textContent='✓ 已自动暂存'; s2.style.color='var(--ok)';
+      setTimeout(()=>{ if(s2.textContent==='✓ 已自动暂存'){ s2.textContent=s2.dataset.orig||''; s2.style.color=''; } }, 2000); }
+  }, 1700);
+}
+
+/* ===== 填充进度 =====
+   只看「模板里有 12345 的格子」对应的字段；图片不算必填。 */
+const KEY_REQUIRED = ['model','prp_kva','prp_kw','eps_kva','eps_kw','freq','std_v'];
+function updateProgress(){
+  const box = document.getElementById('prog');
+  if(!box) return;
+  const m = findModel(cur) || {};
+  const fd = curFreqData(m), cm = m.common||{};
+  const valOf = k => FREQ_FIELDS.includes(k) ? (fd[k]||'') : (cm[k]||'');
+  // 组合字段：任一子段有值即算已填
+  const comboVal = k => {
+    if(k==='el_bat') return [cm.el_bat_n,cm.el_bat_ah,cm.el_bat_cca].filter(Boolean).join('');
+    if(k==='el_alt') return [cm.el_alt_v,cm.el_alt_a].filter(Boolean).join('');
+    return valOf(k);
+  };
+  let all=0, filled=0; const miss=[];
+  GROUPS.forEach(g=>{
+    if(g.id==='img') return;
+    g.fields.forEach(f=>{
+      if(f.sub||f.imgv) return;
+      if(String(f.k).startsWith('__')) return;      // 标题旁型号字等元字段不计入进度
+      if(f.k==='title') return;                     // 大标题留空=自动生成，不算必填
+      all++;
+      const v=String((f.va?comboVal(f.k):valOf(f.k))||'').trim();
+      if(v) filled++; else miss.push({k:f.k, t:f.t, gid:g.id});
+    });
+  });
+  const pct = all? Math.round(filled*100/all) : 0;
+  // 只列出前 5 个缺失项，点一下跳到对应分组
+  const missHTML = miss.length
+    ? `<span class="miss" onclick="jumpTo('${miss[0].gid}')" title="${esc(miss.map(x=>x.t).join('、'))}">缺 ${miss.length} 项，点击定位：${esc(miss[0].t)}</span>`
+    : `<span class="txt" style="color:var(--ok)">✓ 全部字段已填</span>`;
+  box.innerHTML = `<div class="pbar ${pct===100?'full':''}"><i style="width:${pct}%"></i></div>
+    <span class="txt">已填 <b>${filled}</b>/${all} · ${pct}%</span>${missHTML}`;
+}
+
+/* 跳到某分组并高亮 */
+function jumpTo(gid){
+  const g=document.getElementById('grp-'+gid);
+  if(!g) return;
+  g.classList.remove('collapsed');
+  g.scrollIntoView({behavior:'smooth', block:'center'});
+  g.classList.add('flash');
+  setTimeout(()=>g.classList.remove('flash'), 1400);
 }
 
 /* ===== 图片：自动匹配 / 手动选择 / 上传 =====
