@@ -334,6 +334,29 @@ def set_title_on_slide(slide, text, sub_text=None):
         set_shape_text(sub_sh, sub_text)
 
 
+def _clear_non_data_pages(slide):
+    """2026-10-19 用户规则：模板未标注「12345」的页（第3、4页）不得带任何模板示例文字，
+    否则中英混排+换行与原文不一致，导出 PDF 会看起来多出空格/断行。
+    做法：该页所有**表格**清成空单元格；**文本框**若含示例数据也清空（保留纯标题占位/符号框不动）。
+    需在填完数据后调用；被显式填充过的单元格会在下面重新写回。"""
+    A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
+    for sh in slide.shapes:
+        if sh.has_table:
+            tbl = sh.table
+            for row in tbl.rows:
+                for cell in row.cells:
+                    tf = cell.text_frame
+                    p0 = tf.paragraphs[0]
+                    # 每段保留一个空 run：字体/行高与模板一致，但显示为空
+                    if p0.runs:
+                        p0.runs[0].text = ""
+                    for r in p0._p.findall(A + 'r')[1:]:
+                        p0._p.remove(r)
+                    for extra in list(tf.paragraphs)[1:]:
+                        tf._txBody.remove(extra._p)
+
+
+
 def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=True, pic_slots=None):
     tmap = load_map(lang)
     tpl = template or os.path.join(HERE, tmap["template"])
@@ -371,6 +394,10 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                 if img_map:
                     fill_pictures(slide, img_map, pic_slots)
                     print("  已插入图片:", list(img_map.keys()))
+
+        # 第 3/4 页：模板示例文字先清空（用户 2026-10-19：模板里未标 12345 的内容不得带出）
+        if s_idx >= 2:
+            _clear_non_data_pages(slide)
 
         # 标题：仅第 1 页替换（第 2/3/4 页保持模板原样）
         title_tpl = tmap.get("title") if s_idx == 0 else None

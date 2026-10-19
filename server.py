@@ -73,7 +73,7 @@ async def build(request: Request):
     except Exception:
         return JSONResponse({"ok": False, "error": "JSON 解析失败"}, status_code=400)
     data = body.get("data") or {}
-    lang = body.get("lang") or "en"
+    lang = body.get("lang") or "zh"   # 2026-10-19 模板改为单份中英同版，默认中文
     title_sub = body.get("title_sub") or ""
     if title_sub:
         # slide1 顶部小标题（型号字，如 AS550E5）

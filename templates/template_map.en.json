@@ -1,9 +1,9 @@
 {
   "lang": "en",
-  "template": "templates/template_en.pptx",
+  "template": "templates/template_zh.pptx",
   "source": "英文版-技术参数PPT模板-20250427.pptx",
   "generated": "2026-10-16",
-  "note": "字段名 <-> 单元格坐标映射。坐标 [row, col] 为该表格内的行列索引（0 基）。fuel_consumption.lines 走多行写入。multiline_fields 每行一条。",
+  "note": "2026-10-19 模板统一为中英同版(template_zh.pptx)；第3、4页清空模板示例文字，不填数据",
   "title": "Industrial Range Powered By {engine_brand}",
   "slides": [
     {
@@ -341,26 +341,13 @@
     {
       "slide": 3,
       "tables": [],
-      "note": "控制系统页，无表格，保持模板原样。"
+      "note": "控制系统页，无表格，保持模板原样。",
+      "shapes": []
     },
     {
       "slide": 4,
-      "tables": [
-        {
-          "idx": 0,
-          "rows": 2,
-          "cols": 1,
-          "purpose": "standard_features",
-          "multiline_fields": {}
-        },
-        {
-          "idx": 1,
-          "rows": 5,
-          "cols": 2,
-          "purpose": "optional_features",
-          "multiline_fields": {}
-        }
-      ]
+      "tables": [],
+      "shapes": []
     }
   ]
 }
