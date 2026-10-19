@@ -102,10 +102,74 @@ def _clean_value(v):
     return "\n".join(lines)
 
 
-def set_cell(cell, text, size_pt=None):
+def _text_width_in(text, pt, font_path=None):
+    """估算文本宽度（英寸）。用 Pillow + Bai Jamjuree 真实字形宽度。"""
+    try:
+        from PIL import ImageFont
+        px = max(1, int(round(pt * 96 / 72)))
+        path = font_path or "/usr/share/fonts/baijamjuree/BaiJamjuree-Regular.ttf"
+        if not os.path.exists(path):
+            path = "/usr/share/fonts/baijamjuree/BaiJamjuree-Medium.ttf"
+        f = ImageFont.truetype(path, px)
+        return f.getlength(text) / 96.0
+    except Exception:
+        # 兜底：按 8pt 平均字宽 0.055in 粗估
+        return len(text) * 0.055 * (pt / 8.0)
+
+
+def _shrink_to_fit(cell, text, min_pt=5.5):
+    """确保单元格内文本不折行：按可用宽度自动降字号。
+
+    可用宽度 = 列宽 - 左右内边距（模板多为 0.08in）。
+    只调字号（视觉几乎看不出差异），不改列宽、不动版式。
+    """
+    try:
+        from pptx.util import Pt as _Pt
+        col_w = None
+        # 通过父 table 反查列宽
+        tc = cell._tc
+        tr = tc.getparent()
+        tbl = tr.getparent()
+        cols = tbl.findall(qn("a:tblGrid") + "/" + qn("a:gridCol"))
+        # 定位当前列序
+        idx = list(tr).index(tc)
+        if idx < len(cols):
+            col_w = int(cols[idx].get("w", 0)) / 914400.0
+        if not col_w:
+            return
+        marL = (cell.margin_left or 0) / 914400.0
+        marR = (cell.margin_right or 0) / 914400.0
+        avail = col_w - marL - marR
+        # 取当前字号
+        cur = None
+        for para in cell.text_frame.paragraphs:
+            for r in para.runs:
+                if r.font.size:
+                    cur = r.font.size.pt
+                    break
+            if cur:
+                break
+        if cur is None:
+            cur = 8.0
+        # Pillow 估宽偏乐观（LibreOffice 实际渲染更宽），留 12% 安全余量
+        avail = avail * 0.88
+        pt = cur
+        while pt > min_pt and _text_width_in(text, pt) > avail:
+            pt -= 0.5
+        if pt < cur:
+            for para in cell.text_frame.paragraphs:
+                for r in para.runs:
+                    r.font.size = _Pt(pt)
+    except Exception as e:
+        print("  ! 缩字号失败:", e, file=sys.stderr)
+
+
+def set_cell(cell, text, size_pt=None, nowrap=False):
     """写单元格，保留原格式（清空多余 run/段落）
 
     size_pt: 可选，覆盖字号（如尺寸列 13 字符在 1.1in 宽 8pt 下会折行，降到 7pt）。
+    nowrap:  可选，禁止单元格内自动换行（长数字如 3200*1365*1820、
+             2000 kVA 不要被拆成两行）。
     """
     if text is None:
         return
@@ -115,6 +179,10 @@ def set_cell(cell, text, size_pt=None):
         for para in cell.text_frame.paragraphs:
             for r in para.runs:
                 r.font.size = Pt(size_pt)
+    if nowrap:
+        # ⚠️ LibreOffice 转 PDF 时对表格单元格**忽略** bodyPr wrap="none"，
+        # 所以真正防折行只能缩字号：按可用宽度自动往下试。
+        _shrink_to_fit(cell, str(text))
 
 
 def _para_prefix(p_el):
@@ -492,7 +560,9 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                 usfx = (t_def.get("cell_suffix") or {}).get(fname)
                 if usfx and str(txt).strip() and not re.search(r"[A-Za-z℃°]$", str(txt).strip()):
                     txt = "%s %s" % (str(txt).strip(), usfx)
-                set_cell(table.cell(r, c), txt, size_pt=size_pt)
+                # 指定字段禁止换行（长尺寸串 / 带 kVA、kW 的功率值不要拆成两行）
+                nw = fname in (t_def.get("nowrap_fields") or [])
+                set_cell(table.cell(r, c), txt, size_pt=size_pt, nowrap=nw)
             # 多行字段（油耗）
             if "fuel_consumption" in t_def:
                 fc = t_def["fuel_consumption"]

@@ -42,7 +42,13 @@
               5,
               1
             ]
-          }
+          },
+          "nowrap_fields": [
+            "prp_kva",
+            "eps_kva",
+            "prp_kw",
+            "eps_kw"
+          ]
         },
         {
           "idx": 1,
@@ -134,7 +140,11 @@
               5,
               2
             ]
-          }
+          },
+          "nowrap_fields": [
+            "o_lwh",
+            "s_lwh"
+          ]
         }
       ],
       "shapes": [
