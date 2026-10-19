@@ -195,7 +195,7 @@ const GROUPS = [
  ]},
  {id:'gen', t:'③ 电机 · 第2页', open:false, fields:[
    {sub:'基本数据 (Basic data)'},
-   {k:'g_insul',t:'绝缘 / 温升', ph:'H',unit:'Class ',unitPos:'pre',suffix:'/H',tsuf:true},
+   {k:'g_insul',t:'绝缘 / 温升', ph:'H',insulFixed:'H'},
    {k:'g_exc',t:'励磁方式', ph:'请选择',opts:['Self-excited','PMG','Separately excited']},
    {k:'g_lead',t:'绕组出线', ph:'12'},
    {k:'g_conn',t:'绕组接法(标准)', ph:'请选择',opts:['Star','Delta']},
@@ -331,8 +331,11 @@ function normalizeUnits(src){
     let v = String(d.el_v==null?'':d.el_v).trim().toUpperCase().replace(/\s/g,'');
     if(v){ if(!/^DC/.test(v)) v='DC'+v; if(!/V$/.test(v)) v+='V'; d.el_v=v; }
   }
-  pre('g_insul','Class ');                // H -> Class H/H
-  if(/^Class\s+/i.test(String(d.g_insul||'').trim()) && !/\//.test(String(d.g_insul))) d.g_insul = String(d.g_insul).trim()+'/H';
+  // 绝缘/温升：Class H/[温升]（绝缘固定 H，只取温升段）
+  {
+    const r = insulRise(d.g_insul) || 'H';
+    d.g_insul = 'Class H/' + r;
+  }
   return d;
 }
 
@@ -421,6 +424,17 @@ function addFreq(){
 /* ===== 单位固定：显示层辅助 =====
    原则：输入框右侧（或左侧）单位常显，用户只填数字；
    出件前由 normalizeUnits() 统一拼回 "值+单位" 再交给后端。 */
+
+/* 绝缘/温升：模板是 Class H/H（绝缘/温升）。绝缘固定 H，只让用户改温升段。 */
+function insulRise(v){
+  const t=String(v||'').trim();
+  if(!t) return '';
+  const m=t.match(/^\s*Class\s*[A-Z]\s*\/\s*([A-Z])\s*$/i);   // Class H/F
+  if(m) return m[1].toUpperCase();
+  if(/^[A-Z]$/i.test(t)) return t.toUpperCase();                  // 只填了 H
+  return t;                                                       // 其它原样
+}
+
 function battHTML(v){
   // 兼容旧值：2x60Ah(720CCA) / 2x60Ah(580CCA)
   let n='',ah='',cca='';
@@ -483,6 +497,13 @@ function renderForm(){
       // 电池：个数 / 容量Ah / CCA 三段
       if(f.va==='batt') return `<div class="fld"><label>${f.t}</label>
         <div class="urow">${battHTML(v)}</div></div>`;
+      // 绝缘/温升：Class H/[温升] —— 前段 Class H 固定，只改温升等级
+      if(f.insulFixed){
+        const cur1 = insulRise(valOf(f.k)) || 'H';
+        return `<div class="fld"><label>${f.t}</label>
+          <div class="urow"><span class="upre">Class ${esc(f.insulFixed)}/</span>
+            <input type="text" data-k="${f.k}" value="${esc(cur1)}" placeholder="H" style="flex:1"></div></div>`;
+      }
       // 带前缀单位（DCxxV / Class X/H）
       if(f.unit && f.unitPos==='pre'){
         if(f.amp){  // 充电发电机：DC[电压]V/[电流]A
