@@ -284,7 +284,7 @@ function collect(){
   // 组合字段拼回：电池三段 / 充电发电机两段
   const g = k => String(o[k]||'').trim();
   const n=g('el_bat_n'), ah=g('el_bat_ah'), cca=g('el_bat_cca');
-  if(n||ah||cca) o.el_bat = `${n||''}x${ah||''}Ah(${cca||''}CCA)`;
+  if(n||ah||cca) o.el_bat = `${n||''}X${ah||''}Ah(${cca||''}CCA)`;
   delete o.el_bat_n; delete o.el_bat_ah; delete o.el_bat_cca;
   const av=g('el_alt_v'), aa=g('el_alt_a');
   if(av||aa) o.el_alt = `DC${av||''}V/${aa||''}A`;
@@ -442,7 +442,7 @@ function battHTML(v){
   if(m){ n=m[1]; ah=m[2]; cca=m[3]; }
   else { const parts=String(v||'').split('/').map(x=>x.trim()); n=parts[0]||''; ah=parts[1]||''; cca=parts[2]||''; }
   return `<input type="text" data-k="el_bat_n" value="${esc(n)}" placeholder="2" style="flex:1">
-    <span class="usuf">x</span>
+    <span class="usuf">X</span>
     <input type="text" data-k="el_bat_ah" value="${esc(ah)}" placeholder="60" style="flex:1">
     <span class="usuf">Ah(</span>
     <input type="text" data-k="el_bat_cca" value="${esc(cca)}" placeholder="720" style="flex:1">
