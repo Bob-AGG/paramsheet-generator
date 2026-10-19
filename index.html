@@ -782,6 +782,10 @@ async function genFile(fmt){
   const m = findModel(cur);
   if(!m){ return alert('请先新建机型（或检查「机组型号」是否为空）'); }
   const lang = document.getElementById('selLang').value || 'en';
+  // 图片兜底检查：既没手选、型号又为空 -> 明确告知不会带图
+  if(!localImgs.open && !localImgs.silent && !String(m.model||'').trim()){
+    console.warn('[genFile] 无型号且未手选图片，将不带机组照片');
+  }
   const fd = curFreqData(m);
   const meta = {};   // 标题旁型号字等元字段（存在 common 下）
   let data = Object.assign({}, m.common, fd, { model: m.model, freq_sel: m.curFreq });
@@ -798,8 +802,13 @@ async function genFile(fmt){
     data.fc_lines = fcParts;
   }
   // 本地手选图片随 payload 带（dataURL -> 后端写临时文件）
+  // 图片：本地手选优先；没有则依赖后端按型号自动匹配 images/型号_OPEN.png
   if(localImgs.open) data.__img_open_data = localImgs.open;
   if(localImgs.silent) data.__img_silent_data = localImgs.silent;
+  const hasOpen = !!localImgs.open, hasSilent = !!localImgs.silent;
+  if(!hasOpen && !hasSilent){
+    toast('未手选图片，将按型号自动匹配图片库…');
+  }
   // 声压级符号框（模板 4 个格：开架/静音 @1m/@7m）；模板格已加了两行
   data.sound_db = [data.o_db1||'', data.o_db7||'', data.s_db1||'', data.s_db7||''];
   const payload = { lang: lang, format: fmt,

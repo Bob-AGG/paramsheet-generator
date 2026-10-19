@@ -374,7 +374,7 @@ def _set_nowrap(slide):
                 body.set("wrap", "none")
 
 
-def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=True, pic_slots=None):
+def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=False, pic_slots=None):
     tmap = load_map(lang)
     tpl = template or os.path.join(HERE, tmap["template"])
     prs = Presentation(tpl)
