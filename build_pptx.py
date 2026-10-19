@@ -489,6 +489,43 @@ def _fix_fuel_columns(slide, table_tweaks):
             pass
 
 
+# 2026-10-19 用户反馈「导出卡住」：新中文模板把 11 个字体嵌进 PPT（28.4MB），
+# 生成件 PPTX 膨胀到 53MB，前端下载迟迟不结束。模板已内嵌字体是给编辑用的，
+# 出件不需要 —— 剥掉 ppt/fonts/* + presentation.xml 里的 embeddedFontLst。
+def _strip_embedded_fonts(pptx_path):
+    """删除 PPTX 内嵌字体，显著减小文件（不影响 PDF 转换与显示）。"""
+    import zipfile as _zf, shutil as _sh, tempfile as _tf, re as _re, os as _os
+    try:
+        zin = _zf.ZipFile(pptx_path)
+    except Exception:
+        return
+    tmp = pptx_path + ".nofont.tmp"
+    try:
+        zout = _zf.ZipFile(tmp, "w", _zf.ZIP_DEFLATED)
+        for item in zin.infolist():
+            if item.filename.startswith("ppt/fonts/"):
+                continue
+            data = zin.read(item.filename)
+            if item.filename in ("ppt/presentation.xml", "[Content_Types].xml"):
+                txt = data.decode("utf-8", "ignore")
+                txt = _re.sub(r"<p:embeddedFontLst>.*?</p:embeddedFontLst>", "", txt, flags=_re.S)
+                txt = _re.sub(r"<Override[^>]*ppt/fonts/[^>]*/>", "", txt)
+                txt = _re.sub(r'<Default Extension="fntdata"[^>]*/>', "", txt)
+                data = txt.encode("utf-8")
+            zout.writestr(item, data)
+        zout.close()
+        zin.close()
+        _sh.move(tmp, pptx_path)
+    except Exception as e:
+        try:
+            zin.close()
+        except Exception:
+            pass
+        if _os.path.exists(tmp):
+            _os.remove(tmp)
+        print("  警告: 剥离内嵌字体失败(%s)，保留原文件" % e)
+
+
 def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=False, pic_slots=None):
     tmap = load_map(lang)
     tpl = template or os.path.join(HERE, tmap["template"])
@@ -620,6 +657,8 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
     outpath = os.path.join(os.path.join(HERE, outdir) if not os.path.isabs(outdir) else outdir,
                            "%s_paramsheet_%s.pptx" % (model, lang))
     prs.save(outpath)
+    # 剥掉模板内嵌字体（约 28MB），加速前端下载与服务器转换
+    _strip_embedded_fonts(outpath)
     return outpath
 
 
