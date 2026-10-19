@@ -358,6 +358,22 @@ def _replace_slide_with_bg(slide, img_path, blank_layout_idx=None):
                              width=Emu(int(W * 914400)), height=Emu(int(H * 914400)))
 
 
+
+# 2026-10-19 用户反馈：'@75% load&7m dB(A)' 这类「靠空格右推」的固定标签行，
+# 在 Windows/PDF 渲染时字宽略有差异就会把 dB(A) 挤到下一行。
+# 做法：出件时把这类框 bodyPr 改成 wrap="none"（不自动换行），文字超出框也不折行。
+_NOWRAP_NAMES = ("文本框 19",)
+
+
+def _set_nowrap(slide):
+    from pptx.oxml.ns import qn as _qn
+    for sh in slide.shapes:
+        if sh.name in _NOWRAP_NAMES and sh.has_text_frame:
+            body = sh.text_frame._txBody.find(_qn("a:bodyPr"))
+            if body is not None:
+                body.set("wrap", "none")
+
+
 def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=True, pic_slots=None):
     tmap = load_map(lang)
     tpl = template or os.path.join(HERE, tmap["template"])
@@ -367,6 +383,10 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
     for slide_def in tmap["slides"]:
         s_idx = slide_def["slide"] - 1
         slide = prs.slides[s_idx]
+        # 1 页：声压级标签框改不换行（防 dB(A) 掉行）
+        if s_idx == 0:
+            _set_nowrap(slide)
+
         # 第 3/4 页：直接替换为用户成品整页图（纯版式，不填数据）
         if slide_def.get("background"):
             bg = os.path.join(HERE, slide_def["background"])
