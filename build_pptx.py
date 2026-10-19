@@ -462,6 +462,33 @@ def _set_nowrap(slide):
                 body.set("wrap", "none")
 
 
+# 2026-10-19 用户要求：燃油消耗量标签（100% 备用(L/H) 等）不许换行。
+# 中文模板标签列 1.0236in、减去左右边距只剩 0.8645in，而 8pt 中文实测要 0.779in，
+# LibreOffice 渲染又比测量宽，必然折行。做法：出件时把标签列加宽、数值列等量收窄
+# （数值只有 3~4 位数字，0.79in 富余很多）。只动列宽，不动行高、字号、文字。
+_FUEL_COL_FIX = {
+    # 表索引: (标签列号, 目标宽 in, 数值列号, 目标宽 in)
+    1: (1, 1.25, 2, 0.955),
+}
+
+
+def _fix_fuel_columns(slide, table_tweaks):
+    """按 table_map 调整指定表格的列宽，保证燃油标签不折行。"""
+    from pptx.util import Inches
+    if not table_tweaks:
+        return
+    tables = [sh for sh in slide.shapes if sh.has_table]
+    for idx, (lab_c, lab_w, val_c, val_w) in table_tweaks.items():
+        if idx >= len(tables):
+            continue
+        tbl = tables[idx].table
+        try:
+            tbl.columns[lab_c].width = Inches(lab_w)
+            tbl.columns[val_c].width = Inches(val_w)
+        except (IndexError, KeyError):
+            pass
+
+
 def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=False, pic_slots=None):
     tmap = load_map(lang)
     tpl = template or os.path.join(HERE, tmap["template"])
@@ -474,6 +501,8 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
         # 1 页：声压级标签框改不换行（防 dB(A) 掉行）
         if s_idx == 0:
             _set_nowrap(slide)
+            # 1 页：燃油消耗量标签列加宽，防「100% 备用(L/H)」折行
+            _fix_fuel_columns(slide, _FUEL_COL_FIX)
 
         # 第 3/4 页：直接替换为用户成品整页图（纯版式，不填数据）
         if slide_def.get("background"):
