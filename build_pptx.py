@@ -334,6 +334,22 @@ def set_title_on_slide(slide, text, sub_text=None):
         set_shape_text(sub_sh, sub_text)
 
 
+
+def _replace_slide_with_bg(slide, img_path, blank_layout_idx=None):
+    """2026-10-19 用户规则：第 3、4 页直接换成用户提供的成品整页图片（纯版式，不参与数据填充）。
+
+    做法：清掉该页所有 shapes，插入一张铺满整页的图片（位置/尺寸与用户成品一致）。
+    这样导出 PDF 时不会因为往文本框写数据而破坏排版（折行/两端对齐/◆ 前缀）。
+    """
+    from pptx.util import Emu
+    W, H = 8.27, 11.69          # 英寸：用户成品页图片尺寸（A4）
+    sp_tree = slide.shapes._spTree
+    for sh in list(slide.shapes):
+        sp_tree.remove(sh._element)
+    slide.shapes.add_picture(img_path, Emu(int(W * 914400)), 0,
+                             width=Emu(int(W * 914400)), height=Emu(int(H * 914400)))
+
+
 def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=True, pic_slots=None):
     tmap = load_map(lang)
     tpl = template or os.path.join(HERE, tmap["template"])
@@ -343,6 +359,13 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
     for slide_def in tmap["slides"]:
         s_idx = slide_def["slide"] - 1
         slide = prs.slides[s_idx]
+        # 第 3/4 页：直接替换为用户成品整页图（纯版式，不填数据）
+        if slide_def.get("background"):
+            bg = os.path.join(HERE, slide_def["background"])
+            if os.path.exists(bg):
+                _replace_slide_with_bg(slide, bg)
+                print("  slide%d -> 整页背景图 %s" % (s_idx + 1, slide_def["background"]))
+                continue
         # 机组照片（仅 slide1）
         if s_idx == 0 and images_dir:
             import image_utils

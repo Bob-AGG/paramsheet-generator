@@ -340,26 +340,16 @@
     {
       "slide": 3,
       "tables": [],
-      "note": "控制系统页，无表格，保持模板原样。"
+      "note": "2026-10-19 用户指示：第3页直接用成品整页图替代，不参与数据填充",
+      "background": "templates/page_bg/p3.jpg",
+      "shapes": []
     },
     {
       "slide": 4,
-      "tables": [
-        {
-          "idx": 0,
-          "rows": 2,
-          "cols": 1,
-          "purpose": "standard_features",
-          "multiline_fields": {}
-        },
-        {
-          "idx": 1,
-          "rows": 5,
-          "cols": 2,
-          "purpose": "optional_features",
-          "multiline_fields": {}
-        }
-      ]
+      "tables": [],
+      "background": "templates/page_bg/p4.jpg",
+      "shapes": [],
+      "note": "2026-10-19 用户指示：第4页直接用成品整页图替代，不参与数据填充"
     }
   ],
   "title": "采用{engine_brand}发动机"
