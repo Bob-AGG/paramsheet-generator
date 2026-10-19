@@ -434,13 +434,16 @@ def _replace_slide_with_bg(slide, img_path, blank_layout_idx=None):
     做法：清掉该页所有 shapes，插入一张铺满整页的图片（位置/尺寸与用户成品一致）。
     这样导出 PDF 时不会因为往文本框写数据而破坏排版（折行/两端对齐/◆ 前缀）。
     """
-    from pptx.util import Emu, Pt
-    W, H = 8.27, 11.69          # 英寸：用户成品页图片尺寸（A4）
+    from pptx.util import Emu
+    # ⚠️ 必须用页面自身尺寸并从 (0,0) 开始铺满。
+    # 之前写死 A4 8.27in 并把 left 也设成 8.27in（错把宽度当左边距），
+    # 导致图片被推到页面右边界之外 —— 第 3/4 页看着就是空白。
+    prs = slide.part.package.presentation_part.presentation
+    W, H = prs.slide_width, prs.slide_height
     sp_tree = slide.shapes._spTree
     for sh in list(slide.shapes):
         sp_tree.remove(sh._element)
-    slide.shapes.add_picture(img_path, Emu(int(W * 914400)), 0,
-                             width=Emu(int(W * 914400)), height=Emu(int(H * 914400)))
+    slide.shapes.add_picture(img_path, 0, 0, width=W, height=H)
 
 
 
