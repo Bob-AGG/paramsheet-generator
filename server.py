@@ -220,9 +220,98 @@ def list_images(model: str = ""):
                                     for k, v in found.items()}}
 
 
+# ============================================================
+# 机型库（服务器端存储，2026-10-20）
+# ============================================================
+import model_store
+
+model_store.init()
+
+
+@app.get("/api/models-all")
+def api_models_all():
+    """全部机型（含完整数据）。前端启动用，一次拉完直接渲染，避免 N+1。
+    注意：必须注册在任何 /api/models/{name} 之前（FastAPI 按注册顺序匹配）。"""
+    items = model_store.all_models()
+    return {"ok": True, "total": len(items), "models": items}
+
+
+@app.get("/api/models")
+def api_models(family: str = "", q: str = "", limit: int = 0, offset: int = 0):
+    """机型列表（轻量：不含完整数据）
+
+    total 跟随过滤条件（原来恒定返回全库数量，filter 后对不上，测试抓出来的）。
+    """
+    items = model_store.list_models(family or None, q or None, limit, offset)
+    return {"ok": True, "total": len(items),
+            "all_total": model_store.count(),
+            "families": model_store.families(),
+            "items": items}
+
+
+@app.get("/api/models/{name}")
+def api_model_get(name: str):
+    """取单个机型完整数据"""
+    r = model_store.get(name)
+    if not r:
+        return JSONResponse({"ok": False, "error": "机型不存在: %s" % name}, status_code=404)
+    return {"ok": True, "item": r}
+
+
+@app.post("/api/models/save")
+async def api_model_save(request: Request):
+    """保存/更新一个机型。body: {name, model, data, family?, src?, overwrite?}"""
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"ok": False, "error": "JSON 解析失败"}, status_code=400)
+    name = (body.get("name") or "").strip()
+    data = body.get("data") or {}
+    if not name:
+        name = (data.get("model") or "").strip()
+    if not name:
+        return JSONResponse({"ok": False, "error": "缺少 name"}, status_code=400)
+    data.setdefault("model", body.get("model") or name)
+    ok = model_store.save(name, body.get("model") or data.get("model"), data,
+                          body.get("family") or "", body.get("src") or "",
+                          overwrite=body.get("overwrite", True))
+    if not ok:
+        return JSONResponse({"ok": False, "error": "已存在且未允许覆盖: %s" % name}, status_code=409)
+    return {"ok": True, "name": name, "total": model_store.count()}
+
+
+@app.post("/api/models/import")
+async def api_model_import(request: Request):
+    """批量导入。body: {overwrite?:bool, items:[{name,model,data,family,src}]}"""
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"ok": False, "error": "JSON 解析失败"}, status_code=400)
+    items = body.get("items") or []
+    if not items:
+        return JSONResponse({"ok": False, "error": "items 为空"}, status_code=400)
+    added, updated, skipped = model_store.save_many(
+        items, overwrite=body.get("overwrite", True))
+    return {"ok": True, "added": added, "updated": updated,
+            "skipped": skipped, "total": model_store.count()}
+
+
+@app.delete("/api/models/{name}")
+def api_model_delete(name: str):
+    ok = model_store.delete(name)
+    return {"ok": ok, "total": model_store.count()}
+
+
+@app.get("/api/models-export")
+def api_model_export():
+    """导出全部机型（前端 DB 格式，可备份/迁移）"""
+    return model_store.export_all()
+
+
 @app.get("/health")
 def health():
-    return {"ok": True, "langs": ["en", "zh"], "parse": True, "upload": True}
+    return {"ok": True, "langs": ["en", "zh"], "parse": True, "upload": True,
+            "models": model_store.count()}
 
 
 # 前端静态页
