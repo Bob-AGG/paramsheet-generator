@@ -92,6 +92,18 @@
             ],
             "mode": "list",
             "data_key": "fc_lines"
+          },
+          "cell_value_map": {
+            "e_asp": {
+              "Turbocharged & Intercooled": "涡轮增压中冷"
+            },
+            "e_gov": {
+              "Electronic Governor": "电子调速",
+              "Mechanical Governor": "机械调速"
+            },
+            "e_fuel": {
+              "Diesel": "柴油"
+            }
           }
         },
         {

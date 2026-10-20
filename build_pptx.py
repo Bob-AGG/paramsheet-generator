@@ -117,12 +117,36 @@ def _text_width_in(text, pt, font_path=None):
         return len(text) * 0.055 * (pt / 8.0)
 
 
+# 中文版用什么字体量宽：Bai Jamjuree 无中文字形，LibreOffice 走 fontconfig 回落
+# Noto Sans CJK SC（服务器 fonts.conf 已把 黑体/SimHei 指过去）。
+_CJK_FONT_CANDIDATES = [
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc",
+    "/System/Library/Fonts/PingFang.ttc",
+]
+
+
+def _has_cjk(text):
+    return any("\u2e80" <= ch <= "\u9fff" or "\uff00" <= ch <= "\uffef" for ch in str(text))
+
+
+def _cjk_font_path():
+    for p in _CJK_FONT_CANDIDATES:
+        if os.path.exists(p):
+            return p
+    return None
+
+
 def _shrink_to_fit(cell, text, min_pt=5.5):
     """确保单元格内文本不折行：按可用宽度自动降字号。
 
     可用宽度 = 列宽 - 左右内边距（模板多为 0.08in）。
     只调字号（视觉几乎看不出差异），不改列宽、不动版式。
+    含中日文字符时改用 CJK 字体量宽（Bai Jamjuree 没有中文字形，
+    用它量中文会严重低估宽度，导致照旧折行）。
     """
+    font_path = _cjk_font_path() if _has_cjk(text) else None
     try:
         from pptx.util import Pt as _Pt
         col_w = None
@@ -154,7 +178,7 @@ def _shrink_to_fit(cell, text, min_pt=5.5):
         # Pillow 估宽偏乐观（LibreOffice 实际渲染更宽），留 12% 安全余量
         avail = avail * 0.88
         pt = cur
-        while pt > min_pt and _text_width_in(text, pt) > avail:
+        while pt > min_pt and _text_width_in(text, pt, font_path) > avail:
             pt -= 0.5
         if pt < cur:
             for para in cell.text_frame.paragraphs:
@@ -164,12 +188,177 @@ def _shrink_to_fit(cell, text, min_pt=5.5):
         print("  ! 缩字号失败:", e, file=sys.stderr)
 
 
-def set_cell(cell, text, size_pt=None, nowrap=False):
+# 需要「一格一行」的表格：第1页基础参数表、第2页全部参数表（含表头与标签列）
+NOWRAP_PURPOSES = {
+    "power_rating", "performance_data", "dimensions",
+    "engine_basic_data", "exhaust_system", "fuel_system", "cooling_system",
+    "electrical_system", "inlet_air", "alternator_basic_data", "alternator_structure",
+}
+
+
+def _cell_width_in(cell):
+    """列宽（英寸），已扣左右内边距。"""
+    tc = cell._tc
+    tr = tc.getparent()
+    tbl = tr.getparent()
+    cols = tbl.findall(qn("a:tblGrid") + "/" + qn("a:gridCol"))
+    idx = list(tr).index(tc)
+    if idx >= len(cols):
+        return None
+    w = int(cols[idx].get("w", 0)) / 914400.0
+    return w - (cell.margin_left or 0) / 914400.0 - (cell.margin_right or 0) / 914400.0
+
+
+_RENDER_PROBE_ENABLED = [True]
+
+
+def _fit_cell_one_line(cell, min_pt):
+    """把单元格文字压成一行：降字号优先，降到底还放不下才按单词折行。"""
+    try:
+        from pptx.util import Pt as _Pt
+        runs = [r for p in cell.text_frame.paragraphs for r in p.runs]
+        if not runs:
+            return None, None
+        text = "".join(r.text or "" for r in runs)
+        if not text.strip():
+            return 8.0, None
+        avail = _cell_width_in(cell)
+        if not avail:
+            return None, None
+        avail *= 0.88          # Pillow 估宽偏乐观，留 12% 余量
+        cur = next((r.font.size.pt for r in runs if r.font.size), 8.0)
+        fp = _cjk_font_path() if _has_cjk(text) else None
+
+        # ⚠️ 跨平台误差：同一 TTF 在 macOS / Linux 上 getlength 结果能差 10%+
+        # （Bai Jamjuree「Prime & Standby」8pt：Mac 0.88in / Linux 0.97in），
+        # 纯靠估宽会算出「放得下」但 PDF 照样折行。所以在服务器上直接写字量：
+        # 把文字临时写到单元格里，让 LibreOffice 摊出真实单行宽度，
+        # 超出可用宽度就降半磅重试（最多降 8 次），然后恢复原文。
+        def _fit_by_render(text, start_pt):
+            try:
+                import subprocess, tempfile, shutil
+                sofa = shutil.which("soffice") or shutil.which("libreoffice")
+                if not sofa or not _RENDER_PROBE_ENABLED[0]:
+                    return None
+                # 实测渲染宽度时要带上 12% 安全余量，所以探针框也取同一宽度
+                usable_emu = int(round(avail * 914400))
+                # 用一个空白 slide：单元格自动换行时，摊出的「单行宽度」就等于可用宽度
+                tmpd = tempfile.mkdtemp()
+                try:
+                    probe = Presentation()
+                    blank = probe.slide_layouts[6]
+                    sl = probe.slides.add_slide(blank)
+                    tbl = sl.shapes.add_table(1, 1, 0, 0, usable_emu, 914400).table
+                    tcell = tbl.cell(0, 0)
+                    tcell.margin_left = tcell.margin_right = 0
+                    pt = float(start_pt)
+                    for _ in range(9):
+                        tcell.text = text
+                        for para in tcell.text_frame.paragraphs:
+                            for r in para.runs:
+                                r.font.size = _Pt(pt)
+                                r.font.name = "Bai Jamjuree"
+                        pp = os.path.join(tmpd, "p.pptx")
+                        probe.save(pp)
+                        subprocess.run([sofa, "--headless", "--convert-to", "pdf",
+                                        "--outdir", tmpd, pp],
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                       timeout=60)
+                        pdff = os.path.join(tmpd, "p.pdf")
+                        if not os.path.exists(pdff):
+                            return None
+                        import pdfplumber
+                        with pdfplumber.open(pdff) as pf:
+                            words = pf.pages[0].extract_words()
+                        if not words:
+                            return None
+                        used = max(w["x1"] for w in words) - min(w["x0"] for w in words)
+                        # 摊出宽度比可用宽度还小 → 没折行，放得下
+                        if used <= (usable_emu / 914400.0) * 0.985:
+                            return pt
+                        pt -= 0.5
+                    return None
+                finally:
+                    shutil.rmtree(tmpd, ignore_errors=True)
+            except Exception as e:
+                print("  ! 渲染量宽失败:", e, file=sys.stderr)
+                return None
+
+        pt = cur
+        while pt > min_pt and _text_width_in(text, pt, fp) > avail:
+            pt -= 0.5
+        # 2026-10-20 关掉「转 PDF 实测复核」：模板里同一格 LibreOffice 有 0.74in 的
+        # 隐形最小宽度，单格探针测出来的数不可信，还会让每次导出多花十几秒。
+        # 现在靠「缩字号 + 列宽让位」解决（见 _FUEL_COL_FIX）。
+        if False and _RENDER_PROBE_ENABLED[0] and not _has_cjk(text):
+            real = _fit_by_render(text, pt)
+            _RENDER_PROBE_ENABLED[0] = False    # 探一次即够，后续表用同一套量宽结果
+            if real is not None:
+                pt = min(pt, real)
+        if pt < cur:
+            for r in runs:
+                r.font.size = _Pt(pt)
+        # 到下限仍放不下 → 用单词软换行（英文在空格处折，CJK 用 U+200B 断点）
+        if pt <= min_pt and _text_width_in(text, pt, fp) > avail:
+            if " " in text:
+                words, lines, cur_line = text.split(" "), [], ""
+                for wd in words:
+                    trial = (cur_line + " " + wd) if cur_line else wd
+                    if _text_width_in(trial, pt, fp) <= avail or not cur_line:
+                        cur_line = trial
+                    else:
+                        lines.append(cur_line)
+                        cur_line = wd
+                if cur_line:
+                    lines.append(cur_line)
+            else:
+                lines, cur_line = [], ""
+                for ch in text:
+                    if _text_width_in(cur_line + ch, pt, fp) <= avail or not cur_line:
+                        cur_line += ch
+                    else:
+                        lines.append(cur_line)
+                        cur_line = ch
+                if cur_line:
+                    lines.append(cur_line)
+            if len(lines) > 1:
+                set_multiline(cell, lines)
+                for p in cell.text_frame.paragraphs:
+                    for r in p.runs:
+                        r.font.size = _Pt(pt)
+                return pt, lines
+        return pt, None
+    except Exception as e:
+        print("  ! 单行压缩失败:", e, file=sys.stderr)
+        return None, None
+
+
+def _nowrap_table(table):
+    """整个表格的单元格一律不折行（表头/标签/数据格）。
+
+    ⚠️ 表头和标签列是模板原文、**不能动**（用户铁律：模板是权威），
+    只有<b>数据格</b>才允许缩字号/折词：即「模板里原文是 12345 占位」的格子。
+    判定：去掉空白后的原文全部由数字组成 → 视为占位数据格。
+    """
+    for r in range(len(table.rows)):
+        for c in range(len(table.columns)):
+            cell = table.cell(r, c)
+            if not cell.text.strip():
+                continue
+            # 表头/标签是模板原文 → 一律不碰（模板是权威）
+            if not re.fullmatch(r"\s*\d+\s*", cell.text):
+                continue
+            _fit_cell_one_line(cell, min_pt=5.0)
+
+
+def set_cell(cell, text, size_pt=None, nowrap=False, min_pt=5.5):
     """写单元格，保留原格式（清空多余 run/段落）
 
     size_pt: 可选，覆盖字号（如尺寸列 13 字符在 1.1in 宽 8pt 下会折行，降到 7pt）。
     nowrap:  可选，禁止单元格内自动换行（长数字如 3200*1365*1820、
              2000 kVA 不要被拆成两行）。
+    min_pt:  nowrap 生效时的最小字号。模板表头/标签文字固定、不能再缩，
+             所以表头用 6.5；数据格允许降到 5.0。
     """
     if text is None:
         return
@@ -182,7 +371,7 @@ def set_cell(cell, text, size_pt=None, nowrap=False):
     if nowrap:
         # ⚠️ LibreOffice 转 PDF 时对表格单元格**忽略** bodyPr wrap="none"，
         # 所以真正防折行只能缩字号：按可用宽度自动往下试。
-        _shrink_to_fit(cell, str(text))
+        _shrink_to_fit(cell, str(text), min_pt=min_pt)
 
 
 def _para_prefix(p_el):
@@ -468,7 +657,10 @@ def _set_nowrap(slide):
 # （数值只有 3~4 位数字，0.79in 富余很多）。只动列宽，不动行高、字号、文字。
 _FUEL_COL_FIX = {
     # 表索引: (标签列号, 目标宽 in, 数值列号, 目标宽 in)
-    1: (1, 1.25, 2, 0.955),
+    # 2026-10-20 调整：1.25/0.955 时「Prime & Standby」在 1.18in 的右列里被拆成
+    # Standb/y 两行（用户实测反馈）。左右各让 0.15in → 标签列 1.10、数值列 1.105，
+    # 实测 8pt 下两列都单行（标签列 8pt 仍放得下）。
+    1: (1, 1.10, 2, 1.105),
 }
 
 
@@ -683,6 +875,10 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                 r, c = coord
                 size_pt = (t_def.get("cell_size") or {}).get(fname)
                 txt = translate(val, lang)
+                # 单元格级强制译法（中文件用中文、英文件用英文，见 template_map.*.json 的 cell_value_map）
+                vmap = (t_def.get("cell_value_map") or {}).get(fname)
+                if vmap and str(txt) in vmap:
+                    txt = vmap[str(txt)]
                 # 带单位字段：数字后自动补单位（如重量 kg / 油箱 L）
                 usfx = (t_def.get("cell_suffix") or {}).get(fname)
                 if usfx and str(txt).strip() and not re.search(r"[A-Za-z℃°]$", str(txt).strip()):
@@ -690,6 +886,11 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                 # 指定字段禁止换行（长尺寸串 / 带 kVA、kW 的功率值不要拆成两行）
                 nw = fname in (t_def.get("nowrap_fields") or [])
                 set_cell(table.cell(r, c), txt, size_pt=size_pt, nowrap=nw)
+            # 🚫 单元格一律不许折行（2026-10-20 用户要求：中文件用中文、英文件用英文，都不换行）
+            # 收尾统一过一遍：全部单元格按可用宽度缩字号，窄列优先整宽单行，
+            # 实在放不下再按「单词」折（CJK 无空格，自然整段不拆）。
+            if t_def.get("purpose") in NOWRAP_PURPOSES:
+                _nowrap_table(table)
             # 多行字段（油耗）
             if "fuel_consumption" in t_def:
                 fc = t_def["fuel_consumption"]
