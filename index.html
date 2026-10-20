@@ -5,28 +5,94 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>参数单生成器 · 数据管理</title>
 <style>
+  /* ===== 品牌红系 · 与「发电机选型工具」同一套（macOS 风格）===== */
   :root{
-    --bg:#f5f6f8; --card:#fff; --line:#e3e6ec; --txt:#1f2430; --sub:#6b7280;
-    --pri:#2563eb; --pri-d:#1d4ed8; --ok:#16a34a; --warn:#d97706; --danger:#dc2626;
-    --grp:#f0f4ff;
+    /* 红 */
+    --brand:#8e1f2c; --brand-2:#a8283a; --brand-hi:#c8323e; --brand-lite:#e04b4b;
+    --brand-ink:#5b2028;
+    --brand-soft:rgba(142,31,44,.08); --brand-soft2:rgba(142,31,44,.14);
+    --brand-line:rgba(142,31,44,.10);
+    /* 中性 */
+    --ink:#1f2328; --ink-2:#4a5058; --ink-3:#6b7480; --ink-4:#98a1ac;
+    --bg:#f2f1f3; --line:#e6e2e4; --line-2:#efecee;
+    /* 表面 */
+    --surf:#ffffff; --surf-2:#faf9fa; --surf-3:#f6f4f5;
+    /* 兼容旧变量名（模板里大量使用） */
+    --txt:var(--ink); --sub:var(--ink-3); --card:var(--surf);
+    --pri:var(--brand-2); --pri-d:var(--brand);
+    --ok:#16a34a; --warn:#e67e22; --danger:#dc2626;
+    --grp:var(--surf-2);
+    /* 曲线 */
+    --ez-apple:cubic-bezier(.25,.1,.25,1);
+    --ez-spring:cubic-bezier(.22,1,.36,1);
+    --ez-expo:cubic-bezier(.16,1,.3,1);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--txt);padding:0 0 60px}
-  header{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50;flex-wrap:wrap}
-  header h1{font-size:16px;font-weight:700;margin-right:8px}
+  /* ===== 滚动条：与选型工具同一套暖红胶囊 ===== */
+  html{overflow-y:scroll}
+  *{scrollbar-width:thin;scrollbar-color:rgba(142,31,44,.30) transparent}
+  *::-webkit-scrollbar{width:12px;height:12px}
+  *::-webkit-scrollbar-track{background:transparent}
+  *::-webkit-scrollbar-thumb{
+    background:rgba(142,31,44,.30);border-radius:99px;
+    border:3px solid transparent;background-clip:content-box;min-height:32px;
+  }
+  *::-webkit-scrollbar-thumb:hover{background:rgba(142,31,44,.48);border:3px solid transparent;background-clip:content-box}
+  *::-webkit-scrollbar-thumb:active{background:rgba(142,31,44,.62);border:3px solid transparent;background-clip:content-box}
+  *::-webkit-scrollbar-corner{background:transparent}
+  body{
+    font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);padding:0 0 60px;
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(900px 560px at 8% 4%,rgba(142,31,44,.055),transparent 64%),
+      radial-gradient(760px 480px at 92% 10%,rgba(200,50,62,.045),transparent 62%),
+      linear-gradient(160deg,#faf8f9 0%,#f3f1f3 52%,#eeecee 100%);
+    background-attachment:fixed;
+  }
+  /* ===== 页头：不透明红渐变（不加 blur，滚动零额外开销）===== */
+  header{
+    background:linear-gradient(135deg,#e04b4b 0%,#c8323e 55%,#a8283a 100%);
+    color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;
+    position:sticky;top:0;z-index:50;flex-wrap:wrap;
+    box-shadow:0 1px 0 rgba(255,255,255,.18) inset,0 2px 16px rgba(142,31,44,.20);
+  }
+  header h1{font-size:17px;font-weight:700;margin-right:2px;letter-spacing:-.01em}
   header .spacer{flex:1}
-  .btn{border:1px solid var(--line);background:#fff;padding:7px 14px;border-radius:7px;cursor:pointer;font-size:13px;transition:.15s}
-  .btn:hover{border-color:#c7cdd8;background:#fafbfc}
-  .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
-  .btn.pri:hover{background:var(--pri-d)}
+  /* 页头里的按钮：半透明白玻璃 */
+  header .btn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.30);color:#fff}
+  header .btn:hover{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.46)}
+  header .btn.pri{background:#fff;border-color:#fff;color:var(--brand);font-weight:700}
+  header .btn.pri:hover{background:#fff5f5;color:var(--brand-2)}
+  header .btn.pri2{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.42);color:#fff;font-weight:600}
+  header .btn.pri2:hover{background:rgba(255,255,255,.32)}
+  header .hdr-lang{color:rgba(255,255,255,.85);font-size:13px}
+  header .hdr-lang select{
+    background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.34);color:#fff;
+    padding:6px 10px;border-radius:8px;font-size:13px;
+  }
+  header .hdr-lang select option{color:var(--ink);background:#fff}
+  header .vsep{background:rgba(255,255,255,.30)}
+  header .badge{background:rgba(255,255,255,.22);color:#fff;border:1px solid rgba(255,255,255,.34)}
+  .btn{border:1px solid var(--line);background:var(--surf);padding:7px 14px;border-radius:9px;cursor:pointer;font-size:13px;
+    color:var(--ink);transition:background .25s var(--ez-apple),border-color .25s var(--ez-apple),box-shadow .25s var(--ez-apple),transform .18s var(--ez-spring)}
+  .btn:hover{border-color:#d6d0d2;background:var(--surf-3)}
+  .btn:active{transform:scale(.985)}
+  .btn.pri{background:linear-gradient(180deg,var(--brand-2),var(--brand));border-color:transparent;color:#fff;font-weight:600;
+    box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 2px 8px -2px rgba(142,31,44,.34)}
+  .btn.pri:hover{filter:brightness(1.06);box-shadow:0 1px 0 rgba(255,255,255,.26) inset,0 4px 14px -2px rgba(142,31,44,.42)}
   .btn.danger{color:var(--danger);border-color:#fbc4c4}
   .btn.danger:hover{background:#fef2f2}
   .btn.sm{padding:4px 10px;font-size:12px}
-  .bar{display:flex;align-items:center;gap:10px;padding:14px 20px;flex-wrap:wrap}
-  .bar select,.bar input[type=text]{padding:7px 11px;border:1px solid var(--line);border-radius:7px;font-size:14px;background:#fff;min-width:200px}
-  .wrap{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;flex-direction:column;gap:12px}
-  .grp{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .grp>.hd{background:var(--grp);padding:11px 16px;font-weight:600;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:10px;padding:16px 20px;flex-wrap:wrap;max-width:1200px;margin:0 auto;width:100%}
+  .bar select,.bar input[type=text]{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:var(--surf);min-width:220px;color:var(--ink);
+    transition:border-color .25s var(--ez-apple),box-shadow .25s var(--ez-apple)}
+  .bar select:focus,.bar input[type=text]:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-soft2)}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;flex-direction:column;gap:16px;width:100%}
+  .grp{background:var(--surf);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(31,35,40,.05),0 8px 24px -12px rgba(31,35,40,.10);
+    transition:box-shadow .25s var(--ez-apple)}
+  .grp>.hd{background:linear-gradient(180deg,#fdf3f3,#faf6f6);padding:12px 16px;font-weight:600;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;border-bottom:1px solid var(--brand-line);color:var(--brand-ink)}
   .grp>.hd .arw{font-size:11px;color:var(--sub);transition:.2s;display:inline-block}
   .grp.collapsed>.hd .arw{transform:rotate(-90deg)}
   .grp.collapsed>.bd{display:none}
@@ -35,54 +101,64 @@
   .bd.one{grid-template-columns:1fr}
   .fld{display:flex;flex-direction:column;gap:4px}
   .fld label{font-size:12px;color:var(--sub);font-weight:500}
-  .fld input,.fld textarea{padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:inherit;background:#fff;width:100%}
-  .fld input:focus,.fld textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+  .fld input,.fld textarea{padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;background:var(--surf);width:100%;color:var(--ink);
+    transition:border-color .25s var(--ez-apple),box-shadow .25s var(--ez-apple)}
+  .fld input:focus,.fld textarea:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-soft2)}
+  .fld input::placeholder,.fld textarea::placeholder{color:var(--ink-4)}
   .fld textarea{resize:vertical;min-height:64px;line-height:1.5}
   /* 单位固定：输入框右侧(或左侧)常显单位，用户只填数字 */
   .urow{display:flex;align-items:center;gap:6px}
   .urow input{flex:1;min-width:0}
-  .upre{font-size:13px;color:#464B52;font-weight:600;white-space:nowrap}
-  .usuf{font-size:13px;color:#464B52;font-weight:600;white-space:nowrap;min-width:18px}
-  .fld select{padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:inherit;background:#fff;width:100%}
-  .fld select:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-  .sub-h{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--pri);margin-top:6px;padding-bottom:4px;border-bottom:1px dashed var(--line)}
+  .upre{font-size:13px;color:var(--brand-ink);font-weight:700;white-space:nowrap}
+  .usuf{font-size:13px;color:var(--brand-ink);font-weight:700;white-space:nowrap;min-width:18px}
+  .fld select{padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;font-family:inherit;background:var(--surf);width:100%;color:var(--ink);
+    transition:border-color .25s var(--ez-apple),box-shadow .25s var(--ez-apple)}
+  .fld select:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-soft2)}
+  .sub-h{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--brand-ink);margin-top:8px;padding-bottom:4px;border-bottom:1px dashed var(--brand-line)}
   .sub-h:first-child{margin-top:0}
   .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;grid-column:1/-1}
   .imgbox{display:flex;gap:16px;align-items:center;grid-column:1/-1}
-  .imgbox .ph{width:150px;height:110px;border:2px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#b6bcc8;font-size:12px;background:#fafbfc;overflow:hidden}
+  .imgbox .ph{width:150px;height:110px;border:2px dashed var(--brand-line);border-radius:11px;display:flex;align-items:center;justify-content:center;color:var(--ink-4);font-size:12px;background:var(--surf-2);overflow:hidden}
   .imgbox .ph img{width:100%;height:100%;object-fit:contain}
   .hint{font-size:12px;color:var(--sub);line-height:1.7}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1f2430;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(180deg,#a8283a,#8e1f2c);color:#fff;padding:11px 22px;border-radius:11px;font-size:13px;opacity:0;transition:.25s var(--ez-apple);pointer-events:none;z-index:99;
+    box-shadow:0 6px 22px -6px rgba(142,31,44,.55)}
   .toast.on{transform:translateX(-50%) translateY(0);opacity:1}
   .empty{text-align:center;color:var(--sub);padding:50px 0}
-  .badge{display:inline-block;background:#eef2ff;color:var(--pri);border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600}
-  .freqbar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13px;flex-wrap:wrap}
-  .fbtn{border:1px solid var(--line);background:#fff;padding:6px 16px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--sub)}
-  .fbtn.on{background:var(--pri);border-color:var(--pri);color:#fff}
-  /* ===== UI 优化 2026-10-19 ===== */
+  .badge{display:inline-block;background:var(--brand-soft);color:var(--brand-ink);border:1px solid var(--brand-line);border-radius:6px;padding:1px 8px;font-size:11px;font-weight:700}
+  .freqbar{display:flex;align-items:center;gap:8px;background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:13px;flex-wrap:wrap;
+    box-shadow:0 1px 2px rgba(31,35,40,.05)}
+  .fbtn{border:1px solid var(--line);background:var(--surf);padding:6px 18px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-3);
+    transition:background .25s var(--ez-apple),border-color .25s var(--ez-apple),color .25s var(--ez-apple)}
+  .fbtn:hover{border-color:var(--brand-line);color:var(--brand-ink);background:var(--surf-3)}
+  .fbtn.on{background:linear-gradient(180deg,var(--brand-2),var(--brand));border-color:transparent;color:#fff;
+    box-shadow:0 1px 0 rgba(255,255,255,.22) inset,0 2px 8px -2px rgba(142,31,44,.34)}
+  /* ===== UI 优化 2026-10-19（2026-10-20 配色统一到品牌红系）===== */
   .vsep{width:1px;height:22px;background:var(--line);margin:0 2px}
   .hdr-lang{display:flex;align-items:center;gap:6px}
-  .btn.pri2{background:#eef2ff;border-color:#c7d2fe;color:var(--pri-d);font-weight:600}
-  .btn.pri2:hover{background:#e0e7ff}
-  .barlbl{font-size:12px;color:var(--sub);font-weight:600}
+  .btn.pri2{background:var(--brand-soft);border-color:var(--brand-line);color:var(--brand-ink);font-weight:600}
+  .btn.pri2:hover{background:var(--brand-soft2);border-color:rgba(142,31,44,.22)}
+  .barlbl{font-size:12px;color:var(--ink-3);font-weight:700;letter-spacing:.02em}
   /* 进度条 */
-  .prog{max-width:1100px;margin:0 auto 4px;padding:0 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .prog .pbar{flex:1;min-width:180px;height:8px;background:#e6e9f0;border-radius:5px;overflow:hidden}
-  .prog .pbar i{display:block;height:100%;background:linear-gradient(90deg,#60a5fa,#2563eb);border-radius:5px;transition:width .3s}
+  .prog{max-width:1200px;margin:0 auto 4px;padding:0 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .prog .pbar{flex:1;min-width:180px;height:8px;background:var(--line);border-radius:5px;overflow:hidden}
+  .prog .pbar i{display:block;height:100%;background:linear-gradient(90deg,#e04b4b,#8e1f2c);border-radius:5px;transition:width .3s var(--ez-apple)}
   .prog .pbar.full i{background:linear-gradient(90deg,#4ade80,#16a34a)}
   .prog .txt{font-size:12px;color:var(--sub);white-space:nowrap}
-  .prog .txt b{color:var(--pri);font-size:13px}
+  .prog .txt b{color:var(--brand);font-size:13px}
   .prog .miss{font-size:11.5px;color:var(--warn);cursor:pointer;text-decoration:underline dotted}
   /* 分组头：序号徽标 + 页签提示 */
-  .grp>.hd .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--pri);color:#fff;font-size:11px;font-weight:700}
-  .grp>.hd .pg{margin-left:6px;font-size:11px;font-weight:500;color:var(--sub);background:#fff;border:1px solid var(--line);border-radius:4px;padding:0 6px}
+  .grp>.hd .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;
+    background:linear-gradient(180deg,var(--brand-2),var(--brand));color:#fff;font-size:11px;font-weight:700;
+    box-shadow:0 1px 3px rgba(142,31,44,.30)}
+  .grp>.hd .pg{margin-left:6px;font-size:11px;font-weight:500;color:var(--brand-ink);background:#fff;border:1px solid var(--brand-line);border-radius:5px;padding:0 7px}
   /* 子标题更轻 */
   .sub-h{display:flex;align-items:center;gap:6px}
-  .sub-h::before{content:"";width:3px;height:12px;background:var(--pri);border-radius:2px}
+  .sub-h::before{content:"";width:3px;height:12px;background:linear-gradient(180deg,var(--brand-hi),var(--brand));border-radius:2px}
   /* 必填提示 */
   .fld.req label::after{content:"*";color:var(--danger);margin-left:3px}
   /* 聚焦高亮分组 */
-  .grp.flash{box-shadow:0 0 0 2px rgba(37,99,235,.35)}
+  .grp.flash{box-shadow:0 0 0 2px rgba(142,31,44,.35),0 8px 24px -12px rgba(142,31,44,.28)}
   @media (max-width:720px){
     header{gap:8px;padding:10px 12px}
     header h1{font-size:15px}
@@ -122,7 +198,7 @@
   <button class="btn sm" onclick="dupModel()">复制</button>
   <button class="btn sm danger" onclick="delModel()">删除</button>
   <span class="spacer"></span>
-  <span class="hint" id="status">数据保存在浏览器本地</span>
+  <span class="hint" id="status">正在连接服务器…</span>
 </div>
 
 <!-- 填充进度：一眼看出还差哪些必填项 -->
@@ -224,14 +300,94 @@ const API_BASE = (function(){
    { model, curFreq:'50Hz'|'60Hz', freqs:{ '50Hz':{随频率字段}, '60Hz':{...} }, common:{其余字段} }
    兼容旧结构：{ model, ...扁平字段 } -> 自动迁移到 freqs['50Hz'] + common */
 const LS_KEY='paramsheet_db_v2';
-let DB = load();
-let cur = DB.models.length ? DB.models[0].model : null;
+/* 存储模式：
+   server —— 机型库存服务器（SQLite），本地只做缓存 + 断线回退
+   local  —— 服务器不可用，退回 localStorage
+   用户 2026-10-20 定：数据存服务器，旧机型数据全部丢弃 */
+let STORE_MODE = 'server';       // 'server' | 'local'
+let SERVER_TOTAL = 0;
+let DB = {models:[]};
+let cur = null;
 
-function load(){
-  try{ const s=localStorage.getItem(LS_KEY); if(s) return migrate(JSON.parse(s)); }catch(e){}
-  // 尝试从旧 key 迁移
-  try{ const o=localStorage.getItem('paramsheet_db_v1'); if(o) return migrate(JSON.parse(o)); }catch(e){}
-  return {models:[{model:'D17', curFreq:'50Hz', freqs:{'50Hz':{}}, common:{model:'D17'}}]};
+/* 页面立即渲染，数据异步加载（避免后端慢时白屏） */
+function syncStatus(){
+  const st=document.getElementById('status');
+  if(!st) return;
+  if(STORE_MODE==='server'){
+    st.textContent = `共 ${DB.models.length} 个机型 · 数据存服务器`;
+    st.style.color = '';
+  }else{
+    st.textContent = `⚠ 服务器未连接，暂存本地（${DB.models.length} 个机型）`;
+    st.style.color = 'var(--warn)';
+  }
+}
+
+/* 服务器可用性探测 */
+async function apiAvailable(){
+  try{
+    const r = await fetch(API_BASE+'health', {cache:'no-store'});
+    if(!r.ok) return false;
+    const j = await r.json();
+    return !!j.ok;
+  }catch(e){ return false; }
+}
+
+/* 从服务器拉全部机型（含完整数据） */
+async function loadFromServer(){
+  const r = await fetch(API_BASE+'api/models-all', {cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error||'加载失败');
+  SERVER_TOTAL = j.total||0;
+  return migrate({models: (j.models||[]).map(x=>({
+    model: x.model || x.name,
+    name:  x.name  || x.model,
+    curFreq: x.curFreq || null,
+    freqs: x.freqs || {},
+    common: x.common || {},
+    __family: x.family || '',
+    __src: x.src || ''
+  }))});
+}
+
+/* 旧 localStorage 数据：用户要求全部丢弃，这里只清理不复用 */
+function purgeLocalOld(){
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  try{ localStorage.removeItem('paramsheet_db_v1'); }catch(e){}
+}
+
+/* 启动加载 */
+async function boot(){
+  renderForm();
+  const okServer = await apiAvailable();
+  if(okServer){
+    try{
+      DB = await loadFromServer();
+      STORE_MODE = 'server';
+      purgeLocalOld();          // 服务器连上 -> 丢掉浏览器旧数据
+    }catch(e){
+      console.warn('[boot] 服务器读取失败，回退本地', e);
+      STORE_MODE = 'local';
+      DB = {models:[]};
+    }
+  }else{
+    STORE_MODE = 'local';
+    DB = {models:[]};
+  }
+  cur = DB.models.length ? (DB.models[0].name || DB.models[0].model) : null;
+  renderForm();
+  syncStatus();
+  if(STORE_MODE==='server'){
+    toast(`已从服务器加载 ${DB.models.length} 个机型`);
+  }else{
+    toast('服务器未连接，数据暂存本地');
+    console.info('[boot] local mode — 旧机型数据已按指示丢弃');
+  }
+}
+
+/* 本地缓存（仅在 local 模式下使用；server 模式不回写，避免误导） */
+function cacheLocal(){
+  if(STORE_MODE!=='server'){ return; }
 }
 function migrate(db){
   if(!db||!db.models) return db;
@@ -265,10 +421,53 @@ function availFreqs(m){ m=m||findModel(cur); return m && m.freqs ? Object.keys(m
 
 function save(){
   save_soft();
-  localStorage.setItem(LS_KEY, JSON.stringify(DB));
-  toast('已保存');
+  pushModel(cur).then(ok=>{
+    toast(ok ? '已保存到服务器' : '服务器未连接，已暂存本地');
+  });
 }
-function findModel(name){ return DB.models.find(x=>x.model===name); }
+
+/* 把某个机型推到服务器 */
+async function pushModel(name){
+  const m = findModel(name);
+  if(!m) return false;
+  if(STORE_MODE!=='server') return false;
+  try{
+    const r = await fetch(API_BASE+'api/models/save', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name: m.name || m.model,
+        model: m.model,
+        family: m.__family || '',
+        src: m.__src || '',
+        overwrite: true,
+        data: { model:m.model, curFreq:m.curFreq, freqs:m.freqs, common:m.common }
+      })
+    });
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error||'保存失败');
+    return true;
+  }catch(e){
+    console.warn('[pushModel]', e);
+    STORE_MODE='local'; syncStatus();
+    return false;
+  }
+}
+
+/* 删除机型（服务器同步） */
+async function deleteOnServer(name){
+  if(STORE_MODE!=='server') return false;
+  try{
+    const r = await fetch(API_BASE+'api/models/'+encodeURIComponent(name), {method:'DELETE'});
+    const j = await r.json();
+    return !!j.ok;
+  }catch(e){ return false; }
+}
+/* 查找机型：优先按唯一键 name 精确匹配，其次按 model（兼容老数据/图片匹配） */
+function findModel(name){
+  if(name==null) return undefined;
+  return DB.models.find(x=>(x.name||x.model)===name)
+      || DB.models.find(x=>x.model===name);
+}
 
 /* ================= 表单渲染 ================= */
 function cleanVal(v){
@@ -387,7 +586,10 @@ function syncModelFromForm(){
     m.model = v; m.common = m.common||{}; m.common.model = v;   // 改名（图片文件名也随 model 走）
     cur = v;
     const sel=document.getElementById('selModel');
-    if(sel){ sel.innerHTML = DB.models.map(x=>`<option ${x.model===cur?'selected':''}>${esc(x.model)}</option>`).join(''); }
+    if(sel){ sel.innerHTML = DB.models.map(x=>{
+      const label = x.name || x.model;
+      return `<option value="${esc(label)}" ${label===cur?'selected':''}>${esc(label)}</option>`;
+    }).join(''); }
   }
   renderListNames();
 }
@@ -399,7 +601,7 @@ function switchFreq(f){
   const m=findModel(cur); if(!m) return;
   applyCollect(m, collect());
   m.curFreq = f;
-  localStorage.setItem(LS_KEY, JSON.stringify(DB));
+  pushModel(m.model);
   renderForm();
   toast('已切换到 '+f);
 }
@@ -416,7 +618,7 @@ function addFreq(){
   applyCollect(m, collect());
   m.freqs[f] = {};
   m.curFreq = f;
-  localStorage.setItem(LS_KEY, JSON.stringify(DB));
+  pushModel(m.model);
   renderForm();
   toast('已添加 '+f);
 }
@@ -477,7 +679,7 @@ function renderForm(){
         <div class="ph" id="imgph-${f.imgv}"><span style="color:#b6bcc8">…</span></div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div class="hint">自动匹配：<code>${esc(m.model||'型号')}_${f.imgv.toUpperCase()}.png</code><br>
-            <span id="imgstat-${f.imgv}" style="color:#2563eb"></span></div>
+            <span id="imgstat-${f.imgv}" style="color:var(--brand-2)"></span></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn sm" type="button" onclick="pickLocalImg('${f.imgv}')">选择本地图</button>
             <button class="btn sm" type="button" onclick="uploadImg('${f.imgv}')">上传到图片库</button>
@@ -540,10 +742,13 @@ function renderForm(){
       </div>
       <div class="bd">${body}</div></div>`;
   }).join('');
-  // 型号下拉
+  // 型号下拉：显示 name（带区分标签，如 "CU330D5 (400V开架)"），value 用 name 保证唯一
   const sel=document.getElementById('selModel');
-  sel.innerHTML = DB.models.map(x=>`<option ${x.model===cur?'selected':''}>${esc(x.model)}</option>`).join('');
-  document.getElementById('status').textContent = `共 ${DB.models.length} 个机型 · 数据存浏览器本地`;
+  sel.innerHTML = DB.models.map(x=>{
+    const label = x.name || x.model;
+    return `<option value="${esc(label)}" ${label===cur?'selected':''}>${esc(label)}</option>`;
+  }).join('');
+  if(document.getElementById('status') && !document.getElementById('status').textContent.startsWith('●')) syncStatus();
   autoShowImg('open'); autoShowImg('silent');
   updateProgress();
   // 事件委托：任何字段变动 -> 刷新进度条 + 标记未保存（不重渲染表单，避免丢焦点）
@@ -733,7 +938,7 @@ function applyFields(fields){
       n++;
     });
   }
-  localStorage.setItem(LS_KEY, JSON.stringify(DB));
+  pushModel(m.model);
   renderForm();
   alert('✅ 已自动填入 '+n+' 个字段（频率：'+m.curFreq+'）\n请核对补全。');
   toast('已填入 '+n+' 个字段');
@@ -742,16 +947,32 @@ function toggle(id){ document.getElementById('grp-'+id).classList.toggle('collap
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function renderList(){ /* 占位：列表视图后续加 */ }
 
-function switchModel(name){ save_soft(); cur=name; renderForm(); }
-function save_soft(){ const m=findModel(cur); if(m) applyCollect(m, collect()); syncModelFromForm(); localStorage.setItem(LS_KEY,JSON.stringify(DB)); }
+/* 下拉 value 是 name（可能带区分标签），cur 存 model —— 这里做一次映射 */
+function switchModel(name){
+  save_soft();
+  const m = DB.models.find(x=>(x.name||x.model)===name) || DB.models.find(x=>x.model===name);
+  cur = m ? (m.name || m.model) : name;
+  renderForm();
+}
+let _softTimer=null;
+function save_soft(){
+  const m=findModel(cur);
+  if(m) applyCollect(m, collect());
+  syncModelFromForm();
+  // 服务器模式：防抖 800ms 推一次，避免每敲一个字都打接口
+  if(STORE_MODE==='server'){
+    clearTimeout(_softTimer);
+    _softTimer=setTimeout(()=>{ pushModel(cur); }, 800);
+  }
+}
 
 function newModel(){
   const n = (prompt('新机组型号（也是图片文件名）：')||'').trim();
   if(!n) return;
   if(findModel(n)) return alert('型号已存在');
   save_soft();
-  DB.models.push({model:n, curFreq:'50Hz', freqs:{'50Hz':{}}, common:{model:n}});
-  cur=n; localStorage.setItem(LS_KEY,JSON.stringify(DB)); renderForm(); toast('已新建 '+n);
+  DB.models.push({model:n, name:n, curFreq:'50Hz', freqs:{'50Hz':{}}, common:{model:n}});
+  cur=n; renderForm(); pushModel(n); toast('已新建 '+n);
 }
 function dupModel(){
   save_soft();
@@ -759,14 +980,19 @@ function dupModel(){
   if(!n) return;
   if(findModel(n)) return alert('型号已存在');
   const src=findModel(cur)||{};
-  const c=JSON.parse(JSON.stringify(src)); c.model=n; c.common=c.common||{}; c.common.model=n;
-  DB.models.push(c); cur=n; localStorage.setItem(LS_KEY,JSON.stringify(DB)); renderForm(); toast('已复制');
+  const c=JSON.parse(JSON.stringify(src)); c.model=n; c.name=n;
+  c.common=c.common||{}; c.common.model=n;
+  DB.models.push(c); cur=c.name; renderForm(); pushModel(c.name); toast('已复制');
 }
-function delModel(){
-  if(!confirm('确认删除机型 '+cur+' ？')) return;
-  DB.models = DB.models.filter(x=>x.model!==cur);
-  cur = DB.models.length? DB.models[0].model : null;
-  localStorage.setItem(LS_KEY,JSON.stringify(DB)); renderForm(); toast('已删除');
+async function delModel(){
+  if(!confirm('确认删除机型 '+cur+' ？此操作会同时从服务器删除。')) return;
+  const gone = cur;
+  const m0 = findModel(gone);
+  DB.models = DB.models.filter(x=>(x.name||x.model)!==gone && x.model!==gone);
+  cur = DB.models.length? (DB.models[0].name||DB.models[0].model) : null;
+  renderForm();
+  if(m0) await deleteOnServer(m0.name || m0.model);
+  toast('已删除 '+gone);
 }
 function pickImg(){ autoShowImg('open'); autoShowImg('silent'); }
 function exportJson(){
@@ -836,18 +1062,58 @@ async function genFile(fmt){
     alert('无法连接后端（请确认 server.py 已启动）：'+e.message);
   }
 }
+/* 导入 JSON -> 批量推到服务器（不再覆盖本地 localStorage） */
 function importJson(){
   const i=document.createElement('input'); i.type='file'; i.accept='.json';
-  i.onchange=e=>{ const f=e.target.files[0]; const r=new FileReader();
-    r.onload=()=>{ try{ DB=JSON.parse(r.result); cur=DB.models.length?DB.models[0].model:null;
-      localStorage.setItem(LS_KEY,JSON.stringify(DB)); renderForm(); toast('已导入'); }catch(err){ alert('文件格式错误'); } };
+  i.onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+    r.onload=async()=>{
+      let payload;
+      try{ payload=JSON.parse(r.result); }catch(err){ return alert('文件格式错误'); }
+      const src = Array.isArray(payload) ? payload : (payload.models||[]);
+      if(!src.length) return alert('文件里没有机型数据');
+      await importItems(src);
+    };
     r.readAsText(f); };
   i.click();
+}
+
+/* 批量导入入口：既给「导入 JSON」用，也给「从转换结果导入」用 */
+async function importItems(items){
+  if(STORE_MODE!=='server') return alert('服务器未连接，无法导入（请确认后端已启动）');
+  const body = items.map(x=>{
+    const m = x.data ? x : {
+      model: x.model, curFreq: x.curFreq ||
+        (x.freqs ? Object.keys(x.freqs)[0] : '50Hz'),
+      freqs: x.freqs, common: x.common
+    };
+    return {
+      name: x.name || m.model,
+      model: m.model,
+      family: x.family || '',
+      src: x.src || '',
+      data: { model:m.model, curFreq:m.curFreq, freqs:m.freqs, common:m.common }
+    };
+  });
+  toast('正在导入 '+body.length+' 个机型…');
+  try{
+    const r = await fetch(API_BASE+'api/models/import', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({overwrite:true, items:body})
+    });
+    const j = await r.json();
+    if(!j.ok) return alert(j.error||'导入失败');
+    DB = await loadFromServer();
+    cur = DB.models.length ? (DB.models[0].name || DB.models[0].model) : null;
+    renderForm(); syncStatus();
+    toast(`导入完成：新增 ${j.added}，更新 ${j.updated}，跳过 ${j.skipped}`);
+  }catch(err){
+    alert('导入失败：'+err.message);
+  }
 }
 let tt;
 function toast(s){ const t=document.getElementById('toast'); t.textContent=s; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),1800); }
 
-renderForm();
+boot();
 </script>
 </body>
 </html>
