@@ -299,36 +299,32 @@
     },
     {
      "idx": 6,
-     "rows": 8,
+     "rows": 7,
      "cols": 2,
      "purpose": "alternator_basic_data",
      "fields": {
-      "g_model": [
+      "g_insul": [
        1,
        1
       ],
-      "g_insul": [
+      "g_exc": [
        2,
        1
       ],
-      "g_exc": [
+      "g_lead": [
        3,
        1
       ],
-      "g_lead": [
+      "g_conn": [
        4,
        1
       ],
-      "g_conn": [
+      "g_pitch": [
        5,
        1
       ],
-      "g_pitch": [
-       6,
-       1
-      ],
       "g_phase": [
-       7,
+       6,
        1
       ]
      }

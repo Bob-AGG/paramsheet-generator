@@ -1088,13 +1088,27 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
             # 只动「模板原文/剩余内容仍是纯数字占位」的格子，表头/标签列一字不碰。
             # 油耗格（多行）由下面的 fuel_consumption 分支处理，这里跳过。
             fc_cell = (t_def.get("fuel_consumption") or {}).get("cell")
+            # 【2026-10-23 修复】不能只按「纯数字」判定占位：
+            # 用户填的真实数据也可能是纯数字（如绕组出线 12、出线数 6），
+            # 会被误判成模板占位 12345 → 写成 TBA。
+            # 正确判定：①该格是本表某个字段的写入位置 且 ②data 里该字段有值
+            #          → 是真实数据，绝不覆盖。
+            # 只有「模板留下的占位且没有对应数据写入」才兜底 TBA。
+            _field_cells = {}
+            for _fname, _coord in (t_def.get("fields") or {}).items():
+                _v = get_path(data, _fname.split(".")) if "." in _fname else data.get(_fname)
+                _field_cells[(_coord[0], _coord[1])] = (_v not in (None, ""))
             for r in range(len(table.rows)):
                 for c in range(len(table.columns)):
                     if fc_cell and [r, c] == list(fc_cell):
                         continue
                     cell = table.cell(r, c)
-                    if re.fullmatch(r"\s*\d+\s*", cell.text or ""):
-                        set_cell(cell, "TBA")
+                    if not re.fullmatch(r"\s*\d+\s*", cell.text or ""):
+                        continue
+                    # 这一格是字段写入位且该字段有真实数据 → 保留，不写 TBA
+                    if _field_cells.get((r, c)):
+                        continue
+                    set_cell(cell, "TBA")
             # 多行字段（油耗）
             if "fuel_consumption" in t_def:
                 fc = t_def["fuel_consumption"]
