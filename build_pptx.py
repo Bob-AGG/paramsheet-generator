@@ -533,12 +533,70 @@ def replace_picture(slide, old_pic_shape, img_stream):
         return False
 
 
-def fill_pictures(slide, img_map, pic_slots=None):
+BADGE_TEXT = {
+    "zh": "示意图，以实物为准",
+    "en": "For reference only",
+}
+
+
+def add_badge(slide, pic_shape, lang="en"):
+    """在图片右下角叠加一个小标签（白底 + 灰字）。
+
+    lang: "zh" 印「示意图，以实物为准」；"en" 印「For reference only」
+    """
+    text = BADGE_TEXT.get(lang, BADGE_TEXT["en"])
+    try:
+        from pptx.util import Emu, Pt
+        from pptx.dml.color import RGBColor
+        from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+
+        PW, PH = pic_shape.width, pic_shape.height
+        # 英文串更长，宽度按文本长度给
+        ratio = 0.44 if lang == "en" else 0.34
+        box_w = int(PW * ratio)
+        box_h = int(PH * 0.075)
+        margin = int(min(PW, PH) * 0.03)
+        left = pic_shape.left + PW - box_w - margin
+        top = pic_shape.top + PH - box_h - margin
+
+        tb = slide.shapes.add_textbox(Emu(left), Emu(top), Emu(box_w), Emu(box_h))
+        tf = tb.text_frame
+        tf.word_wrap = False
+        tf.margin_left = 0; tf.margin_right = 0
+        tf.margin_top = 0; tf.margin_bottom = 0
+        tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+        para = tf.paragraphs[0]
+        para.alignment = PP_ALIGN.CENTER
+        run = para.add_run()
+        run.text = text
+        run.font.size = Pt(9)
+        run.font.bold = False
+        run.font.color.rgb = RGBColor(0x59, 0x59, 0x59)   # 灰色文字
+        # 白底（略半透明，避免太突兀）
+        fill = tb.fill
+        fill.solid()
+        fill.fore_color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        try:
+            from pptx.oxml.ns import qn
+            srgb = fill.fore_color._xFill.find(qn('a:srgbClr'))
+            if srgb is not None:
+                alpha = srgb.makeelement(qn('a:alpha'), {'val': '88000'})
+                srgb.append(alpha)
+        except Exception:
+            pass
+        tb.line.fill.background()
+        return tb
+    except Exception as e:
+        print("  ! 示意图角标添加失败:", e, file=sys.stderr)
+        return None
+
+
+def fill_pictures(slide, img_map, pic_slots=None, lang="en"):
     """把机组照片填进 slide 的大图位。
 
-    img_map: {"open": 流|None, "silent": 流|None}
+    img_map: {"open": 流|None, "silent": 流|None, "badge": {...}}
     pic_slots: [左框shape, 右框shape]（不传则自动取面积最大的两个图位）
-    规则：两张都有→左开架右静音；只有静音→居中（用两框合并居中位置）。
+    规则：两张都有→左开架右静音；只有一张→居中放大（占两框合并后的中间区域）。
     """
     pics = [sh for sh in slide.shapes if sh.shape_type == 13]
     if not pics:
@@ -561,18 +619,50 @@ def fill_pictures(slide, img_map, pic_slots=None):
         except Exception:
             pass
 
-    o, s = img_map.get("open"), img_map.get("silent")
-    if o and s:
-        replace_picture(slide, left_pic, o)
-        replace_picture(slide, right_pic, s)
-    elif s and not o:
-        # 只有静音图 -> 放进右框，左框留空（不删形状、不改位置）
-        replace_picture(slide, right_pic, s)
-        _hide(left_pic)
-    elif o and not s:
-        # 只有开架图 -> 放进左框，右框留空
-        replace_picture(slide, left_pic, o)
-        _hide(right_pic)
+    def _center_one(slide, shape_a, shape_b, stream, badge):
+        """只有一张图 -> 隐藏两个原图位，在两框合并区域的中间放一张大图。"""
+        _hide(shape_a)
+        _hide(shape_b)
+        try:
+            from pptx.util import Emu
+            L = min(shape_a.left, shape_b.left)
+            R = max(shape_a.left + shape_a.width, shape_b.left + shape_b.width)
+            T = min(shape_a.top, shape_b.top)
+            B = max(shape_a.top + shape_a.height, shape_b.top + shape_b.height)
+            W, H = R - L, B - T
+            # 保持两个原图位的高度，宽度取 4:3（与图库画布一致）
+            img_h = H
+            img_w = int(img_h * 4 / 3)
+            if img_w > W:
+                img_w = W
+                img_h = int(img_w * 3 / 4)
+            left = L + (W - img_w) // 2
+            top = T + (H - img_h) // 2
+            pic = slide.shapes.add_picture(stream, Emu(left), Emu(top),
+                                           Emu(img_w), Emu(img_h))
+            if badge:
+                add_badge(slide, pic, lang=lang)
+            return pic
+        except Exception as e:
+            print("  ! 单图居中失败:", e, file=sys.stderr)
+            return None
+
+    o, s_ = img_map.get("open"), img_map.get("silent")
+    badges = img_map.get("badge") or {}
+
+    if o and s_:
+        ok_o = replace_picture(slide, left_pic, o)
+        ok_s = replace_picture(slide, right_pic, s_)
+        if ok_o and badges.get("open"):
+            add_badge(slide, left_pic, lang=lang)
+        if ok_s and badges.get("silent"):
+            add_badge(slide, right_pic, lang=lang)
+    elif s_ and not o:
+        # 只有静音图 -> 居中
+        _center_one(slide, left_pic, right_pic, s_, badges.get("silent"))
+    elif o and not s_:
+        # 只有开架图 -> 居中
+        _center_one(slide, left_pic, right_pic, o, badges.get("open"))
 
 
 def set_title_on_slide(slide, text, sub_text=None):
@@ -776,7 +866,96 @@ def _compress_media(pptx_path, max_side=1600, quality=88):
         print("  警告: 媒体压缩失败(%s)" % e)
 
 
+# ===== 出件前单位归一（2026-10-20 用户定：后端也补一份，双保险）=====
+# 前端 index.html normalizeUnits() 的 Python 镜像。
+# 规则：值末尾已带单位就不重复补；值是 TBA 一律不补单位。
+# 前端漏补 / 直接调 API 时也不会丢单位。
+_UNIT_SUFFIX = [
+    # (字段, 单位, 是否空格, 已带单位判定)
+    ("prp_kva", "kVA", True, r"kVA$"),
+    ("eps_kva", "kVA", True, r"kVA$"),
+    ("prp_kw", "kW", True, r"kW$"),
+    ("eps_kw", "kW", True, r"kW$"),
+    ("o_wt", "kg", True, r"kg$"),
+    ("s_wt", "kg", True, r"kg$"),
+    ("o_tank", "L", True, r"L$"),
+    ("s_tank", "L", True, r"L$"),
+    ("displ", "L", True, r"L$"),
+    ("rpm", "rpm", True, r"rpm$"),
+    ("ex_t", "°C", True, r"(°C|℃)$"),
+    ("in_t", "°C", True, r"(°C|℃)$"),
+    ("co_oil", "L", True, r"L$"),
+    ("co_cool", "L", True, r"L$"),
+]
+
+# 中文下拉项 -> 英文源值（与前端 OPT_ZH 一一对应；后端按 lang 自行反查）
+_OPT_ZH = {
+    "Self-excited": "自励磁", "PMG": "永磁(PMG)", "Separately excited": "他励",
+    "Star": "星形(Y)", "Delta": "三角形(Δ)",
+    "Two thirds": "2/3", "Five sixths": "5/6",
+    "Single phase": "单相", "Three phase": "三相",
+    "Single bearing": "单轴承", "Double bearing": "双轴承",
+}
+_ZH2EN = {v: k for k, v in _OPT_ZH.items()}
+
+
+def normalize_units(src):
+    """把「数字 + 固定单位」补成模板要的完整字符串（幂等，重复导出不会叠加）。"""
+    d = dict(src or {})
+    for k, unit, space, already in _UNIT_SUFFIX:
+        v = str(d.get(k) if d.get(k) is not None else "").strip()
+        if not v:
+            continue
+        if re.sub(r"\s", "", v).upper() == "TBA":
+            continue                      # TBA 不补单位
+        if re.search(already, v, re.I):
+            continue                      # 已带单位不重复补
+        d[k] = v + (" " if space else "") + unit
+    # 起动机电压：24 -> DC24V
+    v = str(d.get("el_v") or "").strip().upper().replace(" ", "")
+    if v and v != "TBA":
+        if not v.startswith("DC"):
+            v = "DC" + v
+        if not v.endswith("V"):
+            v += "V"
+        d["el_v"] = v
+    # 绝缘/温升：Class H/H（绝缘固定 H，只取温升段）
+    g = str(d.get("g_insul") or "").strip()
+    if g and g.upper() != "TBA":
+        mm = re.match(r"^\s*Class\s*[A-Z]\s*/\s*([A-Z])\s*$", g, re.I)
+        if mm:
+            rise = mm.group(1).upper()
+        elif re.fullmatch(r"[A-Z]", g, re.I):
+            rise = g.upper()
+        else:
+            rise = g
+        d["g_insul"] = "Class H/" + rise
+    return d
+
+
+_OPT_KEYS = ("g_exc", "g_conn", "g_pitch", "g_phase", "g_brg")
+
+
+def localize_options(d, lang):
+    """下拉项按语言转换（前端 optLabel 的镜像）。"""
+    for k in _OPT_KEYS:
+        v = d.get(k)
+        if not v:
+            continue
+        if lang == "zh" and v in _OPT_ZH:
+            d[k] = _OPT_ZH[v]
+        elif lang == "en" and v in _ZH2EN:
+            d[k] = _ZH2EN[v]
+    return d
+
+
 def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=False, pic_slots=None):
+    """生成参数单 PPTX。
+
+    2026-10-20 用户定「双保险」：进 build 先做一遍单位归一 + 下拉翻译，
+    前端已补过也不会重复补（幂等），直接调 API 也有完整单位。
+    """
+    data = localize_options(normalize_units(data), lang)
     tmap = load_map(lang)
     tpl = template or os.path.join(HERE, tmap["template"])
     prs = Presentation(tpl)
@@ -818,14 +997,27 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                     bw, bh = pics[0].width, pics[0].height
                 else:
                     bw, bh = 3000000, 2000000
+                # 示意图标记：前端传的 __img_badge__ + 后端兜底套用的自动标记
+                badge_req = dict(found.get("_badge") or {})
+                front_badge = data.get("__img_badge__") or {}
+                if isinstance(front_badge, dict):
+                    for bk, bv in front_badge.items():
+                        if bv:
+                            badge_req[bk] = True
+                badges = {}
                 for key in ("open", "silent"):
                     p = found.get(key)
                     if p and os.path.exists(p):
                         img_map[key] = image_utils.prepare_image(
                             p, bw, bh, transparent_bg=transparent_bg)
-                if img_map:
-                    fill_pictures(slide, img_map, pic_slots)
-                    print("  已插入图片:", list(img_map.keys()))
+                        if badge_req.get(key):
+                            badges[key] = True
+                if badges:
+                    img_map["badge"] = badges
+                if img_map.get("open") or img_map.get("silent"):
+                    fill_pictures(slide, img_map, pic_slots, lang=lang)
+                    print("  已插入图片:", [k for k in img_map if k != "badge"],
+                          ("(示意图: %s)" % ",".join(badges)) if badges else "")
 
         # 标题：仅第 1 页替换（第 2/3/4 页保持模板原样）
         title_tpl = tmap.get("title") if s_idx == 0 else None
@@ -891,6 +1083,18 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
             # 实在放不下再按「单词」折（CJK 无空格，自然整段不拆）。
             if t_def.get("purpose") in NOWRAP_PURPOSES:
                 _nowrap_table(table)
+            # 【2026-10-20 用户定】没数据的格子一律写 TBA（不带单位），
+            # 绝不让模板占位 12345 露到成品上（TBA 兜底）。
+            # 只动「模板原文/剩余内容仍是纯数字占位」的格子，表头/标签列一字不碰。
+            # 油耗格（多行）由下面的 fuel_consumption 分支处理，这里跳过。
+            fc_cell = (t_def.get("fuel_consumption") or {}).get("cell")
+            for r in range(len(table.rows)):
+                for c in range(len(table.columns)):
+                    if fc_cell and [r, c] == list(fc_cell):
+                        continue
+                    cell = table.cell(r, c)
+                    if re.fullmatch(r"\s*\d+\s*", cell.text or ""):
+                        set_cell(cell, "TBA")
             # 多行字段（油耗）
             if "fuel_consumption" in t_def:
                 fc = t_def["fuel_consumption"]

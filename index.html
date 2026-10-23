@@ -84,10 +84,40 @@
   .btn.danger{color:var(--danger);border-color:#fbc4c4}
   .btn.danger:hover{background:#fef2f2}
   .btn.sm{padding:4px 10px;font-size:12px}
+  /* 页头里的次要按钮（备份/维护，不与主流程抢视线） */
+  header .btn.sub{background:transparent;border-color:rgba(255,255,255,.26);color:rgba(255,255,255,.86);font-size:12.5px;padding:6px 11px}
+  header .btn.sub:hover{background:rgba(255,255,255,.16);color:#fff}
+  /* 机型栏：分区 + 状态胶囊（2026-10-21 重排） */
+  .bar.z1{align-items:flex-end;padding-bottom:4px}
+  .bar.z2{padding-top:2px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .grp-lbl{font-size:11px;color:var(--ink-3);font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;display:block;margin-bottom:5px}
+  .bar-col{display:flex;flex-direction:column;gap:0}
+  .bar-row{display:flex;align-items:center;gap:8px}
+  .dirty-pill{display:none;align-items:center;gap:6px;font-size:12px;font-weight:600;
+    color:#a8620a;background:#fff7e8;border:1px solid #f5d9a8;border-radius:999px;padding:4px 11px}
+  .dirty-pill.on{display:inline-flex}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn:disabled:hover{border-color:var(--line);background:var(--surf)}
+  .dirty-pill i{width:7px;height:7px;border-radius:50%;background:#e0952a;display:block;font-style:normal}
   .bar{display:flex;align-items:center;gap:10px;padding:16px 20px;flex-wrap:wrap;max-width:1200px;margin:0 auto;width:100%}
   .bar select,.bar input[type=text]{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:var(--surf);min-width:220px;color:var(--ink);
     transition:border-color .25s var(--ez-apple),box-shadow .25s var(--ez-apple)}
   .bar select:focus,.bar input[type=text]:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-soft2)}
+  /* 机型搜索结果下拉列表（2026-10-21） */
+  .msearch-wrap{position:relative;display:inline-block}
+  .msearch-list{position:absolute;z-index:60;top:calc(100% + 6px);left:0;width:100%;min-width:360px;
+    max-height:420px;overflow-y:auto;background:var(--surf);border:1px solid var(--line);
+    border-radius:11px;box-shadow:0 12px 32px -8px rgba(31,35,40,.22);padding:4px;display:none}
+  .msearch-list.on{display:block}
+  .msearch-item{padding:7px 10px;border-radius:7px;font-size:13px;cursor:pointer;display:flex;
+    align-items:center;gap:8px;color:var(--ink)}
+  .msearch-item:hover,.msearch-item.hi{background:var(--brand-soft2)}
+  .msearch-item .mm{font-weight:600;white-space:nowrap}
+  .msearch-item .ff{font-size:11px;color:var(--ink-3);background:#f2f3f5;border-radius:5px;padding:1px 6px;flex:0 0 auto}
+  .msearch-item .vv{font-size:11.5px;color:var(--ink-3);margin-left:auto;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;max-width:200px}
+  .msearch-empty{padding:10px 12px;font-size:13px;color:var(--ink-3)}
   .wrap{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;flex-direction:column;gap:16px;width:100%}
   .grp{background:var(--surf);border:1px solid var(--line);border-radius:14px;overflow:hidden;
     box-shadow:0 1px 2px rgba(31,35,40,.05),0 8px 24px -12px rgba(31,35,40,.10);
@@ -182,23 +212,45 @@
     </select>
   </label>
   <span class="vsep"></span>
-  <button class="btn" onclick="uploadDatasheet()" title="上传 PDF/图片自动识别">📎 Datasheet</button>
-  <button class="btn" onclick="importJson()">导入</button>
-  <button class="btn" onclick="exportJson()">导出</button>
-  <button class="btn" onclick="save()">保存</button>
+  <button class="btn sub" onclick="uploadDatasheet()" title="上传 PDF/图片，自动识别参数">📎 识别 Datasheet</button>
+  <button class="btn sub" onclick="importJson()" title="导入机型 JSON 备份到库里">导入库</button>
+  <button class="btn sub" onclick="exportJson()" title="把整个机型库导出成 JSON 备份">备份库</button>
   <span class="vsep"></span>
-  <button class="btn pri" onclick="genFile('pdf')">⬇ 导出 PDF</button>
-  <button class="btn pri2" onclick="genFile('pptx')">PPTX</button>
+  <button class="btn pri2" onclick="save()" title="把当前修改写入机型库（会改动库）">💾 保存到库</button>
+  <span class="vsep"></span>
+  <button class="btn pri" onclick="genFile('pdf')" title="生成 PDF 参数单（不改动机型库）">⬇ 导出 PDF</button>
+  <button class="btn pri2" onclick="genFile('pptx')" title="生成 PPTX 参数单（不改动机型库）">导出 PPTX</button>
 </header>
 
-<div class="bar">
-  <span class="barlbl">机型</span>
-  <select id="selModel" onchange="switchModel(this.value)"></select>
-  <button class="btn sm" onclick="newModel()">+ 新建</button>
-  <button class="btn sm" onclick="dupModel()">复制</button>
-  <button class="btn sm danger" onclick="delModel()">删除</button>
-  <span class="spacer"></span>
-  <span class="hint" id="status">正在连接服务器…</span>
+<div class="bar z1">
+  <span class="bar-col" style="width:100%">
+    <span class="grp-lbl">选机型（找历史机型来导出，或作为新建的底稿）</span>
+    <span class="bar-row" style="flex-wrap:wrap">
+      <span class="msearch-wrap">
+        <input type="text" id="modelSearch" placeholder="🔍 搜机型 / 发动机 / 系列，如 CU1000" autocomplete="off"
+               oninput="onModelSearch(this.value)" onfocus="onModelSearch(this.value)"
+               onkeydown="modelSearchKey(event)" style="min-width:320px">
+        <div class="msearch-list" id="msList"></div>
+      </span>
+      <span class="barlbl" id="searchHint" style="min-width:76px"></span>
+      <select id="selModel" onchange="switchModel(this.value)" style="min-width:280px"></select>
+      <button class="btn sm" onclick="newModel()" title="从空白开始建一个新机型（本地创建，点「保存到库」才入库）">+ 新建机型</button>
+      <span class="spacer"></span>
+      <span class="hint" id="status">正在连接服务器…</span>
+    </span>
+  </span>
+</div>
+
+<div class="bar z2">
+  <span class="bar-col">
+    <span class="grp-lbl">当前机型的动作</span>
+    <span class="bar-row">
+      <span class="dirty-pill" id="dirtyPill"><i></i>已修改，未存库</span>
+      <button class="btn sm" id="btnRevert" onclick="revertModel()" title="丢弃本次修改，从库里重新读取原样" disabled>↺ 放弃修改</button>
+      <button class="btn sm" onclick="saveAsNewModel()" title="把当前参数存成一个新机型，原机型不动（推荐用在「改了几个参数」的场景）">💾 存为新机型</button>
+      <button class="btn sm danger" onclick="delModel()" title="从库里删除这个机型">删除此机型</button>
+    </span>
+  </span>
 </div>
 
 <!-- 填充进度：一眼看出还差哪些必填项 -->
@@ -219,7 +271,7 @@ const GROUPS = [
  /* 顺序严格对应模板：第1页(功率→排量尺寸→声压级→动力概览) → 第2页(动力详参→电机) → 图片 */
  {id:'basic', t:'① 机组 · 第1页', open:true, fields:[
    {k:'model',  t:'机组型号（图片文件名）', ph:'例: D17'},
-   {k:'__sub',  t:'标题旁型号字', ph:'AS500E5'},
+   {k:'__sub',  t:'标题旁型号字（留空=自动用机组型号）', ph:'留空即自动填入机组型号'},
    {k:'title',  t:'大标题（留空=自动）', ph:'Industrial Range Powered By X'},
    {sub:'功率 (Power)'},
    {k:'prp_kva',t:'PRP 功率', unit:'kVA'}, {k:'eps_kva',t:'EPS 功率', unit:'kVA'},
@@ -294,6 +346,7 @@ const API_BASE = (function(){
   if(!p.endsWith('/')) p = p.substring(0, p.lastIndexOf('/')+1);
   return p;   // 形如 /paramsheet/
 })();
+const IMG_BASE = API_BASE;   // 图片库与接口同源
 
 /* ================= 存储 =================
    机型结构（V2 双频）：
@@ -420,10 +473,7 @@ function curFreqData(m){
 function availFreqs(m){ m=m||findModel(cur); return m && m.freqs ? Object.keys(m.freqs) : []; }
 
 function save(){
-  save_soft();
-  pushModel(cur).then(ok=>{
-    toast(ok ? '已保存到服务器' : '服务器未连接，已暂存本地');
-  });
+  saveSoftToServer(cur);
 }
 
 /* 把某个机型推到服务器 */
@@ -467,6 +517,123 @@ function findModel(name){
   if(name==null) return undefined;
   return DB.models.find(x=>(x.name||x.model)===name)
       || DB.models.find(x=>x.model===name);
+}
+
+/* ================= 机型搜索（2026-10-21 用户需求） ================= */
+/* 搜索框过滤机型下拉：空格分隔多个关键词 = AND；支持型号/发动机/系列/电压款式 */
+let _modelQuery = '';
+
+function onModelSearch(v){
+  _modelQuery = String(v||'').trim();
+  renderSearchList();
+}
+
+/* 搜索结果列表：显示全部命中机型（最多 300 条，可键盘上下选） */
+let _msIdx = -1;
+
+function renderSearchList(){
+  const box = document.getElementById('msList');
+  if(!box) return;
+  if(!_modelQuery){ box.classList.remove('on'); box.innerHTML=''; _msIdx=-1; setSearchHint(''); return; }
+  const list = filteredModels();
+  const total = DB.models.length;
+  setSearchHint(`命中 ${list.length}/${total}`);
+  if(!list.length){
+    box.innerHTML = `<div class="msearch-empty">没有匹配「${esc(_modelQuery)}」的机型</div>`;
+    box.classList.add('on');
+    return;
+  }
+  const MAX = 300;
+  const show = list.slice(0, MAX);
+  box.innerHTML = show.map((x,i)=>{
+    const label = x.name || x.model;
+    const d = x.data || {};
+    const em = (d.common||{}).e_model || '';
+    return `<div class="msearch-item ${i===_msIdx?'hi':''}" data-name="${esc(label)}"
+      onmousedown="pickModelFromSearch('${esc(label).replace(/'/g,'&#39;')}')">
+      <span class="mm">${esc(label)}</span>
+      <span class="ff">${esc(x.family||'其他')}</span>
+      <span class="vv">${esc(em)}</span></div>`;
+  }).join('') + (list.length>MAX ? `<div class="msearch-empty">仅显示前 ${MAX} 条，请加关键词缩小范围</div>` : '');
+  box.classList.add('on');
+  _msIdx = -1;
+}
+
+function pickModelFromSearch(name){
+  const box = document.getElementById('msList');
+  if(box){ box.classList.remove('on'); const i=document.getElementById('modelSearch'); if(i) i.value=''; }
+  _modelQuery = ''; _msIdx = -1;
+  setSearchHint('');
+  switchModel(name);
+}
+
+/* 键盘：↑↓ 选择，Enter 确认，Esc 关闭 */
+function modelSearchKey(e){
+  const box = document.getElementById('msList');
+  if(!box || !box.classList.contains('on')) return;
+  const items = [...box.querySelectorAll('.msearch-item')];
+  if(!items.length) return;
+  if(e.key==='ArrowDown' || e.key==='ArrowUp'){
+    e.preventDefault();
+    _msIdx = e.key==='ArrowDown' ? Math.min(_msIdx+1, items.length-1) : Math.max(_msIdx-1, 0);
+    items.forEach((el,i)=>el.classList.toggle('hi', i===_msIdx));
+    items[_msIdx].scrollIntoView({block:'nearest'});
+  } else if(e.key==='Enter'){
+    e.preventDefault();
+    const pick = items[_msIdx>=0?_msIdx:0];
+    if(pick) pickModelFromSearch(pick.dataset.name);
+  } else if(e.key==='Escape'){
+    box.classList.remove('on'); _msIdx=-1;
+  }
+}
+
+/* 点空白关闭搜索结果 */
+document.addEventListener('click', (e)=>{
+  const box = document.getElementById('msList');
+  const wrap = e.target.closest && e.target.closest('.msearch-wrap');
+  if(box && !wrap) box.classList.remove('on');
+});
+
+function _modelHaystack(x){
+  const d = x.data || {};
+  const cm = d.common || {};
+  const freqs = d.freqs || {};
+  const fvals = Object.values(freqs).flatMap(o=>Object.values(o||{}));
+  return [
+    x.name, x.model, x.family, cm.e_model, cm.e_brand,
+    ...fvals.map(v=>String(v==null?'':v))
+  ].filter(Boolean).join(' ').toUpperCase();
+}
+
+/* 按 _modelQuery 过滤机型列表；关键词全命中才保留 */
+function filteredModels(){
+  const qs = _modelQuery.toUpperCase().split(/\s+/).filter(Boolean);
+  if(!qs.length) return DB.models;
+  return DB.models.filter(x=>{
+    const hay = _modelHaystack(x);
+    return qs.every(q=>hay.includes(q));
+  });
+}
+
+/* 下拉里只放「当前机型」本身（2000+ 条 option 会让下拉卡顿）
+   搜索后若无精确匹配，自动跳到第一个命中项；完整机型名显示在下拉右侧 */
+function fillModelSelect(){
+  const sel = document.getElementById('selModel');
+  if(!sel) return;
+  const total = DB.models.length;
+  const list = filteredModels();
+
+  if(!DB.models.length){
+    sel.innerHTML = '<option value="">（无机型，请先导入）</option>';
+    return;
+  }
+  const label = cur || (DB.models[0].name || DB.models[0].model);
+  sel.innerHTML = `<option value="${esc(label)}" selected>${esc(label)}</option>`;
+}
+
+function setSearchHint(txt){
+  const st = document.getElementById('searchHint');
+  if(st) st.textContent = txt || '';
 }
 
 /* ================= 表单渲染 ================= */
@@ -585,11 +752,7 @@ function syncModelFromForm(){
   if(v && v!==m.model && !findModel(v)){
     m.model = v; m.common = m.common||{}; m.common.model = v;   // 改名（图片文件名也随 model 走）
     cur = v;
-    const sel=document.getElementById('selModel');
-    if(sel){ sel.innerHTML = DB.models.map(x=>{
-      const label = x.name || x.model;
-      return `<option value="${esc(label)}" ${label===cur?'selected':''}>${esc(label)}</option>`;
-    }).join(''); }
+    fillModelSelect();
   }
   renderListNames();
 }
@@ -660,7 +823,12 @@ function renderForm(){
   const m = findModel(cur) || {model:''};
   const fd = curFreqData(m);          // 当前频率数据
   const cm = m.common || {};          // 共用数据
-  const valOf = k => FREQ_FIELDS.includes(k) ? (fd[k]||'') : (cm[k]||'');
+  // __sub（标题旁型号字）留空时自动带出机组型号（2026-10-21 用户建议）
+  const valOf = k => {
+    if(k==='__sub') return (cm.__sub || '').trim() || (m.model || '');
+    if(k==='model') return (m.model || '');
+    return FREQ_FIELDS.includes(k) ? (fd[k]||'') : (cm[k]||'');
+  };
   const el = document.getElementById('form');
   // 频率切换条
   const freqs = availFreqs(m);
@@ -678,7 +846,9 @@ function renderForm(){
       if(f.imgv) return `<div class="imgbox">
         <div class="ph" id="imgph-${f.imgv}"><span style="color:#b6bcc8">…</span></div>
         <div style="display:flex;flex-direction:column;gap:6px">
-          <div class="hint">自动匹配：<code>${esc(m.model||'型号')}_${f.imgv.toUpperCase()}.png</code><br>
+          <div class="hint">${f.imgv==='open'
+            ? '自动匹配：<code>'+esc(m.model||'型号')+'_OPEN.jpg</code>'
+            : '静音图需手动选择'}<br>
             <span id="imgstat-${f.imgv}" style="color:var(--brand-2)"></span></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn sm" type="button" onclick="pickLocalImg('${f.imgv}')">选择本地图</button>
@@ -742,12 +912,8 @@ function renderForm(){
       </div>
       <div class="bd">${body}</div></div>`;
   }).join('');
-  // 型号下拉：显示 name（带区分标签，如 "CU330D5 (400V开架)"），value 用 name 保证唯一
-  const sel=document.getElementById('selModel');
-  sel.innerHTML = DB.models.map(x=>{
-    const label = x.name || x.model;
-    return `<option value="${esc(label)}" ${label===cur?'selected':''}>${esc(label)}</option>`;
-  }).join('');
+  // 型号下拉：显示 name（带区分标签），value 用 name 保证唯一
+  fillModelSelect();
   if(document.getElementById('status') && !document.getElementById('status').textContent.startsWith('●')) syncStatus();
   autoShowImg('open'); autoShowImg('silent');
   updateProgress();
@@ -759,56 +925,126 @@ function renderForm(){
   }
 }
 
-let _dirtyTimer = null;
+/* ===== 四种使用路径（2026-10-21 用户定）=====
+   路径1 选中机型 -> 直接导出           ：不动库
+   路径2 选中机型 -> 改参数 -> 导出      ：不动库
+   路径3 选中机型 -> 改参数 -> 导出 -> 存为新机型 ：库里新增一条
+   路径4 新建机型 -> 改 -> 保存 -> 导出  ：保存时才入库
+   核心：改字段只改内存（_edited），绝不自动写服务器。 */
+let _edited = false;          // 当前机型是否有未保存的改动
+
+function markEdited(on){
+  _edited = !!on;
+  const pill = document.getElementById('dirtyPill');
+  if(pill) pill.classList.toggle('on', _edited);
+  const btnR = document.getElementById('btnRevert');
+  if(btnR) btnR.disabled = !_edited;
+  const st = document.getElementById('status');
+  if(!st) return;
+  if(_edited){
+    if(!st.dataset.orig) st.dataset.orig = st.textContent;
+    st.textContent = '● 已修改（未保存，不影响库）';
+    st.style.color = 'var(--warn)';
+  }else if(st.dataset.orig){
+    st.textContent = st.dataset.orig;
+    st.style.color = '';
+  }
+}
+
+/* 放弃修改：从服务器重新拉这个机型，覆盖本地内存（用户 2026-10-21 加） */
+async function revertModel(){
+  if(!_edited) return;
+  if(!confirm('放弃对「' + cur + '」的本次修改，恢复成库里的原样？')) return;
+  const name = cur;
+  try{
+    const r = await fetch(API_BASE + 'api/models/' + encodeURIComponent(name), {cache:'no-store'});
+    const j = await r.json();
+    const d = j && j.item && j.item.data;   // 接口返回 {ok, item:{...,data}} 
+    if(!d) throw new Error('库里没有这个机型');
+    const m = findModel(name);
+    if(m){
+      m.freqs = d.freqs || m.freqs;
+      m.common = d.common || m.common;
+      m.curFreq = d.curFreq || m.curFreq;
+      m.model = d.model || m.model;
+    }
+    delete m.__unsaved;
+    renderForm();
+    markEdited(false);
+    toast('已恢复为库里的原样');
+  }catch(e){
+    // 服务器拿不到 -> 退而重渲染当前内存（至少清掉表单未收集的输入）
+    renderForm();
+    markEdited(false);
+    toast('服务器未连接，已回到上次加载的数据');
+  }
+}
+
 function onFieldChange(){
-  // 先把当前表单写回内存数据，否则进度条读到的还是旧数据
+  // 把表单写回内存（不写服务器），否则进度条读到的还是旧数据
   const m0 = findModel(cur);
   if(m0){ try{ applyCollect(m0, collect()); }catch(e){} }
   updateProgress();
-  const st = document.getElementById('status');
-  if(st && !st.dataset.orig) st.dataset.orig = st.textContent;
-  if(st){ st.textContent = '● 有改动未保存'; st.style.color = 'var(--warn)'; }
-  clearTimeout(_dirtyTimer);
-  _dirtyTimer = setTimeout(()=>{ try{ save_soft(); }catch(e){} }, 1500);  // 1.5s 后自动暂存
-  setTimeout(()=>{
-    const s2=document.getElementById('status');
-    if(s2 && s2.textContent.startsWith('●')){ s2.textContent='✓ 已自动暂存'; s2.style.color='var(--ok)';
-      setTimeout(()=>{ if(s2.textContent==='✓ 已自动暂存'){ s2.textContent=s2.dataset.orig||''; s2.style.color=''; } }, 2000); }
-  }, 1700);
+  markEdited(true);
 }
 
 /* ===== 填充进度 =====
-   只看「模板里有 12345 的格子」对应的字段；图片不算必填。 */
+   v2（2026-10-21 修）：原来直接把「值是否为空」当缺失，导致两类误报：
+     ① 表单显示有默认值（如绕组节距 Two thirds、相数 Three phase、轴承数 Single bearing），
+        但库里没存 -> 看着是填好的却被算「缺」
+     ② 组合字段没走正确的判断分支
+   现在统一走 activeVal()：先读库里值，没有就用表单默认值，两边都算「已填」。 */
 const KEY_REQUIRED = ['model','prp_kva','prp_kw','eps_kva','eps_kw','freq','std_v'];
+
+/* 当前字段的「有效值」：库里值 > 表单默认值 defv */
+function activeVal(f, fd, cm){
+  const k = f.k;
+  const raw = FREQ_FIELDS.includes(k) ? (fd[k]||'') : (cm[k]||'');
+  if(String(raw).trim()) return String(raw).trim();
+  if(f.defv) return String(f.defv);          // 表单渲染时就会显示这个值
+  return '';
+}
+
+/* 组合字段：电池(个数/容量/CCA)、充电发电机(电压/电流)、绝缘温升 */
+function comboRaw(f, cm){
+  if(f.va==='batt') return [cm.el_bat_n, cm.el_bat_ah, cm.el_bat_cca].filter(Boolean).join('');
+  if(f.amp)         return [cm.el_alt_v, cm.el_alt_a].filter(Boolean).join('');
+  if(f.insulFixed)  return cm[f.k] || '';    // 前段 Class H 固定，后段温升
+  return '';
+}
+
 function updateProgress(){
   const box = document.getElementById('prog');
   if(!box) return;
   const m = findModel(cur) || {};
   const fd = curFreqData(m), cm = m.common||{};
-  const valOf = k => FREQ_FIELDS.includes(k) ? (fd[k]||'') : (cm[k]||'');
-  // 组合字段：任一子段有值即算已填
-  const comboVal = k => {
-    if(k==='el_bat') return [cm.el_bat_n,cm.el_bat_ah,cm.el_bat_cca].filter(Boolean).join('');
-    if(k==='el_alt') return [cm.el_alt_v,cm.el_alt_a].filter(Boolean).join('');
-    return valOf(k);
-  };
   let all=0, filled=0; const miss=[];
   GROUPS.forEach(g=>{
     if(g.id==='img') return;
     g.fields.forEach(f=>{
       if(f.sub||f.imgv) return;
-      if(String(f.k).startsWith('__')) return;      // 标题旁型号字等元字段不计入进度
+      if(String(f.k).startsWith('__')) return;      // 图片/元字段不计入进度
       if(f.k==='title') return;                     // 大标题留空=自动生成，不算必填
       all++;
-      const v=String((f.va?comboVal(f.k):valOf(f.k))||'').trim();
-      if(v) filled++; else miss.push({k:f.k, t:f.t, gid:g.id});
+      let v;
+      if(f.va || f.amp || f.insulFixed){
+        v = comboRaw(f, cm) || activeVal(f, fd, cm);
+      }else{
+        v = activeVal(f, fd, cm);
+      }
+      if(String(v||'').trim()) filled++;
+      else miss.push({k:f.k, t:f.t, gid:g.id});
     });
   });
   const pct = all? Math.round(filled*100/all) : 0;
   // 只列出前 5 个缺失项，点一下跳到对应分组
-  const missHTML = miss.length
-    ? `<span class="miss" onclick="jumpTo('${miss[0].gid}')" title="${esc(miss.map(x=>x.t).join('、'))}">缺 ${miss.length} 项，点击定位：${esc(miss[0].t)}</span>`
-    : `<span class="txt" style="color:var(--ok)">✓ 全部字段已填</span>`;
+  let missHTML;
+  if(miss.length){
+    const names = miss.slice(0,4).map(x=>x.t).join('、') + (miss.length>4?' 等':'');
+    missHTML = `<span class="miss" onclick="jumpTo('${miss[0].gid}')" title="${esc(miss.map(x=>x.t).join('\n'))}">缺 ${miss.length} 项（${esc(names)}）</span>`;
+  }else{
+    missHTML = `<span class="txt" style="color:var(--ok)">✓ 全部字段已填</span>`;
+  }
   box.innerHTML = `<div class="pbar ${pct===100?'full':''}"><i style="width:${pct}%"></i></div>
     <span class="txt">已填 <b>${filled}</b>/${all} · ${pct}%</span>${missHTML}`;
 }
@@ -833,34 +1069,179 @@ function autoShowImg(kind){
   const st=document.getElementById('imgstat-'+kind); if(st) st.textContent='';
   // 本地手选优先
   if(localImgs[kind]){
+    imgLevel[kind] = 'exact';
     p.innerHTML='';
-    const im=new Image(); im.src=localImgs[kind]; p.appendChild(im);
+    const im=new Image(); im.src=localImgs[kind]; im.style.maxWidth='100%'; im.style.maxHeight='100%';
+    p.appendChild(im);
     if(st) st.textContent='（本地手选，未入库）';
     return;
   }
-  const model=cur;
+  // 静音图：不自动匹配图片库，一律手动选择（2026-10-21 用户定）
+  if(kind==='silent'){
+    p.innerHTML='<span style="color:#b6bcc8;text-align:center;line-height:1.6">静音图<br>'
+      + '<span style="font-size:11px">请手动选择 / 上传</span></span>';
+    if(st) st.textContent='静音图需手动选择';
+    return;
+  }
+  // 图片文件名只用机组型号（去掉 " (400V开架) [发动机]" 之类的后缀）
+  const model = modelKeyOf(cur);
   if(!model){ p.innerHTML='<span style="color:#b6bcc8">无型号</span>'; return; }
   p.innerHTML='<span style="color:#b6bcc8">…</span>';
-  const exts=['png','jpg'];
-  let i=0;
-  (function tryNext(){
-    if(i>=exts.length){ p.innerHTML='暂无图片<br><span style="font-size:10px;color:#b6bcc8">'+esc(model)+'_'+kind.toUpperCase()+'</span>';
-      if(st) st.textContent='未找到，可手动选择/上传'; return; }
-    const url='images/'+encodeURIComponent(model)+'_'+kind.toUpperCase()+'.'+exts[i];
-    const img=new Image();
-    img.onload=()=>{ p.innerHTML=''; p.appendChild(img); if(st) st.textContent='已匹配 '+model+'_'+kind.toUpperCase()+'.'+exts[i]; };
-    img.onerror=()=>{ i++; tryNext(); };
-    img.src=url+'?t='+Date.now();
+  // 统一走后端 /api/images：后端有「精确 + 静态表 + 动态同动力索引」三层逻辑
+  (async ()=>{
+    let res = null;
+    try{
+      const r = await fetch(API_BASE+'api/images?model='+encodeURIComponent(model), {cache:'no-store'});
+      if(r.ok) res = await r.json();
+    }catch(e){ res = null; }
+
+    if(res && res.ok){
+      const fname = (res.images||{})[kind];
+      const isBadge = !!(res.badge||{})[kind];
+      const fb = res.fallback || {};
+      if(fname){
+        const url = IMG_BASE+'images/'+encodeURIComponent(fname);
+        const img = new Image();
+        img.onload = ()=>{
+          if(isBadge){
+            const lvl = fb.level==='platform' ? '同平台' : '同动力';
+            showMatched(img, fname, fb.level || 'engine',
+              lvl+'套用：'+(fb.src||'')+(fb.src_engine?(' ('+fb.src_engine+')'):''));
+          }else{
+            showMatched(img, fname, 'exact', '');
+          }
+        };
+        img.onerror = ()=>notFound();
+        img.src = url+'?t='+Date.now();
+        return;
+      }
+      notFound();
+      return;
+    }
+
+    // 后端不可用：退回本地兜底表
+    const exts=['jpg','png'];
+    (function tryOriginal(i){
+      if(i<exts.length){
+        const url=IMG_BASE+'images/'+encodeURIComponent(model)+'_'+kind.toUpperCase()+'.'+exts[i];
+        const img=new Image();
+        img.onload=()=>showMatched(img, model+'_'+kind.toUpperCase()+'.'+exts[i], 'exact', '');
+        img.onerror=()=>tryOriginal(i+1);
+        img.src=url+'?t='+Date.now();
+        return;
+      }
+      (async ()=>{
+        const fb = await loadFallback();
+        const hit = fb && fb[model];
+        if(!hit){ notFound(); return; }
+        const url2 = IMG_BASE+'images/'+encodeURIComponent(hit.file);
+        const img2 = new Image();
+        img2.onload=()=>{
+          const lvl = hit.level==='engine' ? '同动力' : '同平台';
+          showMatched(img2, hit.file, hit.level,
+            lvl+'套用：'+hit.src+(hit.src_engine?(' ('+hit.src_engine+')'):''));
+        };
+        img2.onerror=()=>notFound();
+        img2.src=url2+'?t='+Date.now();
+      })();
+    })(0);
   })();
+
+  function showMatched(img, fname, level, note){
+    imgLevel[kind] = level;
+    p.innerHTML='';
+    img.style.maxWidth='100%'; img.style.maxHeight='100%';
+    if(level!=='exact'){
+      // 示意图角标
+      const wrap=document.createElement('div');
+      wrap.style.cssText='position:relative;display:inline-block;width:100%;height:100%;text-align:center';
+      wrap.appendChild(img);
+      const badge=document.createElement('span');
+      badge.textContent='示意图';
+      badge.style.cssText='position:absolute;right:6px;bottom:6px;background:rgba(255,152,0,.92);'
+        + 'color:#fff;font-size:11px;padding:2px 7px;border-radius:4px;letter-spacing:.5px';
+      wrap.appendChild(badge);
+      p.appendChild(wrap);
+    }else{
+      p.appendChild(img);
+    }
+    if(st) st.textContent = level==='exact' ? ('已匹配 '+fname) : ('已匹配（'+note+'）');
+  }
+
+  function notFound(){
+    imgLevel[kind] = '';
+    p.innerHTML='暂无图片<br><span style="font-size:10px;color:#b6bcc8">'+esc(model)+'_'+kind.toUpperCase()+'</span>';
+    if(st) st.textContent='未找到，可手动选择/上传';
+  }
 }
 
+/* 机型名 -> 机组型号（图库文件名的键）
+   "CU400E5 (400VG款) [QSG12-G3]"  ->  "CU400E5"   */
+function modelKeyOf(name){
+  const n = String(name==null?'':name).trim();
+  if(!n) return '';
+  const m = n.match(/^[A-Za-z0-9][A-Za-z0-9\/\.\-]*/);
+  return m ? m[0].replace(/[\/]/g,'-') : '';
+}
+
+/* ===== 开架图兜底套用（2026-10-21 用户定 B 方案）=====
+   规则：① 本型号有图直接用
+        ② 同发动机型号 -> 套用（可复用）
+        ③ 同发动机平台（KTA38-G1 ≈ KTA38-G2）-> 套用
+   套用的图在预览里打「示意图」标记，导出时也带标记 */
+let FALLBACK = null;          // 型号 -> {src, level, engine, src_engine, file}
+let imgLevel = {};            // {open:'exact'|'engine'|'platform'|'', silent:''}  当前图来源
+let FALLBACK_READY = false;
+
+async function loadFallback(){
+  if(FALLBACK_READY) return FALLBACK;
+  try{
+    const r = await fetch(IMG_BASE+'images_fallback.json', {cache:'no-cache'});
+    if(r.ok) FALLBACK = await r.json();
+  }catch(e){ FALLBACK = null; }
+  FALLBACK_READY = true;
+  return FALLBACK;
+}
+
+/* 本地导入图片 -> 立即入库（2026-10-21 用户定：底层逻辑改为导入即存库）
+   流程：选文件 -> 上传 /api/upload-image -> 存成 型号_OPEN.jpg / 型号_SILENT.jpg
+   失败才退回「本地临时图」模式（仅本次导出有效） */
 function pickLocalImg(kind){
+  if(!cur) return alert('请先选机型');
   const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
-  inp.onchange=e=>{
+  inp.onchange=async e=>{
     const f=e.target.files[0]; if(!f) return;
-    const r=new FileReader();
-    r.onload=()=>{ localImgs[kind]=r.result; autoShowImg(kind); toast('已选本地图（未入库）'); };
-    r.readAsDataURL(f);
+    const model = modelKeyOf(cur);
+    if(!model) return alert('当前机型无法确定机组型号，不能入库');
+
+    // 先本地预览（让用户立刻看到图）
+    const dataUrl = await new Promise(res=>{
+      const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f);
+    });
+    localImgs[kind] = dataUrl;
+    imgLevel[kind] = 'exact';
+    autoShowImg(kind);
+    toast('上传入库中…');
+
+    // 上传入库
+    try{
+      const fd=new FormData();
+      fd.append('file', f);
+      fd.append('model', model);
+      fd.append('kind', kind);
+      const r = await fetch(API_BASE+'api/upload-image', {method:'POST', body:fd});
+      const j = await r.json();
+      if(!j.ok) throw new Error(j.error || '上传失败');
+
+      delete localImgs[kind];          // 入库成功 -> 去掉本地临时图，改用库里的
+      toast('已入库：'+j.file);
+      autoShowImg(kind);
+    }catch(err){
+      // 入库失败：保留本地图（本次导出仍可用），但明确提示
+      toast('入库失败，本次仅本地临时使用：'+err.message);
+      const st=document.getElementById('imgstat-'+kind);
+      if(st) st.textContent='⚠ 入库失败，仅本次导出有效';
+    }
   };
   inp.click();
 }
@@ -949,41 +1330,87 @@ function renderList(){ /* 占位：列表视图后续加 */ }
 
 /* 下拉 value 是 name（可能带区分标签），cur 存 model —— 这里做一次映射 */
 function switchModel(name){
+  // 有未保存改动 -> 弹窗三选（用户 2026-10-21 定：必须问，不能自动丢）
+  if(_edited && !_pendingSwitch){
+    const m0 = findModel(cur);
+    const from = cur;
+    const c = confirmDiscardChanges(from, name);
+    if(c === 'cancel'){ fillModelSelect(); return; }
+    if(c === 'abort'){ fillModelSelect(); return; }
+  }
   save_soft();
+  _edited = false;
   const m = DB.models.find(x=>(x.name||x.model)===name) || DB.models.find(x=>x.model===name);
   cur = m ? (m.name || m.model) : name;
   renderForm();
+  markEdited(false);
 }
-let _softTimer=null;
+
+/* 有未保存改动时的三选弹窗。
+   返回 'save'=存回原机型 / 'new'=存为新机型 / 'discard'=放弃 / 'cancel'=取消切换 */
+let _pendingSwitch = false;
+function confirmDiscardChanges(fromName, toName){
+  const answer = window.confirm(
+    '当前机型有未保存的修改：\n\n  ' + fromName + '\n\n' +
+    '【确定】= 保存修改到原机型（会改动库）\n' +
+    '【取消】= 放弃修改，切换到 ' + toName + '\n\n' +
+    '（想保留改动又不覆盖原机型，请点「存为新机型」）'
+  );
+  if(answer){
+    // 用户选保存到原机型
+    saveSoftToServer(fromName);
+    return 'save';
+  }
+  // 用户选放弃 -> 需要二次确认，避免误点丢数据
+  return window.confirm('确定放弃「' + fromName + '」的修改？') ? 'discard' : 'cancel';
+}
+
+/* 明确保存到服务器（覆盖原机型） */
+async function saveSoftToServer(name){
+  save_soft();
+  const ok = await pushModel(name);
+  markEdited(false);
+  toast(ok ? '已保存到库' : '服务器未连接，改动未入库');
+  return ok;
+}
+/* 只把表单写回内存；不再自动推服务器（2026-10-21 改） */
 function save_soft(){
   const m=findModel(cur);
   if(m) applyCollect(m, collect());
   syncModelFromForm();
-  // 服务器模式：防抖 800ms 推一次，避免每敲一个字都打接口
-  if(STORE_MODE==='server'){
-    clearTimeout(_softTimer);
-    _softTimer=setTimeout(()=>{ pushModel(cur); }, 800);
-  }
 }
 
+/* 路径4：新建机型 —— 先只在本地建，点「保存」才真正入库（用户 2026-10-21 定）*/
 function newModel(){
+  if(_edited && !confirm('当前机型有未保存修改，新建会丢弃，继续？')) return;
   const n = (prompt('新机组型号（也是图片文件名）：')||'').trim();
   if(!n) return;
   if(findModel(n)) return alert('型号已存在');
-  save_soft();
-  DB.models.push({model:n, name:n, curFreq:'50Hz', freqs:{'50Hz':{}}, common:{model:n}});
-  cur=n; renderForm(); pushModel(n); toast('已新建 '+n);
+  DB.models.push({model:n, name:n, curFreq:'50Hz', freqs:{'50Hz':{}}, common:{model:n}, __unsaved:true});
+  cur=n; renderForm(); markEdited(true);
+  toast('已新建 ' + n + '（本地未入库，点「保存」才写库）');
 }
-function dupModel(){
+
+/* 路径3 的入口：把当前机型的当前参数另存为新机型 */
+function saveAsNewModel(){
   save_soft();
-  const n = (prompt('复制为新型号名：', cur+'-COPY')||'').trim();
+  const src = findModel(cur);
+  if(!src) return alert('请先选一个机型');
+  const def = cur + '-1';
+  const n = (prompt('存为新机型，新型号名：', def)||'').trim();
   if(!n) return;
-  if(findModel(n)) return alert('型号已存在');
-  const src=findModel(cur)||{};
-  const c=JSON.parse(JSON.stringify(src)); c.model=n; c.name=n;
-  c.common=c.common||{}; c.common.model=n;
-  DB.models.push(c); cur=c.name; renderForm(); pushModel(c.name); toast('已复制');
+  if(findModel(n)) return alert('型号已存在，换个名字');
+  const c = JSON.parse(JSON.stringify(src));
+  c.model = n; c.name = n;
+  c.common = c.common || {}; c.common.model = n;
+  delete c.__unsaved;
+  DB.models.push(c);
+  cur = n; renderForm(); markEdited(false);
+  pushModel(n).then(ok=>{
+    toast(ok ? '已存为新机型：' + n : '服务器未连接，仅存本地');
+  });
 }
+
 async function delModel(){
   if(!confirm('确认删除机型 '+cur+' ？此操作会同时从服务器删除。')) return;
   const gone = cur;
@@ -1037,8 +1464,15 @@ async function genFile(fmt){
   }
   // 声压级符号框（模板 4 个格：开架/静音 @1m/@7m）；模板格已加了两行
   data.sound_db = [data.o_db1||'', data.o_db7||'', data.s_db1||'', data.s_db7||''];
+  // 标题旁型号字：库里没填就自动用机组型号（2026-10-21 改）
+  const subAuto = String((m.common&&m.common.__sub) || '').trim() || String(m.model || '').trim();
+  // 示意图标记：套用来的图（同动力/同平台）在 PPT 上打标
+  data.__img_badge__ = {
+    open: imgLevel.open === 'engine' || imgLevel.open === 'platform',
+    silent: imgLevel.silent === 'engine' || imgLevel.silent === 'platform'
+  };
   const payload = { lang: lang, format: fmt,
-                    title_sub: (m.common&&m.common.__sub) || '',
+                    title_sub: subAuto,
                     title: (m.common&&m.common.title) || '',
                     freq: m.curFreq, data: data };
   toast(fmt==='pdf' ? '正在生成 PDF…' : '正在生成 PPTX…');
