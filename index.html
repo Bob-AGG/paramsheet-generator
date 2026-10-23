@@ -104,6 +104,13 @@
   .bar select,.bar input[type=text]{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:var(--surf);min-width:220px;color:var(--ink);
     transition:border-color .25s var(--ez-apple),box-shadow .25s var(--ez-apple)}
   .bar select:focus,.bar input[type=text]:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-soft2)}
+  /* 当前机型标签（取代只能选一项的假下拉） */
+  .cur-wrap{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border:1px solid var(--brand-line);
+    background:linear-gradient(180deg,#fdf3f3,#faf6f6);border-radius:9px;min-width:0}
+  .cur-wrap .lbl{font-size:11.5px;color:var(--brand-ink);opacity:.75;white-space:nowrap;flex:0 0 auto}
+  .cur-wrap .val{font-weight:600;font-size:13.5px;color:var(--brand-ink);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;max-width:360px}
+  .cur-wrap.empty .val{font-weight:500;opacity:.6}
   /* 品牌/系列下拉（2026-10-23 用户需求：左侧品牌分类，右侧搜索框联动） */
   .fam-wrap{position:relative;display:inline-flex;align-items:center;gap:6px}
   .fam-wrap select{min-width:190px !important}
@@ -243,7 +250,10 @@
         <div class="msearch-list" id="msList"></div>
       </span>
       <span class="barlbl" id="searchHint" style="min-width:76px"></span>
-      <select id="selModel" onchange="switchModel(this.value)" style="min-width:280px"></select>
+      <span class="cur-wrap" id="curBox" title="当前正在编辑的机型（换机型请用左侧搜索框）">
+        <span class="lbl">当前机型</span>
+        <span class="val" id="curName">—</span>
+      </span>
       <button class="btn sm" onclick="newModel()" title="从空白开始建一个新机型（本地创建，点「保存到库」才入库）">+ 新建机型</button>
       <span class="spacer"></span>
       <span class="hint" id="status">正在连接服务器…</span>
@@ -670,20 +680,19 @@ function filteredModels(){
   });
 }
 
-/* 下拉里只放「当前机型」本身（2000+ 条 option 会让下拉卡顿）
-   搜索后若无精确匹配，自动跳到第一个命中项；完整机型名显示在下拉右侧 */
+/* 当前机型只作展示（换机型走搜索框；2000+ 条 option 原生下拉会卡顿） */
 function fillModelSelect(){
-  const sel = document.getElementById('selModel');
-  if(!sel) return;
-  const total = DB.models.length;
-  const list = filteredModels();
-
+  const box = document.getElementById('curBox');
+  const el  = document.getElementById('curName');
+  if(!el) return;
   if(!DB.models.length){
-    sel.innerHTML = '<option value="">（无机型，请先导入）</option>';
+    el.textContent = '（无机型，请先导入）';
+    if(box) box.classList.add('empty');
     return;
   }
   const label = cur || (DB.models[0].name || DB.models[0].model);
-  sel.innerHTML = `<option value="${esc(label)}" selected>${esc(label)}</option>`;
+  el.textContent = label;
+  if(box){ box.classList.toggle('empty', !cur); box.title = '当前正在编辑的机型：' + label + '（换机型请用左侧搜索框）'; }
 }
 
 function setSearchHint(txt){
