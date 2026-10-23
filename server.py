@@ -305,9 +305,26 @@ model_store.init()
 
 @app.get("/api/models-all")
 def api_models_all():
-    """全部机型（含完整数据）。前端启动用，一次拉完直接渲染，避免 N+1。
-    注意：必须注册在任何 /api/models/{name} 之前（FastAPI 按注册顺序匹配）。"""
-    items = model_store.all_models()
+    """全部发动机（动力库，2026-10-23 用户要求替换机组下拉）。
+    数据源：data/engine_50hz.json + data/engine_60hz.json
+    返回结构与旧版兼容（name/model/family/common/freqs），前端无需大改。"""
+    import engine_loader
+    items = []
+    for e in engine_loader.engines():
+        vals = e.get("values") or {}
+        common = {k: v for k, v in vals.items() if k != "rpm"}
+        items.append({
+            "name": e["name"],
+            "model": e["model"],
+            "family": e["family"],
+            "freq_list": [e["freq"]],
+            "src": e.get("src", ""),
+            "curFreq": e["freq"],
+            "freqs": {e["freq"]: {"rpm": e["rpm"], "freq": e["freq"]}},
+            "common": common,
+            "needs_fill": e.get("needs_fill", False),
+            "filled_fields": e.get("filled_fields", 0),
+        })
     return {"ok": True, "total": len(items), "models": items}
 
 
