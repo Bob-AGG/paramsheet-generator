@@ -198,6 +198,10 @@
   .sub-h::before{content:"";width:3px;height:12px;background:linear-gradient(180deg,var(--brand-hi),var(--brand));border-radius:2px}
   /* 必填提示 */
   .fld.req label::after{content:"*";color:var(--danger);margin-left:3px}
+  /* 自动带出字段（电压/频率）：置灰只读，标明来源 */
+  .fld.auto-fld label{display:flex;align-items:center;gap:6px}
+  .auto-tag{font-size:10px;line-height:1;padding:2px 5px;border-radius:5px;background:var(--brand-soft2);color:var(--brand-2);font-weight:600}
+  .fld input.auto-in{background:#f3f4f7;color:var(--sub);border-style:dashed;cursor:not-allowed}
   /* 聚焦高亮分组 */
   .grp.flash{box-shadow:0 0 0 2px rgba(142,31,44,.35),0 8px 24px -12px rgba(142,31,44,.28)}
   @media (max-width:720px){
@@ -343,7 +347,13 @@ const GROUPS = [
  ]},
  {id:'gen', t:'③ 电机 · 第2页', open:false, fields:[
    {sub:'基本数据 (Basic data)'},
+   {k:'g_model',t:'电机型号', ph:'如: LSA 44.3 S5 / UCI274H', rowspan:2},
    {k:'g_insul',t:'绝缘 / 温升', ph:'H',insulFixed:'H'},
+   {sub:'电压 / 频率（自动带出，不用填）'},
+   {k:'std_v',t:'标准电压（来自①机组）', auto:1, ph:''},
+   {k:'opt_v',t:'可用电压（来自①机组）', auto:1, ph:''},
+   {k:'__freq_echo',t:'频率（来自①机组）', freqEcho:1, ph:''},
+   {sub:'其他电机参数'},
    {k:'g_exc',t:'励磁方式', ph:'请选择',opts:['Self-excited','PMG','Separately excited']},
    {k:'g_lead',t:'绕组出线', ph:'12'},
    {k:'g_conn',t:'绕组接法(标准)', ph:'请选择',opts:['Star','Delta']},
@@ -923,6 +933,14 @@ function renderForm(){
             <button class="btn sm" type="button" onclick="uploadImg('${f.imgv}')">上传到图片库</button>
             <button class="btn sm" type="button" onclick="clearLocalImg('${f.imgv}')">恢复自动匹配</button>
           </div></div></div>`;
+      // 自动带出字段（电压 / 频率）：只读，值来自①机组栏，不允许手改
+      if(f.auto || f.freqEcho){
+        const av = f.freqEcho ? (fd['freq']||'') : (cm[f.k]||'');
+        const src = f.freqEcho ? '频率/相数/功率因数' : f.t.replace('（来自①机组）','');
+        return `<div class="fld auto-fld"><label>${f.t} <span class="auto-tag">自动</span></label>
+          <input type="text" class="auto-in" value="${esc(av)}" readonly tabindex="-1"
+            placeholder="（先在①机组填写${esc(src)}）" title="自动取自①机组，不能手改"></div>`;
+      }
       const v = esc(valOf(f.k));
       if(f.ta) return `<div class="fld" style="grid-column:1/-1"><label>${f.t}</label>
         <textarea data-k="${f.k}" placeholder="${f.ph||''}">${v}</textarea></div>`;
