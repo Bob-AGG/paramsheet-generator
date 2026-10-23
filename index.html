@@ -104,6 +104,10 @@
   .bar select,.bar input[type=text]{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:var(--surf);min-width:220px;color:var(--ink);
     transition:border-color .25s var(--ez-apple),box-shadow .25s var(--ez-apple)}
   .bar select:focus,.bar input[type=text]:focus{outline:none;border-color:var(--brand-2);box-shadow:0 0 0 3px var(--brand-soft2)}
+  /* 品牌/系列下拉（2026-10-23 用户需求：左侧品牌分类，右侧搜索框联动） */
+  .fam-wrap{position:relative;display:inline-flex;align-items:center;gap:6px}
+  .fam-wrap select{min-width:190px !important}
+  .fam-count{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
   /* 机型搜索结果下拉列表（2026-10-21） */
   .msearch-wrap{position:relative;display:inline-block}
   .msearch-list{position:absolute;z-index:60;top:calc(100% + 6px);left:0;width:100%;min-width:360px;
@@ -226,6 +230,12 @@
   <span class="bar-col" style="width:100%">
     <span class="grp-lbl">选机型（找历史机型来导出，或作为新建的底稿）</span>
     <span class="bar-row" style="flex-wrap:wrap">
+      <span class="fam-wrap">
+        <select id="selFamily" onchange="onFamilyChange(this.value)" title="按品牌/系列筛选机型">
+          <option value="">全部品牌</option>
+        </select>
+        <span class="fam-count" id="famCount"></span>
+      </span>
       <span class="msearch-wrap">
         <input type="text" id="modelSearch" placeholder="🔍 搜机型 / 发动机 / 系列，如 CU1000" autocomplete="off"
                oninput="onModelSearch(this.value)" onfocus="onModelSearch(this.value)"
@@ -519,6 +529,45 @@ function findModel(name){
       || DB.models.find(x=>x.model===name);
 }
 
+/* ================= 品牌/系列分类下拉（2026-10-23 用户需求） ================= */
+/* 左侧品牌下拉 + 右侧搜索框联动：两者同时生效（AND） */
+let _familyFilter = '';
+
+function onFamilyChange(v){
+  _familyFilter = String(v||'');
+  renderSearchList();
+  updateFamCount();
+}
+
+/* 统计当前品牌下命中数量（配合搜索框） */
+function updateFamCount(){
+  const el = document.getElementById('famCount');
+  if(!el) return;
+  const n = filteredModels().length;
+  const tot = DB.models.length;
+  el.textContent = _familyFilter ? `${n}` : `${tot}`;
+}
+
+/* 根据当前机型库重建品牌下拉（保留当前选中） */
+function fillFamilySelect(){
+  const sel = document.getElementById('selFamily');
+  if(!sel) return;
+  const cnt = {};
+  DB.models.forEach(x=>{ const f = x.family || '其他'; cnt[f] = (cnt[f]||0)+1; });
+  const names = Object.keys(cnt).sort((a,b)=>{
+    if(a==='其他') return 1;           // 「其他」永远排最后
+    if(b==='其他') return -1;
+    return cnt[b]-cnt[a] || a.localeCompare(b); // 按数量降序
+  });
+  // 上一个选中值如果还在就保留
+  const keep = _familyFilter && cnt[_familyFilter] ? _familyFilter : '';
+  _familyFilter = keep;
+  sel.innerHTML = `<option value="">全部品牌（${DB.models.length}）</option>` +
+    names.map(f=>`<option value="${esc(f)}">${esc(f)}（${cnt[f]}）</option>`).join('');
+  sel.value = keep;
+  updateFamCount();
+}
+
 /* ================= 机型搜索（2026-10-21 用户需求） ================= */
 /* 搜索框过滤机型下拉：空格分隔多个关键词 = AND；支持型号/发动机/系列/电压款式 */
 let _modelQuery = '';
@@ -536,7 +585,9 @@ function renderSearchList(){
   if(!box) return;
   if(!_modelQuery){ box.classList.remove('on'); box.innerHTML=''; _msIdx=-1; setSearchHint(''); return; }
   const list = filteredModels();
-  const total = DB.models.length;
+  const total = _familyFilter
+    ? DB.models.filter(x=>(x.family||'其他')===_familyFilter).length
+    : DB.models.length;
   setSearchHint(`命中 ${list.length}/${total}`);
   if(!list.length){
     box.innerHTML = `<div class="msearch-empty">没有匹配「${esc(_modelQuery)}」的机型</div>`;
@@ -605,11 +656,15 @@ function _modelHaystack(x){
   ].filter(Boolean).join(' ').toUpperCase();
 }
 
-/* 按 _modelQuery 过滤机型列表；关键词全命中才保留 */
+/* 按 _familyFilter + _modelQuery 过滤机型列表；关键词全命中才保留 */
 function filteredModels(){
+  let list = DB.models;
+  if(_familyFilter){
+    list = list.filter(x=> (x.family || '其他') === _familyFilter);
+  }
   const qs = _modelQuery.toUpperCase().split(/\s+/).filter(Boolean);
-  if(!qs.length) return DB.models;
-  return DB.models.filter(x=>{
+  if(!qs.length) return list;
+  return list.filter(x=>{
     const hay = _modelHaystack(x);
     return qs.every(q=>hay.includes(q));
   });
@@ -753,6 +808,7 @@ function syncModelFromForm(){
     m.model = v; m.common = m.common||{}; m.common.model = v;   // 改名（图片文件名也随 model 走）
     cur = v;
     fillModelSelect();
+    fillFamilySelect();
   }
   renderListNames();
 }
@@ -914,6 +970,7 @@ function renderForm(){
   }).join('');
   // 型号下拉：显示 name（带区分标签），value 用 name 保证唯一
   fillModelSelect();
+  fillFamilySelect();
   if(document.getElementById('status') && !document.getElementById('status').textContent.startsWith('●')) syncStatus();
   autoShowImg('open'); autoShowImg('silent');
   updateProgress();
