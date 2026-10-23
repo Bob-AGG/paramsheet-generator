@@ -173,16 +173,97 @@ VALUE_MAP = {
         "turbocharged": "Turbocharged",
         "naturallyaspirated": "Naturally aspirated",
         "turbochargedaftercooled": "Turbocharged & Aftercooled",
+        "turbochargedand aftercooled": "Turbocharged & Aftercooled",
         "turbochargedintercooled": "Turbocharged & Intercooled",
-        "naturallyaspirated": "Naturally aspirated",
+        "涡轮增压中冷": "Turbocharged & Aftercooled",
+        "增压中冷": "Turbocharged & Aftercooled",
+        "涡轮增压": "Turbocharged",
     },
     "e_cool": {
         "watercooled": "Water-cooled",
+        "watercooling": "Water-cooled",
+        "水冷": "Water-cooled",
     },
     "e_fuel": {
         "diesel": "Diesel",
+        "柴油": "Diesel",
+        "柴油燃料": "Diesel",
+    },
+    "e_gov": {
+        "electronic": "Electronic",
+        "electronical": "Electronic",
+        "ecm": "Electronic",
+        "ecu": "Electronic",
+        "电调": "Electronic",
+        "电子调速": "Electronic",
+        "mechanical": "Mechanical",
+        "机调": "Mechanical",
+        "机械调速": "Mechanical",
     },
 }
+
+# 语义归一（2026-10-21）：同一意思的不同写法 → 统一到英文规范值
+# 只影响冲突比较与入库值，不改模板结构
+CANON_KEYS = ("e_fuel", "e_cool", "e_gov", "e_asp", "g_exc", "g_conn",
+              "g_pitch", "g_phase", "g_brg")
+
+
+def canon_value(key, v):
+    """把中英文/异体写法归一为规范值；不在映射表里则返回原值（仅文本归一）"""
+    if v is None:
+        return None
+    s = str(v).replace("\xa0", " ").replace("\u3000", " ")
+    s = re.sub(r"\s+", " ", s).strip()
+    if key not in CANON_KEYS:
+        return s
+    # 文本级归一：去换行/压缩空格/统一分隔符，再做语义匹配
+    flat = s.replace("\n", " ").replace("\r", " ")
+    flat = re.sub(r"\s+", " ", flat).strip()
+    norm = re.sub(r"[^0-9a-z\u4e00-\u9fff]", "", flat.lower())
+    table = VALUE_MAP.get(key) or {}
+    if norm in table:
+        return table[norm]
+    # 前缀语义（如 turbocharged and aftercooled / turbocharged and charge air cooled）
+    if key == "e_asp":
+        if norm.startswith("naturallyaspirated") or "自然吸气" in norm:
+            return "Naturally aspirated"
+        turbo = (norm.startswith("turbo") or "涡轮" in norm or "增压" in norm)
+        if turbo:
+            if "lowtemperature" in norm or "低温" in norm:
+                return "Turbocharged & Low Temperature Aftercooled"
+            if "aftercool" in norm:
+                return "Turbocharged & Aftercooled"
+            if "intercool" in norm or "中冷" in norm:
+                return "Turbocharged & Intercooled"
+            return "Turbocharged"
+    if key == "g_exc":
+        if "pmg" in norm or "永磁" in norm:
+            return "PMG"
+        if "self" in norm or "自励" in norm:
+            return "Self-excited"
+        if "separately" in norm or "他励" in norm:
+            return "Separately excited"
+    return flat
+
+
+def CANON_STORE(key, v):
+    """入库值归一：尺寸/重量/油箱去单位，文本去换行；其余原样返回"""
+    if v is None:
+        return None
+    s = re.sub(r"\s+", " ", str(v).replace("\xa0", " ")).strip()
+    if key in ("o_lwh", "s_lwh"):
+        # "4240*2000*2390 mm" / "4240×2000×2390mm" -> "4240*2000*2390"
+        s = re.sub(r"\s*(mm|MM|Mm)\s*$", "", s)
+        s = s.replace("×", "*").replace("x", "*").replace("X", "*")
+        s = re.sub(r"\s*\*\s*", "*", s).strip()
+        return s
+    if key in ("o_wt", "s_wt"):
+        s = re.sub(r"\s*(kg|KG|Kg)\s*$", "", s).strip()
+        return s
+    if key in ("o_tank", "s_tank"):
+        s = re.sub(r"\s*(L|l|升)\s*$", "", s).strip()
+        return s
+    return s
 
 # 中文版报表值（zh 模板 cell_value_map 用；此处只做英文，中文由模板映射）
 
@@ -409,17 +490,23 @@ def infer_freq(src, freq_raw, fields=None):
     return "50Hz", "default"
 
 
+# 产品系列代码（用户 2026-10-21 Excel「产品系列」定义）
+FAMILIES = ("AW", "AF", "AS", "CU", "P", "B", "DE", "V", "H", "MS", "MT", "M",
+            "YD", "YM", "K", "IS", "FW", "YC", "KL", "SC", "F", "MA", "WP",
+            "MW", "YT", "FP", "R", "TC", "GC")
+
+
 def guess_family(model, src):
-    """系列：AF / AS / GC / 其他"""
-    m = (model or "").upper()
-    for f in ("GC", "AS", "AF"):
-        if m.startswith(f):
+    """系列：按机型型号前缀匹配产品系列代码（长前缀优先，如 AS 先于 A）"""
+    m = re.sub(r"[^A-Z0-9]", "", (model or "").upper())
+    for f in sorted(FAMILIES, key=len, reverse=True):
+        if m.startswith(f) and re.match(r"^\d", m[len(f):len(f) + 1] or ""):
             return f
-    # 从路径猜
+    # 从路径猜：目录名形如 "04-上柴 AS 系列机组参数表"
     up = (src or "").upper()
-    for f in ("GC", "AS", "AF"):
-        if re.search(r"(^|[\\/])" + f + r"[\\/-]", up):
-            return f
+    mm = re.search(r"\b([A-Z]{1,3})\s*系列", up)
+    if mm and mm.group(1) in FAMILIES:
+        return mm.group(1)
     return "其他"
 
 
@@ -751,10 +838,119 @@ def build_model(item, name=None, use_pdf_note=True):
 # ============================================================
 # 区分标签：(400V开架)
 # ============================================================
+# ============================================================
+# 产品结构款式（2026-10-21 用户 Excel《2026年柴发产品配置大纲》定）
+#   文件名的括号备注即款式，如 "(G TYPE)" / "(LE TYPE)" / "(T-G TYPE)"
+#   A/W = 开架；D/K/Y/L/G/E/LE/R = 静音；C = 集装箱；T-* = 拖车
+#   用户 A 方案：无款式标记的文件只保留 Open，Silent 数据清除
+# ============================================================
+STYLE_BOX = {
+    "A": "开架", "W": "开架",
+    "D": "静音", "K": "静音", "Y": "静音", "LY": "静音", "LG": "静音",
+    "L": "静音", "G": "静音", "E": "静音", "R": "静音", "LE": "静音",
+    "C": "集装箱", "KW": "集装箱",
+}
+_OPEN_KEYS = ("o_lwh", "o_wt", "o_tank", "o_db1", "o_db7")
+_SILENT_KEYS = ("s_lwh", "s_wt", "s_tank", "s_db1", "s_db7")
+
+# 括号里的备注 → 款式代码（严格匹配，不含 中文版/旧版本/电压 等）
+_STYLE_RE = re.compile(
+    r"^(T\s*-\s*[A-Z]{1,2}|KW|LY|LG|LE|[ADKYLGERCW])\s*[-_]?\s*TYPE$", re.I)
+
+
+def parse_style(src):
+    """从文件名的括号备注里取款式代码，如 'G TYPE' -> 'G'，'T-G TYPE' -> 'T-G'；无则返回 ''"""
+    fn = os.path.basename((src or "").replace("\\", "/"))
+    fn = re.sub(r"\.(pptx|ppt|pdf)$", "", fn, flags=re.I)
+    for m in re.finditer(r"[(（]([^)）]{1,40})[)）]", fn):
+        raw = re.sub(r"\s+", " ", m.group(1)).strip()
+        # WHITE G TYPE / 208V G TYPE 等前缀修饰：取最后的 X TYPE
+        mm = re.search(r"(T\s*-\s*[A-Z]{1,2}|KW|LY|LG|LE|[ADKYLGERCW])\s*[-_]?\s*TYPE$", raw, re.I)
+        if mm:
+            code = re.sub(r"\s+", "", mm.group(1)).upper()
+            if _STYLE_RE.match(code + " TYPE"):
+                return code
+    return ""
+
+
+def style_box(code):
+    """款式代码 -> 箱型（开架/静音/集装箱/拖车）；未知返回 ''"""
+    if not code:
+        return ""
+    if code.startswith("T-") or code == "T":
+        return "拖车"
+    return STYLE_BOX.get(code, "")
+
+
+# ============================================================
+# 机组型号 / 发动机型号 拆分（2026-10-21 用户定）
+#   文件名：AS2500E5-12KTA58-G31
+#            左侧 = 机组型号  右侧 = 发动机型号
+#   机组型号规则（用户 Excel 第 65 行）：
+#     系列代码(1-3字母) + 备用功率kVA + 类型(D/E/G) + 频率(5/6) + 款式字母? + /1P?
+#     例：CU110D5G / AS2500E5 / B1000D5A / P10D5 / CU28E5-1P
+# ============================================================
+_UNIT_MODEL_RE = re.compile(
+    r"^[A-Z]{1,3}\d{1,5}[DEG]?[56]/?[A-Z0-9]{0,4}$", re.I)
+
+# 文件名左侧不像机组型号的词（模板/照片/客户名等），一律不当型号
+_UNIT_BAD_WORDS = re.compile(
+    r"模板|模版|样板|照片|图片|英文版|中文版|俄语版|旧|Engine|HP$|TBA|^VPS$", re.I)
+
+
+def split_unit_engine(src):
+    """从文件名拆出 (机组型号, 发动机型号)。
+    例：'DG SPEC AS2500E5-12KTA58-G31(中文版10.5KV).pptx'
+        -> ('AS2500E5', '12KTA58-G31')
+    拆不出时返回 ('', '')。"""
+    fn = os.path.basename((src or "").replace("\\", "/"))
+    fn = re.sub(r"\.(pptx|ppt|pdf)$", "", fn, flags=re.I)
+    # 去掉括号备注
+    fn = re.sub(r"[(（][^)）]*[)）]", " ", fn)
+    fn = re.sub(r"^(旧|新)\s*", "", fn.strip())
+    fn = re.sub(r"^DG\s*SPEC\s+", "", fn, flags=re.I).strip()
+    # 按第一个 "-" 拆：左侧机组型号，右侧发动机型号（发动机含 "-" 也归右侧）
+    # 文件名常无空格：AS2500E5-12KTA58-G31
+    if " " in fn.split("-")[0].strip():
+        # 左侧带空格说明首段不是型号（如 "C20 TYPE - 403A"），取第一个词
+        pass
+    first = fn.split()[0] if fn.split() else ""
+    if "-" not in first:
+        return "", ""
+    segs = first.split("-")
+    # 相数标记 "1P" / "3P" 不是发动机型号的一部分，也不属于机组型号主体
+    phase = ""
+    if len(segs) > 2 and re.fullmatch(r"[13]P", segs[1].strip(), re.I):
+        phase = segs[1].strip().upper()
+        segs = [segs[0]] + segs[2:]
+    first = "-".join(segs)
+    left, right = first.split("-", 1)
+    left = left.strip()
+    right = right.strip()
+    if phase and "/" not in left:
+        left = left + "/" + phase
+    # 右侧可能接空格段（如 "- R TYPE"），只留首个词
+    if right and " " in right:
+        right = right.split()[0]
+    if not left or not right:
+        return "", ""
+    if _UNIT_BAD_WORDS.search(left):
+        return "", ""
+    if not _UNIT_MODEL_RE.match(left):
+        return "", ""
+    return left.upper(), right.upper()
+
+
+def unit_model_of(src, fallback=""):
+    """取机组型号；拆不出时返回 fallback"""
+    u, _e = split_unit_engine(src)
+    return u or fallback
+
+
 def box_kind(fields):
     """判断箱体：开架 open / 静音 silent / 都有"""
-    has_o = any(fields.get(k) for k in ("o_lwh", "o_wt", "o_tank", "o_db1", "o_db7"))
-    has_s = any(fields.get(k) for k in ("s_lwh", "s_wt", "s_tank", "s_db1", "s_db7"))
+    has_o = any(fields.get(k) for k in _OPEN_KEYS)
+    has_s = any(fields.get(k) for k in _SILENT_KEYS)
     if has_o and has_s:
         return "开架静音"
     if has_s:
@@ -771,11 +967,19 @@ def voltage_tag(fields):
     return (m.group(1) + "V") if m else ""
 
 
-def make_label(fields):
-    """生成区分标签，如 '400V开架'；都取不到返回空"""
+def make_label(fields, style=""):
+    """生成区分标签：有款式时 '400V G款'，无款式时 '400V开架'"""
+    if style:
+        return "".join(p for p in (voltage_tag(fields), style + "款") if p)
     parts = [voltage_tag(fields), box_kind(fields)]
     tag = "".join(p for p in parts if p)
     return tag
+
+
+def strip_silent(fields):
+    """用户 A 方案：无款式标记的文件只留 Open，静音字段全部清除"""
+    out = {k: v for k, v in fields.items() if k not in _SILENT_KEYS}
+    return out
 
 
 # ============================================================
@@ -792,13 +996,36 @@ def merge_items(raw_items):
         src = it.get("source_file") or ""
         is_pdf = src.lower().endswith(".pdf")
         # 只信 PPTX；PDF 单独记，供兜底
-        model_guess = (it.get("model_guess") or "").strip() or "未识别"
+        raw_model = (it.get("model_guess") or "").strip() or "未识别"
+        # 型号分离（用户 2026-10-21 定）：文件名左侧=机组型号，右侧=发动机型号
+        unit_model, engine_model = split_unit_engine(src)
+        model_guess = unit_model or raw_model
         fields, notes = parse_item(it)
-        tag = make_label(fields)
-        key = (model_guess, tag)
+        if engine_model:
+            notes.append("发动机型号（文件名）：%s" % engine_model)
+            if not fields.get("e_model"):
+                fields["e_model"] = engine_model
+        if unit_model and unit_model != raw_model:
+            notes.append("机组型号：%s（原识别 %s）" % (unit_model, raw_model))
+        # 款式从文件名括号备注取（用户 2026-10-21 Excel 定义）
+        style = parse_style(src)
+        if style:
+            box = style_box(style)
+            # 款式=开架/集装箱/拖车 -> 保留 Open 尺寸；款式=静音系列 -> 保留 Silent 尺寸
+            if box and box != "静音":
+                fields = strip_silent(fields)
+            notes.append("款式 %s（%s）" % (style, box or "未知"))
+        else:
+            # 无款式标记：用户 A 方案 -> 只留 Open，Silent 清除
+            fields = strip_silent(fields)
+            notes.append("无款式标记：按 A 方案只保留开架数据")
+        tag = make_label(fields, style)
+        # 配置变体（用户 2026-10-21 选方案 1）：同一机组型号但发动机不同 -> 拆成独立机型
+        variant = (engine_model or fields.get("e_model") or "").strip().upper()
+        key = (model_guess, tag, variant)
         g = groups.setdefault(key, {
-            "model": model_guess, "tag": tag, "pptx": [], "pdf": [],
-            "srcs": [], "notes": [],
+            "model": model_guess, "tag": tag, "variant": variant,
+            "pptx": [], "pdf": [], "srcs": [], "notes": [],
         })
         g["srcs"].append(src)
         g["notes"].extend(notes)
@@ -808,11 +1035,11 @@ def merge_items(raw_items):
     # PDF 版常缺箱体信息 -> tag 只有 "400V"，而 PPTX 版是 "400V开架静音"，
     # 会被当成两个机型。规则：同型号下，若 tag A 是 tag B 的前缀（A 信息更少，
     # 且 A 没有箱体词），把 A 的源并入 B。
-    by_model = {}
-    for (model, tag) in list(groups):
-        by_model.setdefault(model, []).append(tag)
+    by_key = {}
+    for (model, tag, variant) in list(groups):
+        by_key.setdefault((model, variant), []).append(tag)
     merge_map = {}
-    for model, tags in by_model.items():
+    for (model, variant), tags in by_key.items():
         if len(tags) < 2:
             continue
         tags_sorted = sorted(tags, key=len, reverse=True)   # 信息最全的在前
@@ -822,25 +1049,26 @@ def merge_items(raw_items):
             for poor in tags_sorted[i + 1:]:
                 if poor in merge_map:
                     continue
-                # poor 必须是 rich 的前缀（如 "400V" 是 "400V开架静音" 的前缀）
-                box_words = ("开架", "静音")
+                # poor 必须是 rich 的前缀（如 "400V" 是 "400V开架" 的前缀）
+                # 但带「款」字的标签（具体款式）不允许被合并，否则款式会丢
+                box_words = ("开架", "静音", "款")
                 if rich.startswith(poor) and not any(w in poor for w in box_words):
-                    merge_map[(model, poor)] = (model, rich)
+                    merge_map[(model, poor, variant)] = (model, rich, variant)
 
-    for (model, poor), richkey in list(merge_map.items()):
-        src_g, dst_g = groups.get((model, poor)), groups.get(richkey)
+    for poor, richkey in list(merge_map.items()):
+        src_g, dst_g = groups.get(poor), groups.get(richkey)
         if not src_g or not dst_g or src_g is dst_g:
             continue
         dst_g["pptx"] += src_g["pptx"]
         dst_g["pdf"] += src_g["pdf"]
         dst_g["srcs"] += src_g["srcs"]
         dst_g["notes"] += src_g["notes"]
-        del groups[(model, poor)]
+        del groups[poor]
 
     models = []
     renames = []
     used_names = set()
-    for (model, tag), g in groups.items():
+    for (model, tag, variant), g in groups.items():
         # 优先 PPTX；没有 PPTX 才用 PDF
         src_list = g["pptx"] if g["pptx"] else g["pdf"]
         if not src_list:
@@ -871,6 +1099,11 @@ def merge_items(raw_items):
             for k, v in fields.items():
                 if v in (None, ""):
                     continue
+                # 语义归一（中英文/换行/异体写法）后再比较，避免假冲突
+                v = canon_value(k, v)
+                v = CANON_STORE(k, v)
+                if v in (None, ""):
+                    continue
                 if k in FREQ_FIELDS:
                     if k == "freq":
                         nv = normalize_freq_str(v)
@@ -891,7 +1124,10 @@ def merge_items(raw_items):
                         conflicts.append((k, common[k], v, src))
         if not freqs:
             continue
+        # 命名：机组型号 (电压+款式) + 发动机变体
         base_name = model if not tag else "%s (%s)" % (model, tag)
+        if variant:
+            base_name = "%s [%s]" % (base_name, variant)
         name = base_name
         n = 2
         while name in used_names:
@@ -1023,6 +1259,17 @@ def cross_check(models):
 # ============================================================
 # CLI
 # ============================================================
+# 旧版本文件特征（用户 2026-10-21 定：直接丢掉，不入库）
+_OLD_RE = re.compile(r"旧\s*版本|旧版|旧\s*DG|^旧\s|\s-旧|旧图|旧参数", re.I)
+
+
+def is_old_version(src):
+    """文件名带旧版本标记 -> True（丢弃）"""
+    fn = os.path.basename((src or "").replace("\\", "/"))
+    fn = re.sub(r"\.(pptx|ppt|pdf)$", "", fn, flags=re.I)
+    return bool(_OLD_RE.search(fn))
+
+
 def load_items(src_dir):
     files = []
     for root, _dirs, fs in os.walk(src_dir):
@@ -1031,11 +1278,20 @@ def load_items(src_dir):
                 files.append(os.path.join(root, fn))
     files.sort()
     out = []
+    n_old = 0
     for p in files:
         try:
-            out.append(json.load(open(p, encoding="utf-8")))
+            d = json.load(open(p, encoding="utf-8"))
         except Exception as e:
             print("跳过坏文件 %s: %s" % (p, e), file=sys.stderr)
+            continue
+        # 旧版本直接丢弃（用户 2026-10-21 定）
+        if is_old_version(d.get("source_file") or d.get("source_rel") or ""):
+            n_old += 1
+            continue
+        out.append(d)
+    if n_old:
+        print("丢弃旧版本文件 %d 份" % n_old)
     return out
 
 

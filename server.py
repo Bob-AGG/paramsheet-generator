@@ -180,6 +180,41 @@ async def parse_datasheet_api(request: Request):
             "found": len(fields), "meta": meta}
 
 
+# ===== 上传图归一（2026-10-21）：统一 1600×1200 白底居中，不裁不拉伸 =====
+CANVAS_W, CANVAS_H = 1600, 1200
+CANVAS_MARGIN = 0.04
+
+
+def _normalize_image(raw_bytes, canvas_w=CANVAS_W, canvas_h=CANVAS_H,
+                     margin=CANVAS_MARGIN, quality=85):
+    """把任意图片放进统一画布：等比缩放、白底居中、四周留白、不裁切不拉伸。
+
+    返回 JPG 字节流。
+    """
+    import io
+    from PIL import Image
+
+    img = Image.open(io.BytesIO(raw_bytes))
+    img = img.convert("RGB")
+
+    pad_x = int(canvas_w * margin)
+    pad_y = int(canvas_h * margin)
+    box_w = canvas_w - pad_x * 2
+    box_h = canvas_h - pad_y * 2
+
+    scale = min(box_w / float(img.width), box_h / float(img.height))
+    new_w = max(1, int(round(img.width * scale)))
+    new_h = max(1, int(round(img.height * scale)))
+    img = img.resize((new_w, new_h), Image.LANCZOS)
+
+    canvas = Image.new("RGB", (canvas_w, canvas_h), (255, 255, 255))
+    canvas.paste(img, ((canvas_w - new_w) // 2, (canvas_h - new_h) // 2))
+
+    buf = io.BytesIO()
+    canvas.save(buf, format="JPEG", quality=quality, optimize=True)
+    return buf.getvalue()
+
+
 @app.post("/api/upload-image")
 async def upload_image(request: Request):
     """上传机组照片（开架/静音）。
@@ -203,10 +238,44 @@ async def upload_image(request: Request):
     # 安全文件名（去掉路径分隔符）
     safe = "".join(c for c in model if c not in "/\\:*?\"<>|")
     os.makedirs(IMAGES, exist_ok=True)
-    dst = os.path.join(IMAGES, "%s_%s.png" % (safe, kind.upper()))
-    with open(dst, "wb") as f:
-        f.write(content)
-    return {"ok": True, "file": "%s_%s.png" % (safe, kind.upper()), "kind": kind}
+
+    base = "%s_%s" % (safe, kind.upper())
+    # 2026-10-21：入库图统一规格（1600×1200 白底居中），与批量整理一致
+    ext = "png"
+    out_bytes = None
+    try:
+        out_bytes = _normalize_image(content, CANVAS_W, CANVAS_H)
+        ext = "jpg"
+    except Exception as e:
+        print("  ! 图片归一失败，按原样保存:", e, file=sys.stderr)
+
+    if out_bytes:
+        dst = os.path.join(IMAGES, "%s.%s" % (base, ext))
+        with open(dst, "wb") as f:
+            f.write(out_bytes)
+        # 清掉同名其它格式，避免 find_images 取到旧图
+        for old_ext in ("png", "jpg", "jpeg", "PNG", "JPG"):
+            if old_ext == ext:
+                continue
+            op = os.path.join(IMAGES, "%s.%s" % (base, old_ext))
+            if os.path.exists(op):
+                try:
+                    os.remove(op)
+                except Exception:
+                    pass
+    else:
+        # 归一失败：按原扩展名原样存
+        src_ext = os.path.splitext(getattr(up, "filename", "") or "")[1].lower().lstrip(".")
+        ext = src_ext if src_ext in ("png", "jpg", "jpeg") else "png"
+        dst = os.path.join(IMAGES, "%s.%s" % (base, ext))
+        with open(dst, "wb") as f:
+            f.write(content)
+
+    try:
+        os.chmod(dst, 0o644)
+    except Exception:
+        pass
+    return {"ok": True, "file": "%s.%s" % (base, ext), "kind": kind}
 
 
 @app.get("/api/images")
@@ -216,8 +285,14 @@ def list_images(model: str = ""):
     if not model:
         return {"ok": True, "images": {}}
     found = image_utils.find_images(IMAGES, model)
-    return {"ok": True, "images": {k: (os.path.basename(v) if v else None)
-                                    for k, v in found.items()}}
+    # found 里除 open/silent 外还有 _badge(dict)、_fallback(dict)，只回图片路径
+    out = {}
+    for k in ("open", "silent"):
+        v = found.get(k)
+        out[k] = os.path.basename(v) if isinstance(v, str) and v else None
+    return {"ok": True, "images": out,
+            "badge": found.get("_badge") or {},
+            "fallback": found.get("_fallback") or {}}
 
 
 # ============================================================
@@ -316,6 +391,10 @@ def health():
 
 # 前端静态页
 app.mount("/static", StaticFiles(directory=HERE), name="static")
+
+# 图片库（机组照片）：/images/<型号>_OPEN.jpg
+os.makedirs(IMAGES, exist_ok=True)
+app.mount("/images", StaticFiles(directory=IMAGES), name="images")
 
 
 @app.get("/", response_class=HTMLResponse)
