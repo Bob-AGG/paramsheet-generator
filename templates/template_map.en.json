@@ -1,343 +1,347 @@
 {
-  "lang": "en",
-  "template": "templates/template_en.pptx",
-  "source": "英文版-技术参数PPT模板-20250427.pptx",
-  "generated": "2026-10-16",
-  "note": "字段名 <-> 单元格坐标映射。坐标 [row, col] 为该表格内的行列索引（0 基）。fuel_consumption.lines 走多行写入。multiline_fields 每行一条。",
-  "title": "Industrial Range Powered By {engine_brand}",
-  "slides": [
+ "lang": "en",
+ "template": "templates/template_en.pptx",
+ "source": "英文版-技术参数PPT模板-20250427.pptx",
+ "generated": "2026-10-16",
+ "note": "字段名 <-> 单元格坐标映射。坐标 [row, col] 为该表格内的行列索引（0 基）。fuel_consumption.lines 走多行写入。multiline_fields 每行一条。",
+ "title": "Industrial Range Powered By {engine_brand}",
+ "slides": [
+  {
+   "slide": 1,
+   "tables": [
     {
-      "slide": 1,
-      "tables": [
-        {
-          "idx": 0,
-          "rows": 6,
-          "cols": 3,
-          "purpose": "power_rating",
-          "fields": {
-            "prp_kva": [
-              1,
-              1
-            ],
-            "eps_kva": [
-              1,
-              2
-            ],
-            "prp_kw": [
-              2,
-              1
-            ],
-            "eps_kw": [
-              2,
-              2
-            ],
-            "freq_phase_pf": [
-              3,
-              1
-            ],
-            "std_v": [
-              4,
-              1
-            ],
-            "opt_v": [
-              5,
-              1
-            ]
-          },
-          "nowrap_fields": [
-            "prp_kva",
-            "eps_kva",
-            "prp_kw",
-            "eps_kw"
-          ]
-        },
-        {
-          "idx": 1,
-          "rows": 10,
-          "cols": 3,
-          "purpose": "performance_data",
-          "fields": {
-            "e_brand": [
-              1,
-              2
-            ],
-            "e_model": [
-              2,
-              2
-            ],
-            "e_fuel": [
-              3,
-              2
-            ],
-            "e_asp": [
-              4,
-              2
-            ],
-            "e_cool": [
-              5,
-              2
-            ],
-            "e_gov": [
-              6,
-              2
-            ],
-            "e_cyl": [
-              7,
-              2
-            ]
-          },
-          "fuel_consumption": {
-            "cell": [
-              9,
-              2
-            ],
-            "mode": "list",
-            "data_key": "fc_lines"
-          }
-        },
-        {
-          "idx": 2,
-          "rows": 5,
-          "cols": 3,
-          "purpose": "dimensions",
-          "fields": {
-            "o_lwh": [
-              1,
-              1
-            ],
-            "s_lwh": [
-              1,
-              2
-            ],
-            "o_wt": [
-              2,
-              1
-            ],
-            "s_wt": [
-              2,
-              2
-            ],
-            "o_tank": [
-              3,
-              1
-            ],
-            "s_tank": [
-              3,
-              2
-            ]
-          },
-          "nowrap_fields": [
-            "o_lwh",
-            "s_lwh"
-          ]
-        }
+     "idx": 0,
+     "rows": 6,
+     "cols": 3,
+     "purpose": "power_rating",
+     "fields": {
+      "prp_kva": [
+       1,
+       1
       ],
-      "shapes": [
-        {
-          "shape": 14,
-          "purpose": "sound_pressure",
-          "field": "sound_db",
-          "mode": "list"
-        },
-        {
-          "shape": 20,
-          "purpose": "freq_tag",
-          "field": "freq_tag"
-        }
+      "eps_kva": [
+       1,
+       2
+      ],
+      "prp_kw": [
+       2,
+       1
+      ],
+      "eps_kw": [
+       2,
+       2
+      ],
+      "freq_phase_pf": [
+       3,
+       1
+      ],
+      "std_v": [
+       4,
+       1
+      ],
+      "opt_v": [
+       5,
+       1
       ]
+     },
+     "nowrap_fields": [
+      "prp_kva",
+      "eps_kva",
+      "prp_kw",
+      "eps_kw"
+     ]
     },
     {
-      "slide": 2,
-      "tables": [
-        {
-          "idx": 0,
-          "rows": 9,
-          "cols": 2,
-          "purpose": "engine_basic_data",
-          "fields": {
-            "e_brand": [
-              1,
-              1
-            ],
-            "e_model": [
-              2,
-              1
-            ],
-            "displ": [
-              3,
-              1
-            ],
-            "cyl_arr": [
-              4,
-              1
-            ],
-            "bore": [
-              5,
-              1
-            ],
-            "rpm": [
-              7,
-              1
-            ]
-          }
-        },
-        {
-          "idx": 1,
-          "rows": 4,
-          "cols": 2,
-          "purpose": "exhaust_system",
-          "fields": {
-            "ex_t": [
-              1,
-              1
-            ],
-            "ex_f": [
-              2,
-              1
-            ],
-            "ex_bp": [
-              3,
-              1
-            ]
-          }
-        },
-        {
-          "idx": 2,
-          "rows": 3,
-          "cols": 2,
-          "purpose": "fuel_system",
-          "fields": {
-            "fu_res": [
-              1,
-              1
-            ],
-            "fu_max": [
-              2,
-              1
-            ]
-          }
-        },
-        {
-          "idx": 3,
-          "rows": 4,
-          "cols": 2,
-          "purpose": "cooling_system",
-          "fields": {
-            "co_air": [
-              1,
-              1
-            ],
-            "co_oil": [
-              2,
-              1
-            ],
-            "co_cool": [
-              3,
-              1
-            ]
-          }
-        },
-        {
-          "idx": 4,
-          "rows": 4,
-          "cols": 2,
-          "purpose": "electrical_system",
-          "fields": {
-            "el_v": [
-              1,
-              1
-            ],
-            "el_bat": [
-              2,
-              1
-            ],
-            "el_alt": [
-              3,
-              1
-            ]
-          }
-        },
-        {
-          "idx": 5,
-          "rows": 5,
-          "cols": 2,
-          "purpose": "inlet_air",
-          "fields": {
-            "in_flt": [
-              1,
-              1
-            ],
-            "in_res": [
-              2,
-              1
-            ],
-            "in_flow": [
-              3,
-              1
-            ],
-            "in_t": [
-              4,
-              1
-            ]
-          }
-        },
-        {
-          "idx": 6,
-          "rows": 7,
-          "cols": 2,
-          "purpose": "alternator_basic_data",
-          "fields": {
-            "g_insul": [
-              1,
-              1
-            ],
-            "g_exc": [
-              2,
-              1
-            ],
-            "g_lead": [
-              3,
-              1
-            ],
-            "g_conn": [
-              4,
-              1
-            ],
-            "g_pitch": [
-              5,
-              1
-            ],
-            "g_phase": [
-              6,
-              1
-            ]
-          }
-        },
-        {
-          "idx": 7,
-          "rows": 7,
-          "cols": 2,
-          "purpose": "alternator_structure",
-          "fields": {
-            "g_brg": [
-              2,
-              1
-            ]
-          }
-        }
+     "idx": 1,
+     "rows": 10,
+     "cols": 3,
+     "purpose": "performance_data",
+     "fields": {
+      "e_brand": [
+       1,
+       2
+      ],
+      "e_model": [
+       2,
+       2
+      ],
+      "e_fuel": [
+       3,
+       2
+      ],
+      "e_asp": [
+       4,
+       2
+      ],
+      "e_cool": [
+       5,
+       2
+      ],
+      "e_gov": [
+       6,
+       2
+      ],
+      "e_cyl": [
+       7,
+       2
       ]
+     },
+     "fuel_consumption": {
+      "cell": [
+       9,
+       2
+      ],
+      "mode": "list",
+      "data_key": "fc_lines"
+     }
     },
     {
-      "slide": 3,
-      "tables": [],
-      "note": "2026-10-19 用户新模板：第3页=整页背景图(页面bg)，第4页=整页图片；均为纯版式，不填数据",
-      "shapes": []
-    },
-    {
-      "slide": 4,
-      "tables": [],
-      "shapes": [],
-      "note": "2026-10-19 用户新模板：第3页=整页背景图(页面bg)，第4页=整页图片；均为纯版式，不填数据"
+     "idx": 2,
+     "rows": 5,
+     "cols": 3,
+     "purpose": "dimensions",
+     "fields": {
+      "o_lwh": [
+       1,
+       1
+      ],
+      "s_lwh": [
+       1,
+       2
+      ],
+      "o_wt": [
+       2,
+       1
+      ],
+      "s_wt": [
+       2,
+       2
+      ],
+      "o_tank": [
+       3,
+       1
+      ],
+      "s_tank": [
+       3,
+       2
+      ]
+     },
+     "nowrap_fields": [
+      "o_lwh",
+      "s_lwh"
+     ]
     }
-  ]
+   ],
+   "shapes": [
+    {
+     "shape": 14,
+     "purpose": "sound_pressure",
+     "field": "sound_db",
+     "mode": "list"
+    },
+    {
+     "shape": 20,
+     "purpose": "freq_tag",
+     "field": "freq_tag"
+    }
+   ]
+  },
+  {
+   "slide": 2,
+   "tables": [
+    {
+     "idx": 0,
+     "rows": 9,
+     "cols": 2,
+     "purpose": "engine_basic_data",
+     "fields": {
+      "e_brand": [
+       1,
+       1
+      ],
+      "e_model": [
+       2,
+       1
+      ],
+      "displ": [
+       3,
+       1
+      ],
+      "cyl_arr": [
+       4,
+       1
+      ],
+      "bore": [
+       5,
+       1
+      ],
+      "rpm": [
+       7,
+       1
+      ]
+     }
+    },
+    {
+     "idx": 1,
+     "rows": 4,
+     "cols": 2,
+     "purpose": "exhaust_system",
+     "fields": {
+      "ex_t": [
+       1,
+       1
+      ],
+      "ex_f": [
+       2,
+       1
+      ],
+      "ex_bp": [
+       3,
+       1
+      ]
+     }
+    },
+    {
+     "idx": 2,
+     "rows": 3,
+     "cols": 2,
+     "purpose": "fuel_system",
+     "fields": {
+      "fu_res": [
+       1,
+       1
+      ],
+      "fu_max": [
+       2,
+       1
+      ]
+     }
+    },
+    {
+     "idx": 3,
+     "rows": 4,
+     "cols": 2,
+     "purpose": "cooling_system",
+     "fields": {
+      "co_air": [
+       1,
+       1
+      ],
+      "co_oil": [
+       2,
+       1
+      ],
+      "co_cool": [
+       3,
+       1
+      ]
+     }
+    },
+    {
+     "idx": 4,
+     "rows": 4,
+     "cols": 2,
+     "purpose": "electrical_system",
+     "fields": {
+      "el_v": [
+       1,
+       1
+      ],
+      "el_bat": [
+       2,
+       1
+      ],
+      "el_alt": [
+       3,
+       1
+      ]
+     }
+    },
+    {
+     "idx": 5,
+     "rows": 5,
+     "cols": 2,
+     "purpose": "inlet_air",
+     "fields": {
+      "in_flt": [
+       1,
+       1
+      ],
+      "in_res": [
+       2,
+       1
+      ],
+      "in_flow": [
+       3,
+       1
+      ],
+      "in_t": [
+       4,
+       1
+      ]
+     }
+    },
+    {
+     "idx": 6,
+     "rows": 8,
+     "cols": 2,
+     "purpose": "alternator_basic_data",
+     "fields": {
+      "g_model": [
+       1,
+       1
+      ],
+      "g_insul": [
+       2,
+       1
+      ],
+      "g_exc": [
+       3,
+       1
+      ],
+      "g_lead": [
+       4,
+       1
+      ],
+      "g_conn": [
+       5,
+       1
+      ],
+      "g_pitch": [
+       6,
+       1
+      ],
+      "g_phase": [
+       7,
+       1
+      ]
+     }
+    },
+    {
+     "idx": 7,
+     "rows": 7,
+     "cols": 2,
+     "purpose": "alternator_structure",
+     "fields": {
+      "g_brg": [
+       2,
+       1
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "slide": 3,
+   "tables": [],
+   "note": "2026-10-19 用户新模板：第3页=整页背景图(页面bg)，第4页=整页图片；均为纯版式，不填数据",
+   "shapes": []
+  },
+  {
+   "slide": 4,
+   "tables": [],
+   "shapes": [],
+   "note": "2026-10-19 用户新模板：第3页=整页背景图(页面bg)，第4页=整页图片；均为纯版式，不填数据"
+  }
+ ]
 }
