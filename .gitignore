@@ -22,3 +22,10 @@ _bak_*/
 ._*
 swp
 *.swp
+
+# 例外：发动机动力库（数据资产，需要版本管理）
+!data/
+data/*
+!data/engine_50hz.json
+!data/engine_60hz.json
+!data/engine_fuel.json
