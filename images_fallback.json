@@ -1,0 +1,2567 @@
+{
+ "5D5-AF2270-23D": {
+  "src": "AF11D5",
+  "level": "engine",
+  "engine": "AF2270-23D",
+  "src_engine": "AF2270-23D",
+  "file": "AF11D5_OPEN.jpg"
+ },
+ "7D5-1P-3TNV88-GGE": {
+  "src": "YM13D5",
+  "level": "engine",
+  "engine": "3TNV88-GGE",
+  "src_engine": "3TNV88-GGE",
+  "file": "YM13D5_OPEN.jpg"
+ },
+ "AF10D6-1P": {
+  "src": "AF11D5",
+  "level": "platform",
+  "engine": "AF2270-28D",
+  "src_engine": "AF2270-23D",
+  "platform": "AF2270",
+  "file": "AF11D5_OPEN.jpg"
+ },
+ "AF15D5": {
+  "src": "AF11D5",
+  "level": "engine",
+  "engine": "AF2270-23D",
+  "src_engine": "AF2270-23D",
+  "file": "AF11D5_OPEN.jpg"
+ },
+ "AF16D5-1P": {
+  "src": "AF11D5",
+  "level": "engine",
+  "engine": "AF2270-23D",
+  "src_engine": "AF2270-23D",
+  "file": "AF11D5_OPEN.jpg"
+ },
+ "AF17D6-1P": {
+  "src": "AF11D5",
+  "level": "platform",
+  "engine": "AF2270-28D",
+  "src_engine": "AF2270-23D",
+  "platform": "AF2270",
+  "file": "AF11D5_OPEN.jpg"
+ },
+ "AF22D6": {
+  "src": "AF11D5",
+  "level": "platform",
+  "engine": "AF2270-28D",
+  "src_engine": "AF2270-23D",
+  "platform": "AF2270",
+  "file": "AF11D5_OPEN.jpg"
+ },
+ "AF40D6-1P": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-61D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF44D5-1P": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-65D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF44D6": {
+  "src": "AF44D5",
+  "level": "engine",
+  "engine": "AF3860-53D",
+  "src_engine": "AF3860-53D",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF50D6": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-61D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF53D5-1P": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-78D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF53D6-1P": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-75D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF55D5": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-65D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF55D5-1P": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-65D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF60D6-1P": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-90D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF66D5": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-78D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF66D6": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-75D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AF75D6": {
+  "src": "AF44D5",
+  "level": "platform",
+  "engine": "AF3860-90D",
+  "src_engine": "AF3860-53D",
+  "platform": "AF3860",
+  "file": "AF44D5_OPEN.jpg"
+ },
+ "AS1000E5A": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G320",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS1100E5A": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G321",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS110D5": {
+  "src": "AS100D5",
+  "level": "engine",
+  "engine": "4HTAA4.3-G21A",
+  "src_engine": "4HTAA4.3-G21A",
+  "file": "AS100D5_OPEN.jpg"
+ },
+ "AS110D6": {
+  "src": "AS100D5",
+  "level": "engine",
+  "engine": "4HTAA4.3-G21A",
+  "src_engine": "4HTAA4.3-G21A",
+  "file": "AS100D5_OPEN.jpg"
+ },
+ "AS1250E5": {
+  "src": "AS1000E5",
+  "level": "platform",
+  "engine": "6WTAA35-G310",
+  "src_engine": "6WTAA35-G32",
+  "platform": "6WTAA35",
+  "file": "AS1000E5_OPEN.jpg"
+ },
+ "AS125D5": {
+  "src": "AS100D5",
+  "level": "platform",
+  "engine": "4HTAA4.3-G23A",
+  "src_engine": "4HTAA4.3-G21A",
+  "platform": "4HTAA4.3",
+  "file": "AS100D5_OPEN.jpg"
+ },
+ "AS125D6": {
+  "src": "AS100D5",
+  "level": "engine",
+  "engine": "4HTAA4.3-G21A",
+  "src_engine": "4HTAA4.3-G21A",
+  "file": "AS100D5_OPEN.jpg"
+ },
+ "AS138D5": {
+  "src": "AS100D5",
+  "level": "platform",
+  "engine": "4HTAA4.3-G22A",
+  "src_engine": "4HTAA4.3-G21A",
+  "platform": "4HTAA4.3",
+  "file": "AS100D5_OPEN.jpg"
+ },
+ "AS138D6": {
+  "src": "AS100D5",
+  "level": "platform",
+  "engine": "4HTAA4.3-G23A",
+  "src_engine": "4HTAA4.3-G21A",
+  "platform": "4HTAA4.3",
+  "file": "AS100D5_OPEN.jpg"
+ },
+ "AS150E5": {
+  "src": "AS100D5",
+  "level": "platform",
+  "engine": "4HTAA4.3-G36",
+  "src_engine": "4HTAA4.3-G21A",
+  "platform": "4HTAA4.3",
+  "file": "AS100D5_OPEN.jpg"
+ },
+ "AS165D5": {
+  "src": "AS150D5",
+  "level": "platform",
+  "engine": "6HTAA6.5-G22",
+  "src_engine": "6HTAA6.5-G21",
+  "platform": "6HTAA6.5",
+  "file": "AS150D5_OPEN.jpg"
+ },
+ "AS18D5-1P": {
+  "src": "AS22D5",
+  "level": "engine",
+  "engine": "4Z2.7-G21",
+  "src_engine": "4Z2.7-G21",
+  "file": "AS22D5_OPEN.jpg"
+ },
+ "AS206D5": {
+  "src": "AS150D5",
+  "level": "platform",
+  "engine": "6HTAA6.5-G23",
+  "src_engine": "6HTAA6.5-G21",
+  "platform": "6HTAA6.5",
+  "file": "AS150D5_OPEN.jpg"
+ },
+ "AS220D5": {
+  "src": "AS250D5",
+  "level": "platform",
+  "engine": "6DTAA8.9-G21",
+  "src_engine": "6DTAA8.9-G24",
+  "platform": "6DTAA8.9",
+  "file": "AS250D5_OPEN.jpg"
+ },
+ "AS22D6-1P": {
+  "src": "AS22D5",
+  "level": "engine",
+  "engine": "4Z2.7-G21",
+  "src_engine": "4Z2.7-G21",
+  "file": "AS22D5_OPEN.jpg"
+ },
+ "AS2700-G21": {
+  "src": "AS22D5EW",
+  "level": "platform",
+  "engine": "AS2700-G21",
+  "src_engine": "AS2700-Z0024",
+  "platform": "AS2700",
+  "file": "AS22D5EW_OPEN.jpg"
+ },
+ "AS275D5": {
+  "src": "AS250D5",
+  "level": "platform",
+  "engine": "6DTAA8.9-G33",
+  "src_engine": "6DTAA8.9-G24",
+  "platform": "6DTAA8.9",
+  "file": "AS250D5_OPEN.jpg"
+ },
+ "AS550E5A": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G311",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS625E5": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G310",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS625E6": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G311",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS688E5": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G310",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS713E5": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G38",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS750E6": {
+  "src": "AS700E5",
+  "level": "engine",
+  "engine": "6KTAA25-G39",
+  "src_engine": "6KTAA25-G39",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS750E6A": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G38",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS770E5": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G38",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS800E5": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G32",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS825E5": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G32",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS900E5": {
+  "src": "AS700E5",
+  "level": "platform",
+  "engine": "6KTAA25-G31",
+  "src_engine": "6KTAA25-G39",
+  "platform": "6KTAA25",
+  "file": "AS700E5_OPEN.jpg"
+ },
+ "AS94D5": {
+  "src": "AS100D5",
+  "level": "engine",
+  "engine": "4HTAA4.3-G21A",
+  "src_engine": "4HTAA4.3-G21A",
+  "file": "AS100D5_OPEN.jpg"
+ },
+ "B1000D5A": {
+  "src": "B1000D5",
+  "level": "engine",
+  "engine": "12M26G1000-5",
+  "src_engine": "12M26G1000-5",
+  "file": "B1000D5_OPEN.jpg"
+ },
+ "B1100E5": {
+  "src": "B1100D5",
+  "level": "engine",
+  "engine": "8M33G6D3-5",
+  "src_engine": "8M33G6D3-5",
+  "file": "B1100D5_OPEN.jpg"
+ },
+ "B110D5TL": {
+  "src": "B110D5",
+  "level": "engine",
+  "engine": "4M10G110-5",
+  "src_engine": "4M10G110-5",
+  "file": "B110D5_OPEN.jpg"
+ },
+ "B1875E5": {
+  "src": "B1650E5",
+  "level": "engine",
+  "engine": "16M33G1900-5",
+  "src_engine": "16M33G1900-5",
+  "file": "B1650E5_OPEN.jpg"
+ },
+ "B1900E5": {
+  "src": "B1650E5",
+  "level": "engine",
+  "engine": "16M33G1900-5",
+  "src_engine": "16M33G1900-5",
+  "file": "B1650E5_OPEN.jpg"
+ },
+ "B2000E5": {
+  "src": "B2500E5",
+  "level": "engine",
+  "engine": "20M33G2500-5",
+  "src_engine": "20M33G2500-5",
+  "file": "B2500E5_OPEN.jpg"
+ },
+ "B3125E5": {
+  "src": "B2750E5",
+  "level": "engine",
+  "engine": "16M55G3000-5",
+  "src_engine": "16M55G3000-5",
+  "file": "B2750E5_OPEN.jpg"
+ },
+ "B660D5": {
+  "src": "B715D5",
+  "level": "engine",
+  "engine": "6M33G715-5",
+  "src_engine": "6M33G715-5",
+  "file": "B715D5_OPEN.jpg"
+ },
+ "CU1000E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G6",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1000E6": {
+  "src": "CU1000D6",
+  "level": "engine",
+  "engine": "KTA38-G2",
+  "src_engine": "KTA38-G2",
+  "file": "CU1000D6_OPEN.jpg"
+ },
+ "CU100D5-1P": {
+  "src": "CU125D5",
+  "level": "engine",
+  "engine": "6BTA5.9-G2",
+  "src_engine": "6BTA5.9-G2",
+  "file": "CU125D5_OPEN.jpg"
+ },
+ "CU100D5A": {
+  "src": "CU100D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G13",
+  "src_engine": "4BTA3.9-G13",
+  "file": "CU100D5_OPEN.jpg"
+ },
+ "CU1100D5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "KTA38-G5",
+  "src_engine": "KTA38-G2A",
+  "platform": "KTA38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1100D6": {
+  "src": "CU1000D5",
+  "level": "engine",
+  "engine": "KTA38-G2A",
+  "src_engine": "KTA38-G2A",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1100E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G5",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU110D6": {
+  "src": "CU100D5",
+  "level": "engine",
+  "engine": "6BT5.9-G2",
+  "src_engine": "6BT5.9-G2",
+  "file": "CU100D5_OPEN.jpg"
+ },
+ "CU110E5": {
+  "src": "CU100E5",
+  "level": "engine",
+  "engine": "QSB3.9-G39",
+  "src_engine": "QSB3.9-G39",
+  "file": "CU100E5_OPEN.jpg"
+ },
+ "CU110E6": {
+  "src": "CU110E5TL",
+  "level": "engine",
+  "engine": "QSB5.9-G2",
+  "src_engine": "QSB5.9-G2",
+  "file": "CU110E5TL_OPEN.jpg"
+ },
+ "CU1125D6": {
+  "src": "CU1000D5",
+  "level": "engine",
+  "engine": "KTA38-G2A",
+  "src_engine": "KTA38-G2A",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1125G5": {
+  "src": "CU1250G5",
+  "level": "platform",
+  "engine": "NG-K50N-G9P",
+  "src_engine": "NG-K50N-G10P",
+  "platform": "NGK50N",
+  "file": "CU1250G5_OPEN.jpg"
+ },
+ "CU1125G6": {
+  "src": "CU1250G5",
+  "level": "platform",
+  "engine": "NG-K50N-G9S",
+  "src_engine": "NG-K50N-G10P",
+  "platform": "NGK50N",
+  "file": "CU1250G5_OPEN.jpg"
+ },
+ "CU1132D5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "KTA38-G5",
+  "src_engine": "KTA38-G2A",
+  "platform": "KTA38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1200D6": {
+  "src": "CU1250D6",
+  "level": "engine",
+  "engine": "KTA38-G4",
+  "src_engine": "KTA38-G4",
+  "file": "CU1250D6_OPEN.jpg"
+ },
+ "CU1250E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G2",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1250G6": {
+  "src": "CU1250G5",
+  "level": "platform",
+  "engine": "NG-K50N-G10S",
+  "src_engine": "NG-K50N-G10P",
+  "platform": "NGK50N",
+  "file": "CU1250G5_OPEN.jpg"
+ },
+ "CU125D5-1P": {
+  "src": "CU125D5",
+  "level": "engine",
+  "engine": "6BTA5.9-G2",
+  "src_engine": "6BTA5.9-G2",
+  "file": "CU125D5_OPEN.jpg"
+ },
+ "CU125D6": {
+  "src": "CU100D5",
+  "level": "engine",
+  "engine": "6BT5.9-G2",
+  "src_engine": "6BT5.9-G2",
+  "file": "CU100D5_OPEN.jpg"
+ },
+ "CU125D6-1P": {
+  "src": "CU100D5",
+  "level": "engine",
+  "engine": "6BT5.9-G2",
+  "src_engine": "6BT5.9-G2",
+  "file": "CU100D5_OPEN.jpg"
+ },
+ "CU1375E5": {
+  "src": "CU1375D5",
+  "level": "engine",
+  "engine": "KTA38-G9A",
+  "src_engine": "KTA38-G9A",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1375G5": {
+  "src": "CU1250G5",
+  "level": "platform",
+  "engine": "NG-K50N-G10",
+  "src_engine": "NG-K50N-G10P",
+  "platform": "NGK50N",
+  "file": "CU1250G5_OPEN.jpg"
+ },
+ "CU138D6": {
+  "src": "CU125D5",
+  "level": "engine",
+  "engine": "6BTA5.9-G2",
+  "src_engine": "6BTA5.9-G2",
+  "file": "CU125D5_OPEN.jpg"
+ },
+ "CU1450E6": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G5",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1500D5": {
+  "src": "CU1375D5",
+  "level": "platform",
+  "engine": "KTA50-GS8",
+  "src_engine": "KTA50-G3",
+  "platform": "KTA50",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1500D5A": {
+  "src": "CU1375D5",
+  "level": "platform",
+  "engine": "KTA50-GS8",
+  "src_engine": "KTA50-G3",
+  "platform": "KTA50",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1500D6": {
+  "src": "CU1375D5",
+  "level": "engine",
+  "engine": "KTA50-G3",
+  "src_engine": "KTA50-G3",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU150D5": {
+  "src": "CU138D5",
+  "level": "engine",
+  "engine": "6BTAA5.9-G2",
+  "src_engine": "6BTAA5.9-G2",
+  "file": "CU138D5_OPEN.jpg"
+ },
+ "CU150D6": {
+  "src": "CU125D5",
+  "level": "engine",
+  "engine": "6BTA5.9-G2",
+  "src_engine": "6BTA5.9-G2",
+  "file": "CU125D5_OPEN.jpg"
+ },
+ "CU150D6-1P": {
+  "src": "CU138D5",
+  "level": "platform",
+  "engine": "6BTAA5.9-G12",
+  "src_engine": "6BTAA5.9-G2",
+  "platform": "6BTAA5.9",
+  "file": "CU138D5_OPEN.jpg"
+ },
+ "CU150E5": {
+  "src": "CU110E5TL",
+  "level": "platform",
+  "engine": "QSB5.9-G31",
+  "src_engine": "QSB5.9-G2",
+  "platform": "QSB5.9",
+  "file": "CU110E5TL_OPEN.jpg"
+ },
+ "CU1563D6": {
+  "src": "CU1375D5",
+  "level": "engine",
+  "engine": "KTA50-G3",
+  "src_engine": "KTA50-G3",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1563E6": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G4",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1600E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G32",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1610D6": {
+  "src": "CU1375D5",
+  "level": "engine",
+  "engine": "KTA50-G3",
+  "src_engine": "KTA50-G3",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1650E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G31",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU165D5": {
+  "src": "CU138D5",
+  "level": "platform",
+  "engine": "6BTAA5.9-G12",
+  "src_engine": "6BTAA5.9-G2",
+  "platform": "6BTAA5.9",
+  "file": "CU138D5_OPEN.jpg"
+ },
+ "CU165E5": {
+  "src": "CU110E5TL",
+  "level": "platform",
+  "engine": "QSB5.9-G33",
+  "src_engine": "QSB5.9-G2",
+  "platform": "QSB5.9",
+  "file": "CU110E5TL_OPEN.jpg"
+ },
+ "CU1675D5A": {
+  "src": "CU1375D5",
+  "level": "platform",
+  "engine": "KTA50-GS8",
+  "src_engine": "KTA50-G3",
+  "platform": "KTA50",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1750E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G32",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU175D5": {
+  "src": "CU138D5",
+  "level": "platform",
+  "engine": "6BTAA5.9-G12",
+  "src_engine": "6BTAA5.9-G2",
+  "platform": "6BTAA5.9",
+  "file": "CU138D5_OPEN.jpg"
+ },
+ "CU175D6": {
+  "src": "CU138D5",
+  "level": "platform",
+  "engine": "6BTAA5.9-G12",
+  "src_engine": "6BTAA5.9-G2",
+  "platform": "6BTAA5.9",
+  "file": "CU138D5_OPEN.jpg"
+ },
+ "CU1760E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G15",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU1800D5": {
+  "src": "CU1375D5",
+  "level": "platform",
+  "engine": "KTA50-G15X",
+  "src_engine": "KTA50-G3",
+  "platform": "KTA50",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU180D5": {
+  "src": "CU200D5",
+  "level": "engine",
+  "engine": "6CTA8.3-G2",
+  "src_engine": "6CTA8.3-G2",
+  "file": "CU200D5_OPEN.jpg"
+ },
+ "CU1825E5": {
+  "src": "CU1375D5",
+  "level": "platform",
+  "engine": "KTA50-G15X",
+  "src_engine": "KTA50-G3",
+  "platform": "KTA50",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1875D5": {
+  "src": "CU1375D5",
+  "level": "platform",
+  "engine": "KTA50-G15X",
+  "src_engine": "KTA50-G3",
+  "platform": "KTA50",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1875D6": {
+  "src": "CU1375D5",
+  "level": "platform",
+  "engine": "KTA50-G9-20260514",
+  "src_engine": "KTA50-G3",
+  "platform": "KTA50",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU1875E5": {
+  "src": "CU1540E5",
+  "level": "platform",
+  "engine": "QSK50G21",
+  "src_engine": "QSK50-G4",
+  "platform": "QSK50",
+  "file": "CU1540E5_OPEN.jpg"
+ },
+ "CU1875E6": {
+  "src": "CU1540E5",
+  "level": "engine",
+  "engine": "QSK50-G4",
+  "src_engine": "QSK50-G4",
+  "file": "CU1540E5_OPEN.jpg"
+ },
+ "CU188D6": {
+  "src": "CU138D5",
+  "level": "platform",
+  "engine": "6BTAA5.9-G12",
+  "src_engine": "6BTAA5.9-G2",
+  "platform": "6BTAA5.9",
+  "file": "CU138D5_OPEN.jpg"
+ },
+ "CU18E5-1P": {
+  "src": "CU100E5",
+  "level": "platform",
+  "engine": "QSB3.9-G31",
+  "src_engine": "QSB3.9-G39",
+  "platform": "QSB3.9",
+  "file": "CU100E5_OPEN.jpg"
+ },
+ "CU192D6": {
+  "src": "CU200D5",
+  "level": "engine",
+  "engine": "6CTA8.3-G2",
+  "src_engine": "6CTA8.3-G2",
+  "file": "CU200D5_OPEN.jpg"
+ },
+ "CU20000E5": {
+  "src": "CU1540E5",
+  "level": "platform",
+  "engine": "QSK50-G16",
+  "src_engine": "QSK50-G4",
+  "platform": "QSK50",
+  "file": "CU1540E5_OPEN.jpg"
+ },
+ "CU2000D5": {
+  "src": "CU1825D5",
+  "level": "engine",
+  "engine": "KTA50-G23",
+  "src_engine": "KTA50-G23",
+  "file": "CU1825D5_OPEN.jpg"
+ },
+ "CU2000E5": {
+  "src": "CU1825D5",
+  "level": "engine",
+  "engine": "KTA50-G23",
+  "src_engine": "KTA50-G23",
+  "file": "CU1825D5_OPEN.jpg"
+ },
+ "CU2000E5A": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60-G3",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU2000E6": {
+  "src": "CU1540E5",
+  "level": "platform",
+  "engine": "QSK50-G6",
+  "src_engine": "QSK50-G4",
+  "platform": "QSK50",
+  "file": "CU1540E5_OPEN.jpg"
+ },
+ "CU200D6": {
+  "src": "CU200D5",
+  "level": "engine",
+  "engine": "6CTA8.3-G2",
+  "src_engine": "6CTA8.3-G2",
+  "file": "CU200D5_OPEN.jpg"
+ },
+ "CU200D6-1P": {
+  "src": "CU200D5",
+  "level": "engine",
+  "engine": "6CTAA8.3-G2",
+  "src_engine": "6CTAA8.3-G2",
+  "file": "CU200D5_OPEN.jpg"
+ },
+ "CU200E5": {
+  "src": "CU138E5",
+  "level": "platform",
+  "engine": "QSB6.7-G4",
+  "src_engine": "QSB6.7-G32",
+  "platform": "QSB6.7",
+  "file": "CU138E5_OPEN.jpg"
+ },
+ "CU2063D5": {
+  "src": "CU1375D5",
+  "level": "platform",
+  "engine": "KTA50-G16B",
+  "src_engine": "KTA50-G3",
+  "platform": "KTA50",
+  "file": "CU1375D5_OPEN.jpg"
+ },
+ "CU2063E5": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60-G3",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU206E5": {
+  "src": "CU138E5",
+  "level": "engine",
+  "engine": "QSB6.7-G32",
+  "src_engine": "QSB6.7-G32",
+  "file": "CU138E5_OPEN.jpg"
+ },
+ "CU2200E5A": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60-G4",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU2200E6": {
+  "src": "CU1540E5",
+  "level": "platform",
+  "engine": "QSK50-G23",
+  "src_engine": "QSK50-G4",
+  "platform": "QSK50",
+  "file": "CU1540E5_OPEN.jpg"
+ },
+ "CU220D5": {
+  "src": "CU200D5",
+  "level": "engine",
+  "engine": "6CTAA8.3-G2",
+  "src_engine": "6CTAA8.3-G2",
+  "file": "CU200D5_OPEN.jpg"
+ },
+ "CU220D6": {
+  "src": "CU200D5",
+  "level": "engine",
+  "engine": "6CTA8.3-G2",
+  "src_engine": "6CTA8.3-G2",
+  "file": "CU200D5_OPEN.jpg"
+ },
+ "CU2250E5": {
+  "src": "CU1540E5",
+  "level": "platform",
+  "engine": "QSK50G17",
+  "src_engine": "QSK50-G4",
+  "platform": "QSK50",
+  "file": "CU1540E5_OPEN.jpg"
+ },
+ "CU2250E5A": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60-G4",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU2375E6": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60-G7",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU240D6": {
+  "src": "CU200D5",
+  "level": "engine",
+  "engine": "6CTAA8.3-G2",
+  "src_engine": "6CTAA8.3-G2",
+  "file": "CU200D5_OPEN.jpg"
+ },
+ "CU2500E5": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60G21",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU2500E6": {
+  "src": "CU1540E5",
+  "level": "platform",
+  "engine": "QSK50-G24",
+  "src_engine": "QSK50-G4",
+  "platform": "QSK50",
+  "file": "CU1540E5_OPEN.jpg"
+ },
+ "CU2500E6A": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60-G7",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU250C5": {
+  "src": "CU138E5",
+  "level": "platform",
+  "engine": "QSB6.7-G31",
+  "src_engine": "QSB6.7-G32",
+  "platform": "QSB6.7",
+  "file": "CU138E5_OPEN.jpg"
+ },
+ "CU250D5": {
+  "src": "CU275D5",
+  "level": "engine",
+  "engine": "6LTAA8.9-G2",
+  "src_engine": "6LTAA8.9-G2",
+  "file": "CU275D5_OPEN.jpg"
+ },
+ "CU250D6": {
+  "src": "CU200D5",
+  "level": "engine",
+  "engine": "6CTAA8.3-G2",
+  "src_engine": "6CTAA8.3-G2",
+  "file": "CU200D5_OPEN.jpg"
+ },
+ "CU250D6-1P": {
+  "src": "CU275D5",
+  "level": "platform",
+  "engine": "6LTAA8.9-G3",
+  "src_engine": "6LTAA8.9-G2",
+  "platform": "6LTAA8.9",
+  "file": "CU275D5_OPEN.jpg"
+ },
+ "CU250E5": {
+  "src": "CU138E5",
+  "level": "platform",
+  "engine": "QSB6.7-G31",
+  "src_engine": "QSB6.7-G32",
+  "platform": "QSB6.7",
+  "file": "CU138E5_OPEN.jpg"
+ },
+ "CU2750E6": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60-G14",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU275D6": {
+  "src": "CU275D5",
+  "level": "engine",
+  "engine": "6LTAA8.9-G2",
+  "src_engine": "6LTAA8.9-G2",
+  "file": "CU275D5_OPEN.jpg"
+ },
+ "CU275D6A": {
+  "src": "CU275D5A",
+  "level": "engine",
+  "engine": "NT855-GA",
+  "src_engine": "NT855-GA",
+  "file": "CU275D5A_OPEN.jpg"
+ },
+ "CU275E5": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSM11-G2",
+  "src_engine": "QSM11-G5",
+  "platform": "QSM11",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU28E5": {
+  "src": "CU100E5",
+  "level": "platform",
+  "engine": "QSB3.9-G31",
+  "src_engine": "QSB3.9-G39",
+  "platform": "QSB3.9",
+  "file": "CU100E5_OPEN.jpg"
+ },
+ "CU28E5-1P": {
+  "src": "CU100E5",
+  "level": "platform",
+  "engine": "QSB3.9-G31",
+  "src_engine": "QSB3.9-G39",
+  "platform": "QSB3.9",
+  "file": "CU100E5_OPEN.jpg"
+ },
+ "CU3000E5": {
+  "src": "CU2750E5",
+  "level": "platform",
+  "engine": "QSK78-G9",
+  "src_engine": "QSK78-G18",
+  "platform": "QSK78",
+  "file": "CU2750E5_OPEN.jpg"
+ },
+ "CU3000E6": {
+  "src": "CU2750E5",
+  "level": "platform",
+  "engine": "QSK78-G8",
+  "src_engine": "QSK78-G18",
+  "platform": "QSK78",
+  "file": "CU2750E5_OPEN.jpg"
+ },
+ "CU300D6": {
+  "src": "CU275D5",
+  "level": "engine",
+  "engine": "6LTAA8.9-G2",
+  "src_engine": "6LTAA8.9-G2",
+  "file": "CU275D5_OPEN.jpg"
+ },
+ "CU300E5": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSM11-G1",
+  "src_engine": "QSM11-G5",
+  "platform": "QSM11",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU3125E6": {
+  "src": "CU2250E6",
+  "level": "platform",
+  "engine": "QSK60-G19",
+  "src_engine": "QSK60-G5",
+  "platform": "QSK60",
+  "file": "CU2250E6_OPEN.jpg"
+ },
+ "CU313D5": {
+  "src": "CU358D5",
+  "level": "engine",
+  "engine": "6LTAA9.5-G1",
+  "src_engine": "6LTAA9.5-G1",
+  "file": "CU358D5_OPEN.jpg"
+ },
+ "CU313D6": {
+  "src": "CU275D5",
+  "level": "platform",
+  "engine": "6LTAA8.9-G3",
+  "src_engine": "6LTAA8.9-G2",
+  "platform": "6LTAA8.9",
+  "file": "CU275D5_OPEN.jpg"
+ },
+ "CU3300E5": {
+  "src": "CU3410E5C",
+  "level": "engine",
+  "engine": "QSK95-G5",
+  "src_engine": "QSK95-G5",
+  "file": "CU3410E5C_OPEN.jpg"
+ },
+ "CU330D5A": {
+  "src": "CU358D5",
+  "level": "engine",
+  "engine": "6LTAA9.5-G1",
+  "src_engine": "6LTAA9.5-G1",
+  "file": "CU358D5_OPEN.jpg"
+ },
+ "CU330E5": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSM11-G2",
+  "src_engine": "QSM11-G5",
+  "platform": "QSM11",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU3438E6": {
+  "src": "CU2750E5",
+  "level": "platform",
+  "engine": "QSK78-G8",
+  "src_engine": "QSK78-G18",
+  "platform": "QSK78",
+  "file": "CU2750E5_OPEN.jpg"
+ },
+ "CU344D6": {
+  "src": "CU358D5",
+  "level": "engine",
+  "engine": "6LTAA9.5-G1",
+  "src_engine": "6LTAA9.5-G1",
+  "file": "CU358D5_OPEN.jpg"
+ },
+ "CU350D5": {
+  "src": "CU358D5",
+  "level": "engine",
+  "engine": "6LTAA9.5-G1",
+  "src_engine": "6LTAA9.5-G1",
+  "file": "CU358D5_OPEN.jpg"
+ },
+ "CU350D6": {
+  "src": "CU358D5",
+  "level": "engine",
+  "engine": "6LTAA9.5-G1",
+  "src_engine": "6LTAA9.5-G1",
+  "file": "CU358D5_OPEN.jpg"
+ },
+ "CU350E6": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSM11-G1",
+  "src_engine": "QSM11-G5",
+  "platform": "QSM11",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU352D6": {
+  "src": "CU358D5",
+  "level": "engine",
+  "engine": "6LTAA9.5-G1",
+  "src_engine": "6LTAA9.5-G1",
+  "file": "CU358D5_OPEN.jpg"
+ },
+ "CU3750E5": {
+  "src": "CU3410E5C",
+  "level": "platform",
+  "engine": "QSK95-G4",
+  "src_engine": "QSK95-G5",
+  "platform": "QSK95",
+  "file": "CU3410E5C_OPEN.jpg"
+ },
+ "CU375E5": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSM11-G3",
+  "src_engine": "QSM11-G5",
+  "platform": "QSM11",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU375E6": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSM11-G2",
+  "src_engine": "QSM11-G5",
+  "platform": "QSM11",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU375G6": {
+  "src": "CU375G5",
+  "level": "platform",
+  "engine": "NG-K19N-G2",
+  "src_engine": "NG-K19N-G1",
+  "platform": "NGK19N",
+  "file": "CU375G5_OPEN.jpg"
+ },
+ "CU388E6": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSM11-G3",
+  "src_engine": "QSM11-G5",
+  "platform": "QSM11",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU400E6": {
+  "src": "CU400E5",
+  "level": "engine",
+  "engine": "QSM11-G5",
+  "src_engine": "QSM11-G5",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU413E5": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSG12-G4",
+  "src_engine": "QSG12-G3",
+  "platform": "QSG12",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU425E5": {
+  "src": "CU413D5",
+  "level": "engine",
+  "engine": "6ZTAA13-G3",
+  "src_engine": "6ZTAA13-G3",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU4375E6": {
+  "src": "CU3410E5C",
+  "level": "platform",
+  "engine": "QSK95-G2",
+  "src_engine": "QSK95-G5",
+  "platform": "QSK95",
+  "file": "CU3410E5C_OPEN.jpg"
+ },
+ "CU437G5": {
+  "src": "CU375G5",
+  "level": "platform",
+  "engine": "NG-K19N-G3",
+  "src_engine": "NG-K19N-G1",
+  "platform": "NGK19N",
+  "file": "CU375G5_OPEN.jpg"
+ },
+ "CU437G6": {
+  "src": "CU375G5",
+  "level": "platform",
+  "engine": "NG-K19N-G3S",
+  "src_engine": "NG-K19N-G1",
+  "platform": "NGK19N",
+  "file": "CU375G5_OPEN.jpg"
+ },
+ "CU438G5": {
+  "src": "CU375G5",
+  "level": "platform",
+  "engine": "NG-K19N-G3P",
+  "src_engine": "NG-K19N-G1",
+  "platform": "NGK19N",
+  "file": "CU375G5_OPEN.jpg"
+ },
+ "CU440D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "6ZTAA13-G2",
+  "src_engine": "6ZTAA13-G3",
+  "platform": "6ZTAA13",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU440E5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "6ZTAA13-G2",
+  "src_engine": "6ZTAA13-G3",
+  "platform": "6ZTAA13",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU440E6": {
+  "src": "CU400E5",
+  "level": "engine",
+  "engine": "QSG12-G3",
+  "src_engine": "QSG12-G3",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU44E5": {
+  "src": "CU100E5",
+  "level": "platform",
+  "engine": "QSB3.9-G33",
+  "src_engine": "QSB3.9-G39",
+  "platform": "QSB3.9",
+  "file": "CU100E5_OPEN.jpg"
+ },
+ "CU450D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "NTAA855-G7A",
+  "src_engine": "NTAA855-G7",
+  "platform": "NTAA855",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU450E5": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSG12-G4",
+  "src_engine": "QSG12-G3",
+  "platform": "QSG12",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU450PT": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSZ13-G7",
+  "src_engine": "QSZ13-G6",
+  "platform": "QSZ13",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU475D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "6ZTAA13-G2",
+  "src_engine": "6ZTAA13-G3",
+  "platform": "6ZTAA13",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU500D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "6ZTAA13-G4",
+  "src_engine": "6ZTAA13-G3",
+  "platform": "6ZTAA13",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU500D6": {
+  "src": "CU413D5",
+  "level": "engine",
+  "engine": "KTA19-G2",
+  "src_engine": "KTA19-G2",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU500E5": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSZ13-G5",
+  "src_engine": "QSZ13-G6",
+  "platform": "QSZ13",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU500E6": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSG12-G4",
+  "src_engine": "QSG12-G3",
+  "platform": "QSG12",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU500G6": {
+  "src": "CU375G5",
+  "level": "platform",
+  "engine": "NG-K19N-G4S",
+  "src_engine": "NG-K19N-G1",
+  "platform": "NGK19N",
+  "file": "CU375G5_OPEN.jpg"
+ },
+ "CU50D5-1P": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU513E5": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSZ13-G3",
+  "src_engine": "QSZ13-G6",
+  "platform": "QSZ13",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU513E5A": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSZ13-G10",
+  "src_engine": "QSZ13-G6",
+  "platform": "QSZ13",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU525E6": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSZ13-G5",
+  "src_engine": "QSZ13-G6",
+  "platform": "QSZ13",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU53D5-1P": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU53D6-1P": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU550D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G3A",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU550D5A": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G4",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU550E5A": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSZ13-G10",
+  "src_engine": "QSZ13-G6",
+  "platform": "QSZ13",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU550E6": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSZ13-G3",
+  "src_engine": "QSZ13-G6",
+  "platform": "QSZ13",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU55D5-1P": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU563D6": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G3",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU60D5-1P": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU60D6": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU625D6": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G3A",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU625D6A": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G4",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU625E6A": {
+  "src": "CU400E5",
+  "level": "platform",
+  "engine": "QSZ13-G11",
+  "src_engine": "QSZ13-G6",
+  "platform": "QSZ13",
+  "file": "CU400E5_OPEN.jpg"
+ },
+ "CU650D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G8",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU650D5-KTA19": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G8",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU66D5": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU66D5-1P": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU66D6": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU688D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G8A",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU68D5": {
+  "src": "CU100D6",
+  "level": "engine",
+  "engine": "4BTA3.9-G11",
+  "src_engine": "4BTA3.9-G11",
+  "file": "CU100D6_OPEN.jpg"
+ },
+ "CU693D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G8A",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU695D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G8A",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU700D5": {
+  "src": "CU1000D6",
+  "level": "platform",
+  "engine": "KT38-G",
+  "src_engine": "KT38-G2",
+  "platform": "KT38",
+  "file": "CU1000D6_OPEN.jpg"
+ },
+ "CU70D5": {
+  "src": "CU100D6",
+  "level": "engine",
+  "engine": "4BTA3.9-G11",
+  "src_engine": "4BTA3.9-G11",
+  "file": "CU100D6_OPEN.jpg"
+ },
+ "CU713D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G9A油耗有误",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU715D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G9A油耗有误",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU72D5-1P": {
+  "src": "CU100D6",
+  "level": "engine",
+  "engine": "4BTA3.9-G11",
+  "src_engine": "4BTA3.9-G11",
+  "file": "CU100D6_OPEN.jpg"
+ },
+ "CU72D6-1P": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU750D5": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G9A",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU750D5-KTA19": {
+  "src": "CU413D5",
+  "level": "platform",
+  "engine": "KTA19-G9A",
+  "src_engine": "KTA19-G2",
+  "platform": "KTA19",
+  "file": "CU413D5_OPEN.jpg"
+ },
+ "CU75D6": {
+  "src": "CU55D5",
+  "level": "engine",
+  "engine": "4BTA3.9-G2",
+  "src_engine": "4BTA3.9-G2",
+  "file": "CU55D5_OPEN.jpg"
+ },
+ "CU770D5": {
+  "src": "CU1000D6",
+  "level": "platform",
+  "engine": "KT38-GA",
+  "src_engine": "KT38-G2",
+  "platform": "KT38",
+  "file": "CU1000D6_OPEN.jpg"
+ },
+ "CU77D5-1P": {
+  "src": "CU100D6",
+  "level": "engine",
+  "engine": "4BTA3.9-G11",
+  "src_engine": "4BTA3.9-G11",
+  "file": "CU100D6_OPEN.jpg"
+ },
+ "CU800D5": {
+  "src": "CU1000D6",
+  "level": "engine",
+  "engine": "KTA38-G2",
+  "src_engine": "KTA38-G2",
+  "file": "CU1000D6_OPEN.jpg"
+ },
+ "CU800D6": {
+  "src": "CU1000D6",
+  "level": "platform",
+  "engine": "KT38-G",
+  "src_engine": "KT38-G2",
+  "platform": "KT38",
+  "file": "CU1000D6_OPEN.jpg"
+ },
+ "CU80D6-1P": {
+  "src": "CU100D6",
+  "level": "engine",
+  "engine": "4BTA3.9-G11",
+  "src_engine": "4BTA3.9-G11",
+  "file": "CU100D6_OPEN.jpg"
+ },
+ "CU825D5": {
+  "src": "CU1000D6",
+  "level": "engine",
+  "engine": "KTA38-G2",
+  "src_engine": "KTA38-G2",
+  "file": "CU1000D6_OPEN.jpg"
+ },
+ "CU825E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G8",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU880C5-KTA38": {
+  "src": "CU1038D6",
+  "level": "engine",
+  "engine": "KTA38-G2B",
+  "src_engine": "KTA38-G2B",
+  "file": "CU1038D6_OPEN.jpg"
+ },
+ "CU880D5": {
+  "src": "CU1038D6",
+  "level": "engine",
+  "engine": "KTA38-G2B",
+  "src_engine": "KTA38-G2B",
+  "file": "CU1038D6_OPEN.jpg"
+ },
+ "CU88D5-1P": {
+  "src": "CU100D6",
+  "level": "engine",
+  "engine": "4BTA3.9-G11",
+  "src_engine": "4BTA3.9-G11",
+  "file": "CU100D6_OPEN.jpg"
+ },
+ "CU900E5": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "QSK38-G7",
+  "src_engine": "QSK38-G26",
+  "platform": "QSK38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "CU90E5": {
+  "src": "CU100E5",
+  "level": "platform",
+  "engine": "QSB3.9-G3",
+  "src_engine": "QSB3.9-G39",
+  "platform": "QSB3.9",
+  "file": "CU100E5_OPEN.jpg"
+ },
+ "CU935E6": {
+  "src": "CU1000D6",
+  "level": "engine",
+  "engine": "KTA38-G2",
+  "src_engine": "KTA38-G2",
+  "file": "CU1000D6_OPEN.jpg"
+ },
+ "CU94E5": {
+  "src": "CU100E5",
+  "level": "platform",
+  "engine": "QSB3.9-G37",
+  "src_engine": "QSB3.9-G39",
+  "platform": "QSB3.9",
+  "file": "CU100E5_OPEN.jpg"
+ },
+ "CU963D6": {
+  "src": "CU1000D5",
+  "level": "platform",
+  "engine": "KTA38-G1",
+  "src_engine": "KTA38-G2A",
+  "platform": "KTA38",
+  "file": "CU1000D5_OPEN.jpg"
+ },
+ "DE110D6": {
+  "src": "DE100D5",
+  "level": "engine",
+  "engine": "BF4M2012C",
+  "src_engine": "BF4M2012C",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE120D6": {
+  "src": "DE100D5",
+  "level": "platform",
+  "engine": "BF4M1013EC",
+  "src_engine": "BF4M2012C",
+  "platform": "BF4M",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE125D5": {
+  "src": "DE100D5",
+  "level": "platform",
+  "engine": "BF4M1013EC",
+  "src_engine": "BF4M2012C",
+  "platform": "BF4M",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE138D6": {
+  "src": "DE100D5",
+  "level": "platform",
+  "engine": "BF4M1013EC",
+  "src_engine": "BF4M2012C",
+  "platform": "BF4M",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE150D5": {
+  "src": "DE100D5",
+  "level": "platform",
+  "engine": "BF4M1013FC",
+  "src_engine": "BF4M2012C",
+  "platform": "BF4M",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE150D6": {
+  "src": "DE100D5",
+  "level": "platform",
+  "engine": "BF4M1013FC",
+  "src_engine": "BF4M2012C",
+  "platform": "BF4M",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE165D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1013EC",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE180D6": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1013EC",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE183D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1013EC",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE200D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1013EC",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE220D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1013FC",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE220D6": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1013FC",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE250D6": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1013FC",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE275D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015C-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE275D6": {
+  "src": "DE250D5",
+  "level": "engine",
+  "engine": "BF6M1015-LA",
+  "src_engine": "BF6M1015-LA",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE313D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015C-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE313D6": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015C-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE350D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015C-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE388D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015C-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE388D6": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015C-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE400D6": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015CP-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE413D5": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015CP-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE440D6": {
+  "src": "DE250D5",
+  "level": "platform",
+  "engine": "BF6M1015CP-LA",
+  "src_engine": "BF6M1015-LA",
+  "platform": "BF6M",
+  "file": "DE250D5_OPEN.jpg"
+ },
+ "DE48D5": {
+  "src": "DE100D5",
+  "level": "platform",
+  "engine": "BF4M2011",
+  "src_engine": "BF4M2012C",
+  "platform": "BF4M",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE66D5": {
+  "src": "DE100D5",
+  "level": "platform",
+  "engine": "BF4M2012",
+  "src_engine": "BF4M2012C",
+  "platform": "BF4M",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE75D6": {
+  "src": "DE100D5",
+  "level": "platform",
+  "engine": "BF4M2012",
+  "src_engine": "BF4M2012C",
+  "platform": "BF4M",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE88D5": {
+  "src": "DE100D5",
+  "level": "engine",
+  "engine": "BF4M2012C",
+  "src_engine": "BF4M2012C",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "DE90D6": {
+  "src": "DE100D5",
+  "level": "engine",
+  "engine": "BF4M2012C",
+  "src_engine": "BF4M2012C",
+  "file": "DE100D5_OPEN.jpg"
+ },
+ "H1125E6": {
+  "src": "H1000E5",
+  "level": "engine",
+  "engine": "DP222CC",
+  "src_engine": "DP222CC",
+  "file": "H1000E5_OPEN.jpg"
+ },
+ "H625D6": {
+  "src": "H550D5",
+  "level": "engine",
+  "engine": "DP158LD",
+  "src_engine": "DP158LD",
+  "file": "H550D5_OPEN.jpg"
+ },
+ "M1031E6": {
+  "src": "M1000E5",
+  "level": "platform",
+  "engine": "12V1600G31S",
+  "src_engine": "12V1600G31F",
+  "platform": "12V1600",
+  "file": "M1000E5_OPEN.jpg"
+ },
+ "M1100E5": {
+  "src": "M1000E5",
+  "level": "platform",
+  "engine": "16V2000G65",
+  "src_engine": "16V2000G25",
+  "platform": "16V2000",
+  "file": "M1000E5_OPEN.jpg"
+ },
+ "M1125E6": {
+  "src": "M1000E5",
+  "level": "platform",
+  "engine": "12V1600G41S",
+  "src_engine": "12V1600G31F",
+  "platform": "12V1600",
+  "file": "M1000E5_OPEN.jpg"
+ },
+ "M1250E5": {
+  "src": "M1000E5",
+  "level": "platform",
+  "engine": "16V2000G36F",
+  "src_engine": "16V2000G25",
+  "platform": "16V2000",
+  "file": "M1000E5_OPEN.jpg"
+ },
+ "M1250E6": {
+  "src": "M1000E5",
+  "level": "platform",
+  "engine": "16V2000G85",
+  "src_engine": "16V2000G25",
+  "platform": "16V2000",
+  "file": "M1000E5_OPEN.jpg"
+ },
+ "M1375E6": {
+  "src": "M1375E5",
+  "level": "engine",
+  "engine": "18V2000B76",
+  "src_engine": "18V2000B76",
+  "file": "M1375E5_OPEN.jpg"
+ },
+ "M1500E6": {
+  "src": "TM1500E6",
+  "level": "engine",
+  "engine": "18V2000G85",
+  "src_engine": "18V2000G85",
+  "file": "TM1500E6_OPEN.jpg"
+ },
+ "M715E5": {
+  "src": "M1000E5",
+  "level": "platform",
+  "engine": "12V1600G20F",
+  "src_engine": "12V1600G31F",
+  "platform": "12V1600",
+  "file": "M1000E5_OPEN.jpg"
+ },
+ "M750E6": {
+  "src": "M1000E5",
+  "level": "platform",
+  "engine": "12V1600G31S",
+  "src_engine": "12V1600G31F",
+  "platform": "12V1600",
+  "file": "M1000E5_OPEN.jpg"
+ },
+ "M825E5": {
+  "src": "M1000E5",
+  "level": "platform",
+  "engine": "12V1600G11F",
+  "src_engine": "12V1600G31F",
+  "platform": "12V1600",
+  "file": "M1000E5_OPEN.jpg"
+ },
+ "MS1540D5": {
+  "src": "MS1400D5",
+  "level": "engine",
+  "engine": "S12R-PTAR1-C",
+  "src_engine": "S12R-PTAR1-C",
+  "file": "MS1400D5_OPEN.jpg"
+ },
+ "MS2200D5": {
+  "src": "MS2500D5",
+  "level": "engine",
+  "engine": "S16R2-PTAW-C",
+  "src_engine": "S16R2-PTAW-C",
+  "file": "MS2500D5_OPEN.jpg"
+ },
+ "P1000D6": {
+  "src": "P825D5",
+  "level": "platform",
+  "engine": "4006-23TAG4",
+  "src_engine": "4006-23TAG2A",
+  "platform": "400623TA",
+  "file": "P825D5_OPEN.jpg"
+ },
+ "P1100D6": {
+  "src": "P1000D5",
+  "level": "engine",
+  "engine": "4008TAG2",
+  "src_engine": "4008TAG2",
+  "file": "P1000D5_OPEN.jpg"
+ },
+ "P1250D5": {
+  "src": "P1000D5",
+  "level": "platform",
+  "engine": "4008-30TAG3",
+  "src_engine": "4008-30TAG1",
+  "platform": "400830TA",
+  "file": "P1000D5_OPEN.jpg"
+ },
+ "P1375D6": {
+  "src": "P1375D5",
+  "level": "engine",
+  "engine": "4012-46TWG2A",
+  "src_engine": "4012-46TWG2A",
+  "file": "P1375D5_OPEN.jpg"
+ },
+ "P13D5-1P": {
+  "src": "P11D5-1P",
+  "level": "platform",
+  "engine": "403A-15G2",
+  "src_engine": "403A-15G1",
+  "platform": "403A15",
+  "file": "P11D5-1P_OPEN.jpg"
+ },
+ "P1500D5": {
+  "src": "P1375D5",
+  "level": "platform",
+  "engine": "4012-46TWG3A",
+  "src_engine": "4012-46TWG2A",
+  "platform": "401246TW",
+  "file": "P1375D5_OPEN.jpg"
+ },
+ "P1500D6": {
+  "src": "P1375D5",
+  "level": "platform",
+  "engine": "4012-46TWG3A",
+  "src_engine": "4012-46TWG2A",
+  "platform": "401246TW",
+  "file": "P1375D5_OPEN.jpg"
+ },
+ "P15D5": {
+  "src": "P11D5-1P",
+  "level": "engine",
+  "engine": "403A-15G1",
+  "src_engine": "403A-15G1",
+  "file": "P11D5-1P_OPEN.jpg"
+ },
+ "P1650D5": {
+  "src": "P1375D5",
+  "level": "platform",
+  "engine": "4012-46TWG4A",
+  "src_engine": "4012-46TWG2A",
+  "platform": "401246TW",
+  "file": "P1375D5_OPEN.jpg"
+ },
+ "P165D5": {
+  "src": "P220D5",
+  "level": "platform",
+  "engine": "1106A-70TAG2",
+  "src_engine": "1106A-70TAG4",
+  "platform": "1106A70TA",
+  "file": "P220D5_OPEN.jpg"
+ },
+ "P1675D6": {
+  "src": "P1375D5",
+  "level": "engine",
+  "engine": "4012-46TAG2A",
+  "src_engine": "4012-46TAG2A",
+  "file": "P1375D5_OPEN.jpg"
+ },
+ "P169D6": {
+  "src": "P150D5",
+  "level": "engine",
+  "engine": "1106A-70TG1",
+  "src_engine": "1106A-70TG1",
+  "file": "P150D5_OPEN.jpg"
+ },
+ "P176D5": {
+  "src": "P220D5",
+  "level": "platform",
+  "engine": "1106A-70TAG3",
+  "src_engine": "1106A-70TAG4",
+  "platform": "1106A70TA",
+  "file": "P220D5_OPEN.jpg"
+ },
+ "P1850D5": {
+  "src": "P1375D5",
+  "level": "platform",
+  "engine": "4012-46TAG3A",
+  "src_engine": "4012-46TAG0A",
+  "platform": "401246TA",
+  "file": "P1375D5_OPEN.jpg"
+ },
+ "P1875D5": {
+  "src": "P1375D5",
+  "level": "platform",
+  "engine": "4012-46TAG3A",
+  "src_engine": "4012-46TAG0A",
+  "platform": "401246TA",
+  "file": "P1375D5_OPEN.jpg"
+ },
+ "P1880D6": {
+  "src": "P1375D5",
+  "level": "platform",
+  "engine": "4012-46TAG3A",
+  "src_engine": "4012-46TAG0A",
+  "platform": "401246TA",
+  "file": "P1375D5_OPEN.jpg"
+ },
+ "P188D6": {
+  "src": "P220D5",
+  "level": "platform",
+  "engine": "1106A-70TAG2",
+  "src_engine": "1106A-70TAG4",
+  "platform": "1106A70TA",
+  "file": "P220D5_OPEN.jpg"
+ },
+ "P200D5": {
+  "src": "P220D5",
+  "level": "platform",
+  "engine": "1106A-70TAG3",
+  "src_engine": "1106A-70TAG4",
+  "platform": "1106A70TA",
+  "file": "P220D5_OPEN.jpg"
+ },
+ "P20D6": {
+  "src": "P11D5-1P",
+  "level": "platform",
+  "engine": "403A-15G2",
+  "src_engine": "403A-15G1",
+  "platform": "403A15",
+  "file": "P11D5-1P_OPEN.jpg"
+ },
+ "P220D6": {
+  "src": "P220D5",
+  "level": "platform",
+  "engine": "1106A-70TAG3",
+  "src_engine": "1106A-70TAG4",
+  "platform": "1106A70TA",
+  "file": "P220D5_OPEN.jpg"
+ },
+ "P2250D5": {
+  "src": "P2000D5",
+  "level": "platform",
+  "engine": "4016-61TRG2",
+  "src_engine": "4016-61TRG1",
+  "platform": "401661TR",
+  "file": "P2000D5_OPEN.jpg"
+ },
+ "P22D5": {
+  "src": "P22D6",
+  "level": "engine",
+  "engine": "404D-22G",
+  "src_engine": "404D-22G",
+  "file": "P22D6_OPEN.jpg"
+ },
+ "P25D5": {
+  "src": "P33D5",
+  "level": "engine",
+  "engine": "1103A-33G",
+  "src_engine": "1103A-33G",
+  "file": "P33D5_OPEN.jpg"
+ },
+ "P27D5TL": {
+  "src": "P33D5",
+  "level": "engine",
+  "engine": "1103A-33G",
+  "src_engine": "1103A-33G",
+  "file": "P33D5_OPEN.jpg"
+ },
+ "P27D6": {
+  "src": "P22D6",
+  "level": "engine",
+  "engine": "404D-22G",
+  "src_engine": "404D-22G",
+  "file": "P22D6_OPEN.jpg"
+ },
+ "P28D5": {
+  "src": "P33D5",
+  "level": "engine",
+  "engine": "1103A-33G",
+  "src_engine": "1103A-33G",
+  "file": "P33D5_OPEN.jpg"
+ },
+ "P28D5TL": {
+  "src": "P33D5",
+  "level": "engine",
+  "engine": "1103A-33G",
+  "src_engine": "1103A-33G",
+  "file": "P33D5_OPEN.jpg"
+ },
+ "P28D6": {
+  "src": "P33D5",
+  "level": "engine",
+  "engine": "1103A-33G",
+  "src_engine": "1103A-33G",
+  "file": "P33D5_OPEN.jpg"
+ },
+ "P30D6-1P": {
+  "src": "P33D5",
+  "level": "engine",
+  "engine": "1103A-33G",
+  "src_engine": "1103A-33G",
+  "file": "P33D5_OPEN.jpg"
+ },
+ "P330D5": {
+  "src": "P450E5",
+  "level": "platform",
+  "engine": "2206C-E13TAG2",
+  "src_engine": "2206C-E13TAG3",
+  "platform": "2206CE13TA",
+  "file": "P450E5_OPEN.jpg"
+ },
+ "P330D5R": {
+  "src": "P450E5",
+  "level": "platform",
+  "engine": "2206C-E13TAG2",
+  "src_engine": "2206C-E13TAG3",
+  "platform": "2206CE13TA",
+  "file": "P450E5_OPEN.jpg"
+ },
+ "P33D5TL": {
+  "src": "P33D5",
+  "level": "engine",
+  "engine": "1103A-33G",
+  "src_engine": "1103A-33G",
+  "file": "P33D5_OPEN.jpg"
+ },
+ "P38D6": {
+  "src": "P33D5",
+  "level": "engine",
+  "engine": "1103A-33G",
+  "src_engine": "1103A-33G",
+  "file": "P33D5_OPEN.jpg"
+ },
+ "P400E5": {
+  "src": "P450E5",
+  "level": "platform",
+  "engine": "2206C-E13TAG2",
+  "src_engine": "2206C-E13TAG3",
+  "platform": "2206CE13TA",
+  "file": "P450E5_OPEN.jpg"
+ },
+ "P440D5": {
+  "src": "P450E5",
+  "level": "engine",
+  "engine": "2206D-E13TAG3",
+  "src_engine": "2206D-E13TAG3",
+  "file": "P450E5_OPEN.jpg"
+ },
+ "P440E6": {
+  "src": "P450E5",
+  "level": "platform",
+  "engine": "2206C-E13TAG2",
+  "src_engine": "2206C-E13TAG3",
+  "platform": "2206CE13TA",
+  "file": "P450E5_OPEN.jpg"
+ },
+ "P450E6": {
+  "src": "P450E5",
+  "level": "platform",
+  "engine": "2206D-E13TAG2",
+  "src_engine": "2206D-E13TAG3",
+  "platform": "2206DE13TA",
+  "file": "P450E5_OPEN.jpg"
+ },
+ "P825D6": {
+  "src": "P825D5",
+  "level": "engine",
+  "engine": "4006-23TAG2A",
+  "src_engine": "4006-23TAG2A",
+  "file": "P825D5_OPEN.jpg"
+ },
+ "P880D5": {
+  "src": "P825D5",
+  "level": "platform",
+  "engine": "4006-23TAG3A",
+  "src_engine": "4006-23TAG2A",
+  "platform": "400623TA",
+  "file": "P825D5_OPEN.jpg"
+ },
+ "P975D6": {
+  "src": "P1000D5",
+  "level": "platform",
+  "engine": "4008TAG1",
+  "src_engine": "4008TAG1A",
+  "platform": "4008TA",
+  "file": "P1000D5_OPEN.jpg"
+ },
+ "S275E6": {
+  "src": "S275E5",
+  "level": "engine",
+  "engine": "DC09",
+  "src_engine": "DC09",
+  "file": "S275E5_OPEN.jpg"
+ },
+ "S313E5": {
+  "src": "S275E5",
+  "level": "engine",
+  "engine": "DC09",
+  "src_engine": "DC09",
+  "file": "S275E5_OPEN.jpg"
+ },
+ "S313E6": {
+  "src": "S275E5",
+  "level": "engine",
+  "engine": "DC09",
+  "src_engine": "DC09",
+  "file": "S275E5_OPEN.jpg"
+ },
+ "S344E6": {
+  "src": "S275E5",
+  "level": "engine",
+  "engine": "DC09",
+  "src_engine": "DC09",
+  "file": "S275E5_OPEN.jpg"
+ },
+ "S360E5": {
+  "src": "S275E5",
+  "level": "engine",
+  "engine": "DC09",
+  "src_engine": "DC09",
+  "file": "S275E5_OPEN.jpg"
+ },
+ "S360E6": {
+  "src": "S275E5",
+  "level": "engine",
+  "engine": "DC09",
+  "src_engine": "DC09",
+  "file": "S275E5_OPEN.jpg"
+ },
+ "S413E6": {
+  "src": "S275E5",
+  "level": "engine",
+  "engine": "DC09",
+  "src_engine": "DC09",
+  "file": "S275E5_OPEN.jpg"
+ },
+ "V250E6": {
+  "src": "V220E5",
+  "level": "engine",
+  "engine": "TAD840GE-B",
+  "src_engine": "TAD840GE-B",
+  "file": "V220E5_OPEN.jpg"
+ },
+ "WP1100E5": {
+  "src": "WP1100D5",
+  "level": "engine",
+  "engine": "8M33D975E310",
+  "src_engine": "8M33D975E310",
+  "file": "WP1100D5_OPEN.jpg"
+ },
+ "WP110D5": {
+  "src": "WP165D5",
+  "level": "engine",
+  "engine": "WP6D152E200",
+  "src_engine": "WP6D152E200",
+  "file": "WP165D5_OPEN.jpg"
+ },
+ "WP188D5": {
+  "src": "WP165D5",
+  "level": "platform",
+  "engine": "WP6D167E200",
+  "src_engine": "WP6D152E200",
+  "platform": "WP6D",
+  "file": "WP165D5_OPEN.jpg"
+ },
+ "WP220D5": {
+  "src": "WP250D5",
+  "level": "platform",
+  "engine": "WP10D200E200",
+  "src_engine": "WP10D238E200",
+  "platform": "WP10D",
+  "file": "WP250D5_OPEN.jpg"
+ },
+ "WP275D5": {
+  "src": "WP250D5",
+  "level": "platform",
+  "engine": "WP10D264E200",
+  "src_engine": "WP10D238E200",
+  "platform": "WP10D",
+  "file": "WP250D5_OPEN.jpg"
+ },
+ "YC138D5": {
+  "src": "YC110D5",
+  "level": "platform",
+  "engine": "YC4A180L-D20",
+  "src_engine": "YC4A140L-D25",
+  "platform": "YC4A",
+  "file": "YC110D5_OPEN.jpg"
+ },
+ "YC150D5": {
+  "src": "YC110D5",
+  "level": "platform",
+  "engine": "YC4A190-D30",
+  "src_engine": "YC4A140L-D25",
+  "platform": "YC4A",
+  "file": "YC110D5_OPEN.jpg"
+ },
+ "YC165D5": {
+  "src": "GYC165D5",
+  "level": "engine",
+  "engine": "YC6B205L-D20",
+  "src_engine": "YC6B205L-D20",
+  "file": "GYC165D5_OPEN.jpg"
+ },
+ "YC80D5": {
+  "src": "YC110D5",
+  "level": "platform",
+  "engine": "YC4A100Z-D25",
+  "src_engine": "YC4A140L-D25",
+  "platform": "YC4A",
+  "file": "YC110D5_OPEN.jpg"
+ },
+ "YD12D6": {
+  "src": "YD11D5",
+  "level": "engine",
+  "engine": "YD385D",
+  "src_engine": "YD385D",
+  "file": "YD11D5_OPEN.jpg"
+ },
+ "YD9D5-1P": {
+  "src": "YD6D5",
+  "level": "engine",
+  "engine": "YD380D",
+  "src_engine": "YD380D",
+  "file": "YD6D5_OPEN.jpg"
+ },
+ "YM12D5-1P": {
+  "src": "YM13D5",
+  "level": "engine",
+  "engine": "4TNV84T-GGE",
+  "src_engine": "4TNV84T-GGE",
+  "file": "YM13D5_OPEN.jpg"
+ },
+ "YM26D5": {
+  "src": "YM44D5",
+  "level": "engine",
+  "engine": "4TNV98T-GGE",
+  "src_engine": "4TNV98T-GGE",
+  "file": "YM44D5_OPEN.jpg"
+ },
+ "YM26D5-1P": {
+  "src": "YM44D5",
+  "level": "engine",
+  "engine": "4TNV98T-GGE",
+  "src_engine": "4TNV98T-GGE",
+  "file": "YM44D5_OPEN.jpg"
+ }
+}
