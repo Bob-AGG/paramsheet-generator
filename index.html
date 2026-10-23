@@ -558,12 +558,15 @@ function updateFamCount(){
   el.textContent = _familyFilter ? `${n}` : `${tot}`;
 }
 
+/* 取机型的系列名（loadFromServer 映射后存的是 __family；兼容旧字段） */
+function famOf(x){ return (x && (x.__family || x.family)) || '其他'; }
+
 /* 根据当前机型库重建品牌下拉（保留当前选中） */
 function fillFamilySelect(){
   const sel = document.getElementById('selFamily');
   if(!sel) return;
   const cnt = {};
-  DB.models.forEach(x=>{ const f = x.family || '其他'; cnt[f] = (cnt[f]||0)+1; });
+  DB.models.forEach(x=>{ const f = famOf(x); cnt[f] = (cnt[f]||0)+1; });
   const names = Object.keys(cnt).sort((a,b)=>{
     if(a==='其他') return 1;           // 「其他」永远排最后
     if(b==='其他') return -1;
@@ -596,7 +599,7 @@ function renderSearchList(){
   if(!_modelQuery){ box.classList.remove('on'); box.innerHTML=''; _msIdx=-1; setSearchHint(''); return; }
   const list = filteredModels();
   const total = _familyFilter
-    ? DB.models.filter(x=>(x.family||'其他')===_familyFilter).length
+    ? DB.models.filter(x=>famOf(x)===_familyFilter).length
     : DB.models.length;
   setSearchHint(`命中 ${list.length}/${total}`);
   if(!list.length){
@@ -613,7 +616,7 @@ function renderSearchList(){
     return `<div class="msearch-item ${i===_msIdx?'hi':''}" data-name="${esc(label)}"
       onmousedown="pickModelFromSearch('${esc(label).replace(/'/g,'&#39;')}')">
       <span class="mm">${esc(label)}</span>
-      <span class="ff">${esc(x.family||'其他')}</span>
+      <span class="ff">${esc(famOf(x))}</span>
       <span class="vv">${esc(em)}</span></div>`;
   }).join('') + (list.length>MAX ? `<div class="msearch-empty">仅显示前 ${MAX} 条，请加关键词缩小范围</div>` : '');
   box.classList.add('on');
@@ -661,7 +664,7 @@ function _modelHaystack(x){
   const freqs = d.freqs || {};
   const fvals = Object.values(freqs).flatMap(o=>Object.values(o||{}));
   return [
-    x.name, x.model, x.family, cm.e_model, cm.e_brand,
+    x.name, x.model, famOf(x), cm.e_model, cm.e_brand,
     ...fvals.map(v=>String(v==null?'':v))
   ].filter(Boolean).join(' ').toUpperCase();
 }
@@ -670,7 +673,7 @@ function _modelHaystack(x){
 function filteredModels(){
   let list = DB.models;
   if(_familyFilter){
-    list = list.filter(x=> (x.family || '其他') === _familyFilter);
+    list = list.filter(x=> famOf(x) === _familyFilter);
   }
   const qs = _modelQuery.toUpperCase().split(/\s+/).filter(Boolean);
   if(!qs.length) return list;
