@@ -70,7 +70,7 @@ LABELS = {
     "displacement": "displ",
     "noofcylarrangement": "cyl_arr",
     "borexstroke": "bore",
-    "compressionratio": "__ignore",
+    "compressionratio": "comp_ratio",
     "enginespeed": "rpm",
     "enginetype": "__ignore",
     # --- 排气 ---
@@ -122,7 +122,7 @@ LABELS = {
     "缸径行程": "bore",
     "缸径": "__ignore",
     "行程": "__ignore",
-    "压缩比": "__ignore",
+    "压缩比": "comp_ratio",
     "发火次序": "__ignore",
     "喷油提前角": "__ignore",
     "调速器": "e_gov",
@@ -761,6 +761,9 @@ def parse_item(item):
                 s = re.sub(r"\s*mm\s*$", "", s, flags=re.I)
                 s = re.sub(r"\s*", "", s)
                 put(key, s)
+            elif key == "comp_ratio":
+                # 压缩比统一格式 "17.5:1"（源数据有 17.5 / 17.5:1 / 17.5 : 1 等写法）
+                put(key, fmt_comp_ratio(raw))
             elif key == "g_insul":
                 # "Class H/H" -> "H"
                 m = re.search(r"\b([HF])\b", raw)
@@ -788,6 +791,37 @@ def parse_item(item):
             if m:
                 f["g_insul"] = m.group(1)
     return f, notes
+
+
+def fmt_comp_ratio(raw):
+    """压缩比统一成 "17.5:1" 格式；无法识别返回 None
+ 
+    源数据常见写法：17.5 / 17.5:1 / 17.5 : 1 / 17.5：1（全角）/ 17.5~18:1
+    """
+    if not raw:
+        return None
+    s = str(raw).strip()
+    if not s or s.lower() in NULL_TOKENS:
+        return None
+    # 全角冒号/斜杠统一
+    s = s.replace("：", ":").replace("／", "/")
+    # 区间写法 "17.5~18:1" / "17.5-18:1" -> 取第一个数
+    m = re.match(r"\s*(\d+(?:\.\d+)?)\s*[~\-—–]\s*\d", s)
+    if m:
+        return "%s:1" % m.group(1)
+    # 已带 :1 或 : 的形式
+    m = re.search(r"(\d+(?:\.\d+)?)\s*[:：]\s*(\d+(?:\.\d+)?)", s)
+    if m:
+        return "%s:%s" % (m.group(1), m.group(2))
+    # 纯数字 -> 补 ":1"
+    m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*", s)
+    if m:
+        return "%s:1" % m.group(1)
+    # 区间/其他写法：只取第一个数字补 ":1"
+    m = re.search(r"(\d+(?:\.\d+)?)", s)
+    if m:
+        return "%s:1" % m.group(1)
+    return None
 
 
 def build_model(item, name=None, use_pdf_note=True):

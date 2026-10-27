@@ -116,7 +116,7 @@
   .fam-wrap select{min-width:190px !important}
   .fam-count{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
   /* 机型搜索结果下拉列表（2026-10-21） */
-  .msearch-wrap{position:relative;display:inline-block}
+  .msearch-wrap{position:relative;display:inline-block;min-width:320px}
   .msearch-list{position:absolute;z-index:60;top:calc(100% + 6px);left:0;width:100%;min-width:360px;
     max-height:420px;overflow-y:auto;background:var(--surf);border:1px solid var(--line);
     border-radius:11px;box-shadow:0 12px 32px -8px rgba(31,35,40,.22);padding:4px;display:none}
@@ -124,7 +124,7 @@
   .msearch-item{padding:7px 10px;border-radius:7px;font-size:13px;cursor:pointer;display:flex;
     align-items:center;gap:8px;color:var(--ink)}
   .msearch-item:hover,.msearch-item.hi{background:var(--brand-soft2)}
-  .msearch-item .mm{font-weight:600;white-space:nowrap}
+  .msearch-item .mm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .msearch-item .ff{font-size:11px;color:var(--ink-3);background:#f2f3f5;border-radius:5px;padding:1px 6px;flex:0 0 auto}
   .msearch-item .vv{font-size:11.5px;color:var(--ink-3);margin-left:auto;white-space:nowrap;overflow:hidden;
     text-overflow:ellipsis;max-width:200px}
@@ -249,7 +249,7 @@
       </span>
       <span class="msearch-wrap">
         <input type="text" id="modelSearch" placeholder="🔍 搜机型 / 发动机 / 系列，如 CU1000" autocomplete="off"
-               oninput="onModelSearch(this.value)" onfocus="onModelSearch(this.value)"
+               oninput="onModelSearch(this.value)" onfocus="onFocusShowAll(this.value)"
                onkeydown="modelSearchKey(event)" style="min-width:320px">
         <div class="msearch-list" id="msList"></div>
       </span>
@@ -286,7 +286,7 @@
 <script>
 /* ================= 字段定义（分组 = 模板模块） ================= */
 /* 随频率变化的字段（放 freqs[频率]）；其余字段放 common */
-const FREQ_FIELDS = ['freq','prp_kva','eps_kva','prp_kw','eps_kw',
+const FREQ_FIELDS = ['freq','pf','prp_kva','eps_kva','prp_kw','eps_kw',
                      'rpm','fc_esp','fc_prp','fc_75','fc_50'];
 
 /* 只保留模板中标注了 12345 的格子；其余格子（含第3、4页）一律保持模板原值不动。
@@ -300,7 +300,9 @@ const GROUPS = [
    {sub:'功率 (Power)'},
    {k:'prp_kva',t:'PRP 功率', unit:'kVA'}, {k:'eps_kva',t:'EPS 功率', unit:'kVA'},
    {k:'prp_kw', t:'PRP 功率', unit:'kW'},  {k:'eps_kw', t:'EPS 功率', unit:'kW'},
-   {k:'freq',   t:'频率 / 相数 / 功率因数', ph:'50Hz / 3P / PF0.8'},
+   {k:'freq',   t:'频率', ph:'请选择', opts:['50Hz','60Hz'], defv:'50Hz'},
+   {k:'g_phase',t:'相数', ph:'请选择', opts:['Single phase','Three phase'], defv:'Three phase'},
+   {k:'__pf',   t:'功率因数 PF', ph:'请选择', pfOpts:['0.8','1.0'], defv:'0.8'},
    {k:'std_v',  t:'标准电压', ph:'400/230V'},
    {k:'opt_v',  t:'可用电压', ph:'380/220V · 415/240V'},
    {sub:'外观尺寸 (Dimension / Weight / Fuel tank)'},
@@ -323,7 +325,8 @@ const GROUPS = [
  {id:'perf', t:'② 动力详参 · 第2页', open:true, fields:[
    {sub:'基础数据 (Basic data)'},
    {k:'displ',t:'排量', ph:'16.25',unit:'L'},{k:'cyl_arr',t:'缸数 / 排列', ph:'6L'},
-   {k:'bore',t:'缸径×行程', ph:'142x171'},{k:'rpm',t:'转速', ph:'1500',unit:'rpm'},
+   {k:'bore',t:'缸径×行程', ph:'142x171'},{k:'comp_ratio',t:'压缩比', ph:'17.5:1'},
+   {k:'rpm',t:'转速', ph:'1500',unit:'rpm'},
    {sub:'排气系统 (Exhaust)'},
    {k:'ex_t',t:'排气温度 (max)', ph:'560',unit:'°C'},
    {k:'ex_f',t:'排气流量 (max) — 连单位输入', ph:'107.5m³/min'},
@@ -357,7 +360,6 @@ const GROUPS = [
    {k:'g_lead',t:'绕组出线', ph:'12'},
    {k:'g_conn',t:'绕组接法(标准)', ph:'请选择',opts:['Star','Delta']},
    {k:'g_pitch',t:'绕组节距', ph:'请选择',opts:['Two thirds','Five sixths'],defv:'Two thirds'},
-   {k:'g_phase',t:'相数', ph:'请选择',opts:['Single phase','Three phase'],defv:'Three phase'},
    {sub:'结构 (Structure)'},
    {k:'g_brg',t:'轴承数', ph:'请选择',opts:['Single bearing','Double bearing'],defv:'Single bearing'},
  ]},
@@ -599,20 +601,34 @@ function onModelSearch(v){
   renderSearchList();
 }
 
+/* 聚焦搜索框：即使没输入也弹出完整型号列表（2026-10-26 用户要求） */
+function onFocusShowAll(v){
+  _modelQuery = String(v||'').trim();
+  renderSearchList();
+  // 2026-10-26 修：聚焦时浏览器把光标停在开头，列表从第一条开始滚，用户看到的是「没反应」
+  // 聚焦（无关键词）时把列表滚回顶部
+  const box = document.getElementById('msList');
+  if(box) box.scrollTop = 0;
+}
+
 /* 搜索结果列表：显示全部命中机型（最多 300 条，可键盘上下选） */
 let _msIdx = -1;
 
 function renderSearchList(){
   const box = document.getElementById('msList');
   if(!box) return;
-  if(!_modelQuery){ box.classList.remove('on'); box.innerHTML=''; _msIdx=-1; setSearchHint(''); return; }
+  // 2026-10-26 用户要求：点搜索框（空查询）也直接列出全部型号，不必先打字
+  const _q = _modelQuery;
   const list = filteredModels();
   const total = _familyFilter
     ? DB.models.filter(x=>famOf(x)===_familyFilter).length
     : DB.models.length;
   setSearchHint(`命中 ${list.length}/${total}`);
   if(!list.length){
-    box.innerHTML = `<div class="msearch-empty">没有匹配「${esc(_modelQuery)}」的机型</div>`;
+    // 2026-10-26 修：空结果也必须写内容，否则多行模板的缩进空白会让列表看起来「没弹出」
+    box.innerHTML = _q
+      ? `<div class="msearch-empty">没有匹配「${esc(_q)}」的机型</div>`
+      : `<div class="msearch-empty">机型库为空或仍在加载，请稍候…</div>`;
     box.classList.add('on');
     return;
   }
@@ -731,7 +747,29 @@ function collect(){
   const av=g('el_alt_v'), aa=g('el_alt_a');
   if(av||aa) o.el_alt = `DC${av||''}V/${aa||''}A`;
   delete o.el_alt_v; delete o.el_alt_a;
+  // 功率因数：表单默认 0.8，用户可改 1.0（存 pf，不参与回显干扰）
+  const pfv = g('__pf') || '0.8';
+  o.pf = pfv;
+  delete o.__pf;
   return o;
+}
+
+/* 频率 / 相数 / 功率因数 复合串（模板第1页 [3,1]）
+   中文：50Hz / 3P / PF0.8   英文：50Hz / 3P / PF0.8（英文模板同格式）
+   相数 Single phase -> 1P，Three phase -> 3P；PF 默认 0.8，可改 1.0 */
+function buildFreqPhasePf(freq, phase, pf, lang){
+  const fq = String(freq||'').trim() || '50Hz';
+  const ph = String(phase||'').trim();
+  const isSingle = /single/i.test(ph);
+  const isThree  = /three/i.test(ph);
+  const pTag = isSingle ? '1P' : (isThree ? '3P' : '');
+  let pfv = String(pf||'').trim() || '0.8';
+  // 去掉可能残留的 "PF" 前缀，统一再加
+  pfv = pfv.replace(/^PF\s*/i,'').replace(/\s/g,'');
+  const parts = [fq];
+  if(pTag) parts.push(pTag);
+  if(pfv) parts.push('PF' + pfv);
+  return parts.join(' / ');
 }
 
 /* ===== 出件前归一：把"数字 + 固定单位"拼成模板要的完整字符串 =====
@@ -904,6 +942,7 @@ function renderForm(){
   const valOf = k => {
     if(k==='__sub') return (cm.__sub || '').trim() || (m.model || '');
     if(k==='model') return (m.model || '');
+    if(k==='__pf')  return (fd['pf'] || '').trim() || '0.8';
     return FREQ_FIELDS.includes(k) ? (fd[k]||'') : (cm[k]||'');
   };
   const el = document.getElementById('form');
@@ -944,6 +983,13 @@ function renderForm(){
       if(f.ta) return `<div class="fld" style="grid-column:1/-1"><label>${f.t}</label>
         <textarea data-k="${f.k}" placeholder="${f.ph||''}">${v}</textarea></div>`;
       const oninp = (f.k==='model') ? ' oninput="syncModelFromForm()"' : '';
+      // 功率因数 PF：默认 0.8，可改 1.0（值存 freqs[频率].pf）
+      if(f.pfOpts){
+        const curP = (valOf('__pf')||'0.8').trim() || '0.8';
+        const popts = f.pfOpts.map(o=>`<option value="${esc(o)}"${o===curP?' selected':''}>${esc(o)}</option>`).join('');
+        return `<div class="fld"><label>${f.t}</label>
+          <select data-k="__pf" data-pf="1">${popts}</select></div>`;
+      }
       // 下拉框（固定选项，出件时按语言映射成英文/中文）
       if(f.opts){
         const cur0 = (valOf(f.k)||'').trim() || (f.defv||'');
@@ -1534,6 +1580,8 @@ async function genFile(fmt){
   ['g_exc','g_conn','g_pitch','g_phase','g_brg'].forEach(k=>{
     if(data[k]) data[k] = optLabel(data[k], lang);
   });
+  // 频率 / 相数 / 功率因数：模板第1页 [3,1] 复合单元格，按当前语言拼装
+  data.freq_phase_pf = buildFreqPhasePf(m.curFreq, data.g_phase, data.pf, lang);
   // 油耗：模板左列已有标签(100% ESP(L/H) 等)，右列只要纯数字，按同顺序拼多行
   const fcParts = [];
   if(fd.fc_esp || fd.fc_prp || fd.fc_75 || fd.fc_50){

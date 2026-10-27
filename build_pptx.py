@@ -9,6 +9,7 @@
 """
 import argparse
 import copy
+import hashlib
 import io
 import json
 import os
@@ -1131,8 +1132,16 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
 
     os.makedirs(os.path.join(HERE, outdir) if not os.path.isabs(outdir) else outdir, exist_ok=True)
     model = data.get("model", "model")
+    # 2026-10-26 修：型号含 / \ : * ? " < > | 会导致路径/文件名非法（如 AF11D5/1P -> output/AF11D5/1P_...）
+    # 只清洗磁盘文件名，data["model"] 原值不受影响，页面显示不变
+    safe_model = re.sub(r'[/\\:*?"<>|]', '-', str(model)).strip() or "model"
+    # 2026-10-26 修：同名型号不同动力配置清洗后会同名互相覆盖（AF17D6/1P 两个款）
+    # 取关键配置指纹前 6 位追加到文件名，避免静默覆盖
+    _fp_src = "|".join(str(data.get(k, "")) for k in
+                       ("e_model", "prp_kva", "eps_kva", "std_v", "freq_tag"))
+    _fp = hashlib.md5(_fp_src.encode("utf-8")).hexdigest()[:6]
     outpath = os.path.join(os.path.join(HERE, outdir) if not os.path.isabs(outdir) else outdir,
-                           "%s_paramsheet_%s.pptx" % (model, lang))
+                           "%s_%s_paramsheet_%s.pptx" % (safe_model, _fp, lang))
     prs.save(outpath)
     # 剥掉模板内嵌字体（约 28MB），加速前端下载与服务器转换
     _strip_embedded_fonts(outpath)
