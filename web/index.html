@@ -116,6 +116,7 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
   <select id="fShell" onchange="doSearch()"><option value="">全部款式</option></select>
   <input type="text" id="fKw" placeholder="搜型号 / 发动机 / 品牌 / 电压" onkeydown="if(event.key==='Enter')doSearch()">
   <button class="btn primary" onclick="doSearch()">搜索</button>
+  <button class="btn" id="newBtn" onclick="doNew()" style="margin-left:auto">+ 新增参数单</button>
 </div>
 
 <div class="body">
@@ -128,7 +129,11 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 
   <!-- 中：编辑 -->
   <div class="col">
-    <div class="col-h">参数编辑 <span class="n" id="editName"></span></div>
+    <div class="col-h">参数编辑 <span class="n" id="editName"></span>
+      <span id="editOps" style="margin-left:auto;display:none;gap:6px">
+        <button class="btn primary" style="padding:4px 12px;font-size:12px" onclick="doSave()">保存</button>
+        <button class="btn" style="padding:4px 10px;font-size:12px;color:#b91c1c" onclick="doDelete()">删除</button>
+      </span></div>
     <div id="shellbar"></div>
     <div class="col-b" id="editor"><div class="empty">左边选一个参数单</div></div>
   </div>
@@ -146,7 +151,7 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 
 <script>
 const S={kind:'std',page:1,size:20,q:'',family:'',shell:'',cur:null,data:null,orig:null,
-         shells:new Set(),dict:null,admin:false,diff:null};
+         shells:new Set(),dict:null,admin:false,diff:null,isNew:false};
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -222,7 +227,7 @@ async function doSearch(page){
 
 /* ---------- 打开详情 ---------- */
 async function openDetail(name){
-  S.cur=name;S.shells=new Set();
+  S.isNew=false;S.cur=name;S.shells=new Set();
   const p=new URLSearchParams({kind:S.kind,name});
   const r=await (await fetch('/api/detail?'+p)).json();
   if(!r.ok){toast('读取失败');return;}
@@ -233,6 +238,7 @@ async function openDetail(name){
   else if(S.data.has_silent)S.shells.add('SILENT');
   $('editName').textContent=S.data.parsed.model_code||'';
   renderShellbar();renderEditor();renderPreview();
+  $('editOps').style.display='flex';
   document.querySelectorAll('.item').forEach(el=>{
     el.classList.toggle('on',el.querySelector('.t').textContent===name);
   });
@@ -311,8 +317,23 @@ function toggleGrp(gi){
   const el=$('grp'+gi);if(!el)return;
   el.style.display = el.style.display==='none'?'block':'none';
 }
+function buildNewName(){
+  if(!S.isNew)return;
+  const d=S.data;
+  const mc=(d.model||d.parsed&&d.parsed.model_code||'').trim();
+  if(!mc){d.name='新参数单';return;}
+  const v=(d.std_v||'').trim();
+  const vol=v?(' ('+v+')'):'';
+  const em=(d.e_model||'').trim();
+  d.name=mc+vol+(em?' ['+em+']':'');
+}
 function onEdit(k,v){
   setVal(k,v);
+  if(S.isNew){
+    if(k==='model'&&S.data.parsed)S.data.parsed.model_code=v;
+    if(k==='std_v'||k==='e_model'||k==='model')buildNewName();
+    $('editName').textContent=S.data.name||'（新增）';
+  }
   // 只刷新预览 + 当前输入框的改动标记（不整块重绘，避免失焦）
   const inp=event.target;
   inp.classList.toggle('chg',changed(k));
@@ -435,8 +456,52 @@ async function doExport(){
   $('mask').classList.remove('on');
 }
 
+/* ---------- 保存 / 新增 / 删除 ---------- */
 async function doSave(){
-  toast('保存功能下一版开放（需管理员登录）');
+  if(!S.data){toast('先选一个参数单');return;}
+  if(!S.admin){toast('请先点右上角「管理员登录」');return;}
+  const payload={kind:S.kind,name:S.isNew?'':S.cur,is_new:!!S.isNew,data:S.data};
+  const r=await (await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)})).json().catch(e=>({ok:false,error:e.message}));
+  if(!r.ok){toast('保存失败：'+(r.error||''));return;}
+  toast(r.action==='created'?'已新增':'已保存');
+  const savedName=r.name;
+  S.isNew=false;
+  await doSearch(S.page);
+  await openDetail(savedName);
+}
+async function doDelete(){
+  if(!S.cur||S.isNew){toast('先选一个参数单');return;}
+  if(!S.admin){toast('请先点右上角「管理员登录」');return;}
+  if(!confirm('确定删除？\n'+S.cur+'\n（删标准单时其下非标会一起删）'))return;
+  const r=await (await fetch('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({kind:S.kind,name:S.cur})})).json().catch(e=>({ok:false,error:e.message}));
+  if(!r.ok){toast('删除失败：'+(r.error||''));return;}
+  toast('已删除'+(r.deleted_nonstd&&r.deleted_nonstd.length?`（含非标 ${r.deleted_nonstd.length} 条）`:''));
+  S.cur=null;S.data=null;S.isNew=false;
+  $('editor').innerHTML='<div class="empty">左边选一个参数单</div>';
+  $('shellbar').innerHTML='';$('preview').innerHTML='<div class="empty">预览区</div>';
+  $('editName').textContent='';$('editOps').style.display='none';
+  await doSearch(1);
+}
+function doNew(){
+  if(!S.admin){toast('请先点右上角「管理员登录」');return;}
+  S.isNew=true;S.cur=null;S.diff=null;
+  const blank={name:'',model:'',family_name:'',version:'',cur_freq:'50Hz',shell_code:'A',shell_name:'A',
+    images:{OPEN:null,SILENT:null},parsed:{model_code:'',voltage:null,variant:null,engine_model:null},
+    has_open:true,has_silent:false};
+  ['prp_kva','prp_kw','eps_kva','eps_kw','std_v','opt_v','rpm','e_brand','e_model','e_fuel','e_asp',
+   'e_cool','e_gov','e_cyl','displ','cyl_arr','bore','ex_t','ex_f','ex_bp','fu_res','fu_max','co_air',
+   'co_oil','co_cool','el_v','el_bat','el_alt','in_flt','in_res','in_flow','in_t','g_insul','g_exc',
+   'g_lead','g_conn','g_pitch','g_phase','g_brg','o_lwh','o_wt','o_tank','s_lwh','s_wt','s_tank'
+  ].forEach(k=>blank[k]='');
+  blank.name='新参数单';
+  S.data=blank;S.orig=JSON.parse(JSON.stringify(blank));
+  S.shells=new Set(['OPEN']);
+  $('editName').textContent='（新增）';
+  $('editOps').style.display='flex';
+  renderShellbar();renderEditor();renderPreview();
+  toast('填好型号/电压/发动机后点「保存」');
 }
 
 /* ---------- 登录 ---------- */
