@@ -117,6 +117,7 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
   <input type="text" id="fKw" placeholder="搜型号 / 发动机 / 品牌 / 电压" onkeydown="if(event.key==='Enter')doSearch()">
   <button class="btn primary" onclick="doSearch()">搜索</button>
   <button class="btn" id="newBtn" onclick="doNew()" style="margin-left:auto">+ 新增参数单</button>
+  <button class="btn" id="deriveBtn" onclick="doDerive()" style="display:none">＋ 由标准单派生非标</button>
 </div>
 
 <div class="body">
@@ -204,6 +205,9 @@ function setKind(k){
   $('shellbar').innerHTML='';
   $('preview').innerHTML='<div class="empty">预览区</div>';
   $('editName').textContent='';
+  $('editOps').style.display='none';
+  $('newBtn').style.display = k==='std' ? '' : 'none';
+  $('deriveBtn').style.display = k==='nonstd' ? '' : 'none';
   loadDict().then(()=>doSearch());
 }
 
@@ -460,6 +464,7 @@ async function doExport(){
 async function doSave(){
   if(!S.data){toast('先选一个参数单');return;}
   if(!S.admin){toast('请先点右上角「管理员登录」');return;}
+  if(S.isNew && S.deriveBase){return doSaveDerive();}
   const payload={kind:S.kind,name:S.isNew?'':S.cur,is_new:!!S.isNew,data:S.data};
   const r=await (await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)})).json().catch(e=>({ok:false,error:e.message}));
@@ -502,6 +507,48 @@ function doNew(){
   $('editOps').style.display='flex';
   renderShellbar();renderEditor();renderPreview();
   toast('填好型号/电压/发动机后点「保存」');
+}
+
+/* ---------- 由标准单派生非标 ---------- */
+async function doDerive(){
+  if(!S.admin){toast('请先点右上角「管理员登录」');return;}
+  // 步骤1：选基准标准单
+  const q=prompt('输入标准单的型号 / 发动机型号（如 AF2270 或 AF11D5）');
+  if(q===null)return;
+  const r=await (await fetch('/api/std_index?q='+encodeURIComponent(q||'')+'&limit=30')).json();
+  if(!r.ok||!r.items.length){toast('没找到标准单');return;}
+  const lines=r.items.map((it,i)=>`${i+1}. ${it.name}  —  ${it.e_model||'—'} / ${it.prp_kva||'—'}kVA`).join('\n');
+  const pick=prompt('选一个作基准（输入序号）：\n\n'+lines, '1');
+  if(!pick)return;
+  const idx=parseInt(pick,10)-1;
+  if(isNaN(idx)||!r.items[idx]){toast('序号不对');return;}
+  const base=r.items[idx];
+  // 步骤2：非标单名称
+  const nm=prompt('非标单名称（留空 = 「'+base.name+' · 非标」）','');
+  if(nm===null)return;
+  // 步骤3：读基准详情，放进编辑器，标记为非标新增
+  const d=await (await fetch('/api/detail?kind=std&name='+encodeURIComponent(base.name))).json();
+  if(!d.ok){toast('读取基准失败');return;}
+  S.isNew=true;S.deriveBase=base.name;
+  S.data=JSON.parse(JSON.stringify(d.data));
+  S.orig=JSON.parse(JSON.stringify(d.data));
+  S.cur=null;S.diff=null;
+  if(nm.trim())S.data.name=nm.trim();
+  $('editName').textContent=S.data.name;
+  $('editOps').style.display='flex';
+  S.shells=new Set(S.data.has_open?['OPEN']:['SILENT']);
+  renderShellbar();renderEditor();renderPreview();
+  toast('已载入基准参数，改完点「保存」= 生成非标单');
+}
+async function doSaveDerive(){
+  const r=await (await fetch('/api/derive',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({base:S.deriveBase,name:S.data.name,data:S.data})})).json()
+    .catch(e=>({ok:false,error:e.message}));
+  if(!r.ok){toast('派生失败：'+(r.error||''));return;}
+  toast('非标单已生成：'+r.name);
+  S.isNew=false;S.deriveBase=null;
+  await setKind('nonstd');
+  await openDetail(r.name);
 }
 
 /* ---------- 登录 ---------- */
