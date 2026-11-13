@@ -294,6 +294,166 @@ def serve_out(fn: str):
     return FileResponse(p) if os.path.exists(p) else JSONResponse({'error': 'nf'}, 404)
 
 
+# ---------------- 保存 / 新增 / 删除（仅管理员） ----------------
+class SaveIn(BaseModel):
+    kind: str = 'std'
+    name: str = ''            # 原主键；新增时为空
+    data: dict                # 前端编辑后的摊平字段（S.data）
+    is_new: bool = False      # 新增标记：true 时走 insert，不做"名称不能为空"拦截
+
+
+def _is_admin(request: Request):
+    return request.cookies.get('admin') == '1'
+
+
+def _today_version():
+    import datetime
+    return 'V' + datetime.datetime.now().strftime('%Y%m%d') + '-01'
+
+
+def _derive(row_name, data, kind):
+    """从摊平数据回推派生列（款式/系列/分区/版本）"""
+    import re as _re
+    sh = (data.get('shell_code') or '').strip().upper() or None
+    if not sh:
+        m = _re.search(r'开架', row_name)
+        if m:
+            sh = 'A'
+        else:
+            m = _re.search(r'([A-Z]{1,2})款', row_name)
+            if m:
+                sh = m.group(1)
+    fam = (data.get('family_code') or '').strip().upper() or None
+    return sh, fam, (data.get('zone') or ('std' if kind == 'std' else 'std'))
+
+
+@app.post('/api/save')
+def api_save(body: SaveIn, request: Request):
+    """保存参数单：标准单直接覆盖原单（用户 2026-11-13 定口径，不留历史）"""
+    if not _is_admin(request):
+        return JSONResponse({'ok': False, 'error': '需要管理员登录'}, 403)
+    kind = body.kind if body.kind in ('std', 'nonstd') else 'std'
+    db = STD_DB if kind == 'std' else NON_DB
+    d = dict(body.data or {})
+    name = (body.name or '').strip()
+    is_new = bool(body.is_new) or not name
+    if is_new:
+        # 新增：主键由前端拼好（型号 (电压款式) [发动机]）
+        name = (d.get('name') or name).strip()
+    if not name:
+        return JSONResponse({'ok': False, 'error': '缺少参数单名称'}, 400)
+
+    c = sqlite3.connect(db)
+    c.row_factory = sqlite3.Row
+    old = c.execute("select * from models where name=?", (name,)).fetchone()
+    if old is not None and is_new:
+        c.close()
+        return JSONResponse({'ok': False, 'error': '同名参数单已存在：' + name}, 409)
+
+    # 回写嵌套 data：保留未在界面出现的字段，只覆盖界面编辑过的那些
+    if old is not None:
+        raw = json.loads(old['data'])
+    else:
+        raw = {'model': d.get('model') or d.get('name'), 'curFreq': d.get('cur_freq') or '50Hz',
+               'freqs': {}, 'common': {}}
+    cur_f = raw.get('curFreq') or '50Hz'
+    freqs = raw.setdefault('freqs', {})
+    fv = freqs.setdefault(cur_f, {})
+    cm = raw.setdefault('common', {})
+    for k in FREQ_KEYS:
+        if k in d:
+            fv[k] = d.get(k)
+    for k in COMMON_KEYS:
+        if k in d:
+            cm[k] = d.get(k)
+    # 界面上的开架/静音尺寸（o_*/s_*）已在 COMMON_KEYS 内
+    if d.get('model'):
+        raw['model'] = d.get('model')
+    if d.get('cur_freq'):
+        raw['curFreq'] = d.get('cur_freq')
+        cur_f = d.get('cur_freq')
+    # 兜底：频率/相数/功率因素格
+    if not fv.get('freq'):
+        fv['freq'] = d.get('freq_phase_pf') or cur_f
+
+    sh, fam, zone = _derive(name, d, kind)
+    version = d.get('version') or (old['version'] if old is not None else _today_version())
+    now = __import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    created = old['created_at'] if old is not None else now
+    payload = json.dumps(raw, ensure_ascii=False)
+
+    if old is None:
+        c.execute("""insert into models(name,model,family,freq_list,src,data,created_at,updated_at,
+                     shell_code,shell_name,family_code,family_name,zone,version,display_name)
+                     values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                  (name, raw.get('model'), (fam or ''), json.dumps(list(freqs.keys())),
+                   d.get('src') or 'web新增', payload, created, now, sh, sh, fam,
+                   d.get('family_name'), zone, version, d.get('display_name')))
+        action = 'created'
+    else:
+        c.execute("""update models set model=?, data=?, updated_at=?, shell_code=?, shell_name=?,
+                     family_code=?, family_name=?, zone=?, version=? where name=?""",
+                  (raw.get('model'), payload, now, sh, sh, fam,
+                   d.get('family_name') or old['family_name'], zone, version, name))
+        action = 'updated'
+    # 同步 FTS
+    try:
+        c.execute("delete from models_fts where name=?", (name,))
+        c.execute("""insert into models_fts(name,model,shell_name,family_name,e_model,e_brand,std_v,zone)
+                     values(?,?,?,?,?,?,?,?)""",
+                  (name, raw.get('model'), sh, d.get('family_name') or '',
+                   cm.get('e_model'), cm.get('e_brand'), cm.get('std_v'), zone))
+    except Exception:
+        pass
+    c.commit()
+    c.close()
+    return {'ok': True, 'action': action, 'name': name, 'version': version, 'updated_at': now}
+
+
+class DeleteIn(BaseModel):
+    kind: str = 'std'
+    name: str = ''
+
+
+@app.post('/api/delete')
+def api_delete(body: DeleteIn, request: Request):
+    """删除参数单：删标准单时其下非标跟着删"""
+    if not _is_admin(request):
+        return JSONResponse({'ok': False, 'error': '需要管理员登录'}, 403)
+    kind = body.kind if body.kind in ('std', 'nonstd') else 'std'
+    name = (body.name or '').strip()
+    if not name:
+        return JSONResponse({'ok': False, 'error': '缺少名称'}, 400)
+    db = STD_DB if kind == 'std' else NON_DB
+    c = sqlite3.connect(db)
+    c.row_factory = sqlite3.Row
+    n = c.execute("select count(*) from models where name=?", (name,)).fetchone()[0]
+    if not n:
+        c.close()
+        return JSONResponse({'ok': False, 'error': 'not found'}, 404)
+    deleted_nonstd = []
+    if kind == 'std':
+        # 删标准单 → 其下非标跟着删（按型号前缀配对）
+        base = parse_name(name)['model_code'] or ''
+        nc = sqlite3.connect(NON_DB)
+        nc.row_factory = sqlite3.Row
+        rows = nc.execute("select name from models where name like ?", (base + '%',)).fetchall()
+        for r in rows:
+            if (parse_name(r['name'])['model_code'] or '').upper() == base.upper():
+                nc.execute("delete from models where name=?", (r['name'],))
+                deleted_nonstd.append(r['name'])
+        nc.commit()
+        nc.close()
+    c.execute("delete from models where name=?", (name,))
+    try:
+        c.execute("delete from models_fts where name=?", (name,))
+    except Exception:
+        pass
+    c.commit()
+    c.close()
+    return {'ok': True, 'deleted': name, 'deleted_nonstd': deleted_nonstd}
+
+
 # ---------------- 页面 ----------------
 @app.get('/', response_class=HTMLResponse)
 def index():
