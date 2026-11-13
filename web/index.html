@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>机组参数单管理工具</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#eef1f5;color:#1f2328;font-size:13px}
+.top{background:#1f4e79;color:#fff;height:52px;display:flex;align-items:center;gap:16px;padding:0 20px;position:sticky;top:0;z-index:100}
+.top h1{font-size:15px;font-weight:600}
+.top .sp{flex:1}
+.top .st{font-size:12px;opacity:.8}
+.btn{border:none;padding:7px 15px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;background:#fff;color:#1f4e79}
+.btn:hover{background:#e6eef7}
+.btn.primary{background:#1f6feb;color:#fff}
+.btn.primary:hover{background:#1a5fd0}
+.btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45)}
+.btn.ghost:hover{background:rgba(255,255,255,.15)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* 顶部搜索条 */
+.sbar{background:#fff;padding:10px 20px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #dfe4ea;flex-wrap:wrap}
+.sbar input[type=text]{flex:1;min-width:200px;padding:8px 12px;border:1px solid #d3d9e0;border-radius:6px;font-size:13px;outline:none}
+.sbar input[type=text]:focus{border-color:#1f6feb;box-shadow:0 0 0 3px rgba(31,111,235,.1)}
+.sbar select{padding:8px 10px;border:1px solid #d3d9e0;border-radius:6px;font-size:12.5px;background:#fff;min-width:120px}
+.sbar .modebtn{padding:8px 18px;border:2px solid #dfe4ea;background:#fff;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:#4b5563}
+.sbar .modebtn.on{border-color:#1f6feb;background:#eef5ff;color:#1f6feb}
+
+/* 主体：左列表 + 中编辑 + 右预览 */
+.body{display:grid;grid-template-columns:270px 400px 1fr;gap:10px;padding:10px;height:calc(100vh - 108px)}
+@media(max-width:1500px){.body{grid-template-columns:240px 370px 1fr}}
+@media(max-width:1200px){.body{grid-template-columns:1fr;height:auto}}
+
+.col{background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(0,0,0,.07);display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.col-h{padding:10px 14px;border-bottom:1px solid #eef1f4;font-weight:600;font-size:12.5px;display:flex;align-items:center;gap:6px;flex:0 0 auto;background:#fafbfc}
+.col-h .n{color:#6b7280;font-weight:400;font-size:11.5px}
+.col-b{flex:1;overflow-y:auto;min-height:0}
+
+/* 列表 */
+.item{padding:9px 14px;border-bottom:1px solid #f3f5f7;cursor:pointer}
+.item:hover{background:#f8fafc}
+.item.on{background:#eef5ff;border-left:3px solid #1f6feb;padding-left:11px}
+.item .t{font-size:12.5px;font-weight:500;line-height:1.35;word-break:break-all}
+.item .m{font-size:11px;color:#78828e;margin-top:3px}
+.pager{padding:8px;border-top:1px solid #eef1f4;display:flex;gap:6px;justify-content:center;align-items:center;font-size:11.5px;flex:0 0 auto}
+.pager button{padding:4px 10px;border:1px solid #d3d9e0;background:#fff;border-radius:4px;cursor:pointer;font-size:11.5px}
+.pager button:disabled{opacity:.4}
+
+/* 编辑区 */
+.grp{border-bottom:1px solid #f0f2f5}
+.grp-t{padding:9px 14px;font-size:12px;font-weight:600;color:#1f4e79;background:#f6f9fc;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+.grp-t .ar{font-size:9px;color:#8b95a1}
+.grp-b{padding:8px 14px 12px}
+.fld{display:flex;align-items:center;margin-bottom:7px;gap:8px}
+.fld label{width:118px;flex:0 0 118px;font-size:12px;color:#5b6572;line-height:1.3}
+.fld input,.fld select{flex:1;min-width:0;padding:5px 8px;border:1px solid #dbe0e6;border-radius:5px;font-size:12.5px;outline:none;background:#fff}
+.fld input:focus,.fld select:focus{border-color:#1f6feb;box-shadow:0 0 0 2px rgba(31,111,235,.12)}
+.fld input.chg{border-color:#e6a23c;background:#fffdf5}
+.tba{color:#b0b7c0;font-style:italic}
+
+/* 开架静音切换 */
+.shellbar{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid #eef1f4;background:#fafbfc}
+.sb{flex:1;border:2px solid #dfe4ea;border-radius:8px;background:#fff;padding:9px 10px;cursor:pointer;text-align:left;position:relative}
+.sb:hover{border-color:#b9c6d4}
+.sb.on{border-color:#1f6feb;background:#eef5ff}
+.sb .t{font-size:13px;font-weight:600}
+.sb .d{font-size:10.5px;color:#78828e;margin-top:2px}
+.sb .bd{position:absolute;top:7px;right:8px;font-size:9.5px;padding:1px 5px;border-radius:3px}
+.bd.ok{background:#dcfce7;color:#15803d}
+.bd.no{background:#f1f3f5;color:#8b95a1}
+
+/* 预览区 */
+.pv{background:#fff;padding:0}
+.pv-bar{padding:10px 16px;border-bottom:1px solid #eef1f4;display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:#fafbfc;position:sticky;top:0;z-index:5}
+.pv-bar .hint{font-size:11px;color:#9aa4b0;margin-left:auto}
+.paper{background:#fff;max-width:900px;margin:16px auto;padding:30px 34px;box-shadow:0 2px 14px rgba(0,0,0,.09);border-radius:3px;font-size:12.5px}
+.paper h2{font-size:19px;font-weight:700;margin-bottom:4px;color:#12304d}
+.paper .sub2{font-size:11.5px;color:#6b7280;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1f4e79}
+.paper h3{font-size:13px;font-weight:700;color:#1f4e79;margin:16px 0 8px;padding-left:8px;border-left:3px solid #1f6feb}
+.pt{width:100%;border-collapse:collapse;font-size:12px}
+.pt th,.pt td{padding:6px 9px;border:1px solid #e4e8ec;text-align:left;vertical-align:top}
+.pt th{background:#f6f9fc;font-weight:600;color:#4b5563;width:38%;font-size:11.5px}
+.pt td{word-break:break-all}
+.pt tr.hl td{background:#eff6ff;font-weight:600;color:#1a4d8f}
+.pv-pic{border:1px solid #e4e8ec;border-radius:6px;overflow:hidden;background:#fafbfc;margin-bottom:12px;text-align:center;min-height:130px;display:flex;align-items:center;justify-content:center}
+.pv-pic img{width:100%;display:block}
+.pv-pic .ni{color:#9aa4b0;font-size:12px;padding:30px}
+
+/* PDF 遮罩 */
+.mask{position:fixed;inset:0;background:rgba(20,26,33,.55);z-index:200;display:none;align-items:center;justify-content:center}
+.mask.on{display:flex}
+.mbox{background:#fff;border-radius:11px;padding:26px 34px;text-align:center;font-size:14px;min-width:250px}
+.spin{width:30px;height:30px;border:3px solid #e4e8ec;border-top-color:#1f6feb;border-radius:50%;margin:0 auto 14px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;top:64px;right:20px;background:#1f2328;color:#fff;padding:10px 16px;border-radius:7px;font-size:12.5px;z-index:999;opacity:0;transform:translateY(-8px);transition:.2s;pointer-events:none}
+.toast.on{opacity:1;transform:none}
+.empty{padding:50px 20px;text-align:center;color:#9aa4b0;font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>机组参数单管理</h1>
+  <span class="st" id="verinfo"></span>
+  <div class="sp"></div>
+  <span class="st" id="who">游客模式</span>
+  <button class="btn ghost" id="loginBtn" onclick="doLogin()">管理员登录</button>
+</div>
+
+<div class="sbar">
+  <button class="modebtn on" data-kind="std" onclick="setKind('std')">标准参数单</button>
+  <button class="modebtn" data-kind="nonstd" onclick="setKind('nonstd')">非标参数单</button>
+  <select id="fFamily" onchange="doSearch()"><option value="">全部动力品牌</option></select>
+  <select id="fShell" onchange="doSearch()"><option value="">全部款式</option></select>
+  <input type="text" id="fKw" placeholder="搜型号 / 发动机 / 品牌 / 电压" onkeydown="if(event.key==='Enter')doSearch()">
+  <button class="btn primary" onclick="doSearch()">搜索</button>
+</div>
+
+<div class="body">
+  <!-- 左：列表 -->
+  <div class="col">
+    <div class="col-h">参数单列表 <span class="n" id="listCnt"></span></div>
+    <div class="col-b" id="list"><div class="empty">加载中…</div></div>
+    <div class="pager" id="pager"></div>
+  </div>
+
+  <!-- 中：编辑 -->
+  <div class="col">
+    <div class="col-h">参数编辑 <span class="n" id="editName"></span></div>
+    <div id="shellbar"></div>
+    <div class="col-b" id="editor"><div class="empty">左边选一个参数单</div></div>
+  </div>
+
+  <!-- 右：实时预览 -->
+  <div class="col">
+    <div class="col-b pv" id="preview">
+      <div class="empty">预览区<br><span style="font-size:12px">编辑参数时这里实时刷新</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="mask" id="mask"><div class="mbox"><div class="spin"></div><div id="maskTxt">正在生成 PDF…</div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const S={kind:'std',page:1,size:20,q:'',family:'',shell:'',cur:null,data:null,orig:null,
+         shells:new Set(),dict:null,admin:false,diff:null};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2000);}
+const T=(v)=> (v==null||v==='') ? '<span class="tba">TBA</span>' : esc(v);
+
+/* 字段分组定义：编辑表单结构（跟着 PPT 模板走） */
+const GROUPS=[
+ {t:'额定输出',open:true,f:[
+   ['prp_kva','主用功率 kVA'],['prp_kw','主用功率 kW'],
+   ['eps_kva','备用功率 kVA'],['eps_kw','备用功率 kW'],
+   ['std_v','标准电压'],['opt_v','可用电压'],
+ ]},
+ {t:'常规参数（随开架/静音切换）',open:true,shellAware:true,f:[
+   ['lwh','外形尺寸 L×W×H (mm)'],['wt','净重 (kg)'],['tank','油箱容量 (L)'],
+ ]},
+ {t:'机组基础',open:true,f:[
+   ['cur_freq','频率'],['rpm','转速'],['model','机组型号'],
+ ]},
+ {t:'发动机',open:false,f:[
+   ['e_brand','发动机品牌'],['e_model','发动机型号'],['e_fuel','燃料类型'],
+   ['e_asp','进气方式'],['e_cool','冷却方式'],['e_gov','调速方式'],['e_cyl','缸数/排量'],
+   ['displ','排量 (L)'],['cyl_arr','缸数排列'],['bore','缸径×冲程'],
+ ]},
+ {t:'排气系统',open:false,f:[['ex_t','排气温度 (℃)'],['ex_f','排气流量'],['ex_bp','最大排气背压']]},
+ {t:'燃油系统',open:false,f:[['fu_res','进油口阻力'],['fu_max','最大燃油流量']]},
+ {t:'冷却系统',open:false,f:[['co_air','散热器风扇风量'],['co_oil','机油容量 (L)'],['co_cool','冷却液容量 (L)']]},
+ {t:'电气系统',open:false,f:[['el_v','启动电压'],['el_bat','启动电池'],['el_alt','充电发电机']]},
+ {t:'进气系统',open:false,f:[['in_flt','空滤类型'],['in_res','进气阻力'],['in_flow','进气流量'],['in_t','进气温度 (℃)']]},
+ {t:'发电机',open:false,f:[
+   ['g_insul','绝缘/温升'],['g_exc','励磁方式'],['g_lead','引出线数'],
+   ['g_conn','绕组接法'],['g_pitch','节距'],['g_phase','相数'],['g_brg','轴承'],
+ ]},
+];
+
+/* ---------- 字典 ---------- */
+async function loadDict(){
+  const d=await (await fetch(`/api/dict?kind=${S.kind}`)).json();
+  S.dict=d;
+  $('fFamily').innerHTML='<option value="">全部动力品牌</option>'+
+    d.family.filter(f=>f.count>0).map(f=>`<option value="${f.code}">${esc(f.name)} · ${f.count}</option>`).join('');
+  $('fShell').innerHTML='<option value="">全部款式</option>'+
+    d.shell.filter(s=>s.count>0).map(s=>`<option value="${s.code}">${esc(s.name)} · ${s.count}</option>`).join('');
+  $('verinfo').textContent=`共 ${d.total} 条`+(S.kind==='std'?`（待分类 ${d.pending}）`:'');
+}
+function setKind(k){
+  S.kind=k;S.page=1;S.cur=null;S.data=null;
+  document.querySelectorAll('.modebtn').forEach(b=>b.classList.toggle('on',b.dataset.kind===k));
+  $('editor').innerHTML='<div class="empty">左边选一个参数单</div>';
+  $('shellbar').innerHTML='';
+  $('preview').innerHTML='<div class="empty">预览区</div>';
+  $('editName').textContent='';
+  loadDict().then(()=>doSearch());
+}
+
+/* ---------- 列表 ---------- */
+async function doSearch(page){
+  S.page=page||1;
+  S.q=$('fKw').value.trim();S.family=$('fFamily').value;S.shell=$('fShell').value;
+  const p=new URLSearchParams({kind:S.kind,q:S.q,family:S.family,shell:S.shell,page:S.page,size:S.size});
+  const d=await (await fetch('/api/list?'+p)).json();
+  $('listCnt').textContent=`${d.total} 条`;
+  $('list').innerHTML=d.items.map(it=>`
+    <div class="item ${S.cur===it.name?'on':''}" onclick='openDetail(${JSON.stringify(it.name)})'>
+      <div class="t">${esc(it.name)}</div>
+      <div class="m">${esc(it.shell_name||'—')} · ${esc(it.family_name||'')}${it.p50?' · '+it.p50+'kVA':''}${it.zone==='pending'?' · 待分类':''}</div>
+    </div>`).join('')||'<div class="empty">没有匹配</div>';
+  $('pager').innerHTML=d.pages>1?`
+    <button ${d.page<=1?'disabled':''} onclick="doSearch(${d.page-1})">上一页</button>
+    <span>${d.page}/${d.pages}</span>
+    <button ${d.page>=d.pages?'disabled':''} onclick="doSearch(${d.page+1})">下一页</button>`:'';
+}
+
+/* ---------- 打开详情 ---------- */
+async function openDetail(name){
+  S.cur=name;S.shells=new Set();
+  const p=new URLSearchParams({kind:S.kind,name});
+  const r=await (await fetch('/api/detail?'+p)).json();
+  if(!r.ok){toast('读取失败');return;}
+  S.data=JSON.parse(JSON.stringify(r.data));   // 编辑副本
+  S.orig=JSON.parse(JSON.stringify(r.data));   // 原始值（用来标改动）
+  S.diff=r.diff;
+  if(S.data.has_open)S.shells.add('OPEN');
+  else if(S.data.has_silent)S.shells.add('SILENT');
+  $('editName').textContent=S.data.parsed.model_code||'';
+  renderShellbar();renderEditor();renderPreview();
+  document.querySelectorAll('.item').forEach(el=>{
+    el.classList.toggle('on',el.querySelector('.t').textContent===name);
+  });
+}
+
+/* ---------- 开架/静音 ---------- */
+function renderShellbar(){
+  const d=S.data;
+  $('shellbar').innerHTML=`<div class="shellbar" style="border:none;padding:10px 14px;display:flex;gap:8px">
+    <button class="sb ${S.shells.has('OPEN')?'on':''}" onclick="toggleShell('OPEN')">
+      <div class="t">开架</div><div class="d">${esc(d.o_lwh||'尺寸 TBA')}</div>
+      <span class="bd ${d.has_open?'ok':'no'}">${d.has_open?'有数据':'暂无'}</span>
+    </button>
+    <button class="sb ${S.shells.has('SILENT')?'on':''}" onclick="toggleShell('SILENT')">
+      <div class="t">静音</div><div class="d">${esc(d.s_lwh||'尺寸 TBA')}</div>
+      <span class="bd ${d.has_silent?'ok':'no'}">${d.has_silent?'有数据':'暂无'}</span>
+    </button>
+  </div>`;
+}
+function toggleShell(k){
+  if(S.shells.has(k))S.shells.delete(k);else S.shells.add(k);
+  if(S.shells.size===0)toast('至少要选一个：开架或静音');
+  renderShellbar();renderEditor();renderPreview();
+}
+function curShell(){ return S.shells.has('OPEN')?'O':(S.shells.has('SILENT')?'S':'O'); }
+
+/* ---------- 编辑区 ---------- */
+function val(key){
+  const d=S.data;
+  if(key==='lwh'||key==='wt'||key==='tank'){
+    const pre=curShell()==='O'?'o_':'s_';
+    return d[pre+key]??'';
+  }
+  return d[key]??'';
+}
+function setVal(key,v){
+  const d=S.data;
+  if(key==='lwh'||key==='wt'||key==='tank'){
+    const pre=curShell()==='O'?'o_':'s_';
+    d[pre+key]=v||null;
+  }else{
+    d[key]=v||null;
+  }
+}
+function changed(key){
+  const o=S.orig;
+  if(key==='lwh'||key==='wt'||key==='tank'){
+    const pre=curShell()==='O'?'o_':'s_';
+    return (o[pre+key]??'')!==(S.data[pre+key]??'');
+  }
+  return (o[key]??'')!==(S.data[key]??'');
+}
+function renderEditor(){
+  if(!S.data){return;}
+  let h='';
+  GROUPS.forEach((g,gi)=>{
+    const shNote=g.shellAware?`（当前：${curShell()==='O'?'开架':'静音'}）`:'';
+    h+=`<div class="grp">
+      <div class="grp-t" onclick="toggleGrp(${gi})"><span class="ar">${g.open?'▼':'▶'}</span>${g.t}${shNote}</div>
+      <div class="grp-b" id="grp${gi}" style="display:${g.open?'block':'none'}">`;
+    g.f.forEach(([k,label])=>{
+      const isNum=['prp_kva','prp_kw','eps_kva','eps_kw','rpm'].includes(k);
+      h+=`<div class="fld">
+        <label>${label}</label>
+        <input type="${isNum?'number':'text'}" value="${esc(val(k))}"
+          class="${changed(k)?'chg':''}"
+          oninput="onEdit('${k}',this.value)" ${isNum?'step="any"':''}>
+      </div>`;
+    });
+    h+=`</div></div>`;
+  });
+  $('editor').innerHTML=h;
+}
+const _open={};
+function toggleGrp(gi){
+  const el=$('grp'+gi);if(!el)return;
+  el.style.display = el.style.display==='none'?'block':'none';
+}
+function onEdit(k,v){
+  setVal(k,v);
+  // 只刷新预览 + 当前输入框的改动标记（不整块重绘，避免失焦）
+  const inp=event.target;
+  inp.classList.toggle('chg',changed(k));
+  renderPreview();
+}
+
+/* ---------- 右侧实时预览（HTML，参考样式） ---------- */
+function renderPreview(){
+  if(!S.data){return;}
+  const d=S.data;
+  const isO=curShell()==='O';
+  const lwh=isO?d.o_lwh:d.s_lwh, wt=isO?d.o_wt:d.s_wt, tank=isO?d.o_tank:d.s_tank;
+  const img=isO?d.images.OPEN:d.images.SILENT;
+  const shellLabel=isO?'开架型':'静音型';
+
+  const diffHtml = (S.kind==='nonstd'&&S.diff)
+    ? (S.diff.diffs&&S.diff.diffs.length
+        ? `<div style="margin:0 0 14px;padding:10px 13px;background:#fff8e6;border:1px solid #f0d38a;border-radius:7px">
+             <div style="font-weight:600;font-size:12px;color:#8a6100;margin-bottom:7px">⚠ 与标准单不同（基准：${esc(S.diff.base||'—')}）</div>
+             ${S.diff.diffs.map(x=>`<div style="display:grid;grid-template-columns:130px 1fr 1fr;gap:8px;font-size:11.5px;padding:3px 0">
+               <span style="color:#78828e">${esc(x.field)}</span>
+               <span style="color:#9aa4b0;text-decoration:line-through">${T(x.std)}</span>
+               <span style="color:#b91c1c;font-weight:600">${T(x.nonstd)}</span></div>`).join('')}
+           </div>`
+        : `<div style="margin:0 0 14px;padding:10px 13px;background:#f0fdf4;border:1px solid #a7e0b8;border-radius:7px;font-size:12px;color:#15803d">${esc(S.diff.note||'与标准单一致')}</div>`)
+    : '';
+
+  const kv=(label,value)=>`<tr><th>${label}</th><td>${T(value)}</td></tr>`;
+
+  const html=`
+  <div class="pv-bar">
+    <button class="btn primary" onclick="doExport()">生成正式 PDF</button>
+    <button class="btn" onclick="doSave()">保存</button>
+    <span class="hint">HTML 快预览仅供参考，以导出 PDF 为准</span>
+  </div>
+  <div class="paper">
+    <h2>${esc(d.model||d.parsed.model_code||'')} 柴油发电机组</h2>
+    <div class="sub2">
+      采用 ${esc(d.e_brand||'—')} 发动机 ｜ ${esc(shellLabel)} ｜ ${esc(d.family_name||'')}
+      　版本 ${esc(d.version||'—')}
+    </div>
+    ${diffHtml}
+
+    <h3>一、发电机组额定输出</h3>
+    <table class="pt">
+      <tr><th colspan="2">PRP 常用功率 / ESP 备用功率</th></tr>
+      <tr class="hl"><td>主用功率</td><td>${T(d.prp_kva)} kVA / ${T(d.prp_kw)} kW</td></tr>
+      <tr class="hl"><td>备用功率</td><td>${T(d.eps_kva)} kVA / ${T(d.eps_kw)} kW</td></tr>
+      ${kv('频率 / 相数 / 功率因数', d.cur_freq)}
+      ${kv('标准电压', d.std_v)}
+      ${kv('可用电压', d.opt_v)}
+      ${kv('转速', d.rpm?d.rpm+' rpm':'')}
+    </table>
+
+    <h3>二、常规参数（${shellLabel}）</h3>
+    ${img?`<div class="pv-pic"><img src="${img}" alt="${shellLabel}"></div>`:`<div class="pv-pic"><div class="ni">暂无${shellLabel}图片</div></div>`}
+    <table class="pt">
+      ${kv('外形尺寸 L×W×H (mm)', lwh)}
+      ${kv('净重 (kg)', wt)}
+      ${kv('油箱容量 (L)', tank)}
+    </table>
+
+    <h3>三、发动机技术参数</h3>
+    <table class="pt">
+      ${kv('品牌', d.e_brand)}
+      ${kv('发动机型号', d.e_model)}
+      ${kv('燃料类型', d.e_fuel)}
+      ${kv('进气方式', d.e_asp)}
+      ${kv('冷却方式', d.e_cool)}
+      ${kv('调速方式', d.e_gov)}
+      ${kv('排量 (L)', d.displ)}
+      ${kv('缸数 / 排列', d.cyl_arr)}
+      ${kv('缸径 × 冲程', d.bore)}
+    </table>
+
+    <h3>四、各系统参数</h3>
+    <table class="pt">
+      ${kv('排气温度 (℃)', d.ex_t)}
+      ${kv('排气流量', d.ex_f)}
+      ${kv('最大排气背压', d.ex_bp)}
+      ${kv('燃油进油口阻力', d.fu_res)}
+      ${kv('最大燃油流量', d.fu_max)}
+      ${kv('散热器风扇风量', d.co_air)}
+      ${kv('机油总容量 (L)', d.co_oil)}
+      ${kv('冷却液总容量 (L)', d.co_cool)}
+      ${kv('启动电压', d.el_v)}
+      ${kv('启动电池', d.el_bat)}
+      ${kv('充电发电机', d.el_alt)}
+      ${kv('空滤类型', d.in_flt)}
+      ${kv('最大进气阻力', d.in_res)}
+      ${kv('进气流量', d.in_flow)}
+      ${kv('最大进气温度 (℃)', d.in_t)}
+    </table>
+
+    <h3>五、发电机技术参数</h3>
+    <table class="pt">
+      ${kv('绝缘等级 / 温升', d.g_insul)}
+      ${kv('励磁方式', d.g_exc)}
+      ${kv('引出线数量', d.g_lead)}
+      ${kv('绕组接法', d.g_conn)}
+      ${kv('节距', d.g_pitch)}
+      ${kv('相数', d.g_phase)}
+      ${kv('轴承', d.g_brg)}
+    </table>
+  </div>`;
+  $('preview').innerHTML=html;
+}
+
+/* ---------- 导出 PDF ---------- */
+async function doExport(){
+  if(!S.cur)return;
+  if(S.shells.size===0){toast('先选开架或静音');return;}
+  $('mask').classList.add('on');$('maskTxt').textContent='正在生成 PDF…';
+  try{
+    const r=await (await fetch('/api/export',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:S.kind,name:S.cur,shell:curShell()==='O'?'OPEN':'SILENT'})})).json();
+    if(r.ok){toast('PDF 已生成');window.open(r.pdf,'_blank');}
+    else toast('失败：'+(r.error||''));
+  }catch(e){toast('失败：'+e.message);}
+  $('mask').classList.remove('on');
+}
+
+async function doSave(){
+  toast('保存功能下一版开放（需管理员登录）');
+}
+
+/* ---------- 登录 ---------- */
+async function doLogin(){
+  if(S.admin){
+    await fetch('/api/logout',{method:'POST'});S.admin=false;
+    $('who').textContent='游客模式';$('loginBtn').textContent='管理员登录';toast('已退出');return;
+  }
+  const u=prompt('管理员账号');if(!u)return;
+  const p=prompt('密码');if(!p)return;
+  const r=await (await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({user:u,password:p})})).json();
+  if(r.ok){S.admin=true;$('who').textContent='管理员：bob';$('loginBtn').textContent='退出登录';toast('登录成功');}
+  else toast('账号或密码不对');
+}
+
+(async()=>{
+  const r=await (await fetch('/api/whoami')).json();
+  S.admin=r.admin;$('who').textContent=r.admin?'管理员：'+r.user:'游客模式';
+  $('loginBtn').textContent=r.admin?'退出登录':'管理员登录';
+  await loadDict();await doSearch();
+})();
+</script>
+</body>
+</html>

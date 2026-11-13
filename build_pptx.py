@@ -1052,7 +1052,14 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
                 lines = val if isinstance(val, (list, tuple)) else [x for x in str(val).split("\n")]
                 set_multiline(sh.text_frame, lines, keep_shape=True)
             else:
-                set_shape_text(sh, translate(val, lang))
+                _txt = val
+                # strip_unit：去掉值里自带的单位（如 "50Hz" -> "50"），再补 suffix
+                if sdef.get("strip_unit"):
+                    _txt = re.sub(r"(?i)\s*(khz|hz|kva|kw|kg|mm)\s*$", "", str(_txt)).strip()
+                _txt = translate(_txt, lang)
+                if sdef.get("suffix"):
+                    _txt = "%s%s" % (_txt, sdef["suffix"])
+                set_shape_text(sh, _txt)
 
         shape_tables = [sh for sh in slide.shapes if sh.has_table]
         for t_def in slide_def.get("tables", []):
