@@ -18,6 +18,44 @@ ADMIN_USER, ADMIN_PASS = 'bob', '12345'
 app = FastAPI(title='参数单管理工具')
 
 
+import logging
+import traceback as _tb
+import datetime as _dt
+
+LOG_PATH = os.path.join(BASE, 'logs', 'api.log')
+os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+_log = logging.getLogger('paramsheet')
+if not _log.handlers:
+    _log.setLevel(logging.INFO)
+    _fh = logging.FileHandler(LOG_PATH, encoding='utf-8')
+    _fh.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    _log.addHandler(_fh)
+    _sh = logging.StreamHandler()
+    _sh.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    _log.addHandler(_sh)
+
+
+@app.middleware('http')
+async def _access_log(request: Request, call_next):
+    """统一访问日志 + 异常兜底：任何接口崩了都返回 JSON 而不是 500 白屏"""
+    import time as _t
+    t0 = _t.time()
+    try:
+        resp = await call_next(request)
+    except Exception as e:
+        _log.error('EXC %s %s -> %s\n%s', request.method, request.url.path, e, _tb.format_exc()[-1500:])
+        return JSONResponse({'ok': False, 'error': '服务器内部错误：' + str(e)}, 500)
+    ms = int((_t.time() - t0) * 1000)
+    if request.url.path.startswith('/api') or ms > 500:
+        _log.info('%s %s %s %dms', request.method, request.url.path, resp.status_code, ms)
+    resp.headers['X-Elapsed-Ms'] = str(ms)
+    return resp
+
+
+def _now():
+    return _dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
 def conn(kind='std'):
     c = sqlite3.connect(STD_DB if kind == 'std' else NON_DB)
     c.row_factory = sqlite3.Row
@@ -189,8 +227,100 @@ def api_detail(kind: str = 'std', name: str = ''):
 
 
 # ---------------- 非标对比 ----------------
+@app.get('/api/std_index')
+def api_std_index(q: str = '', limit: int = 20):
+    """标准单索引：非标派生时选基准（按型号/发动机/品牌搜）"""
+    limit = min(50, max(5, limit))
+    c = conn('nonstd')
+    if q.strip():
+        like = '%' + q.strip() + '%'
+        rows = c.execute("""select * from std_index
+            where name like ? or model_code like ? or e_model like ? or e_brand like ?
+            order by model_code limit ?""", (like, like, like, like, limit)).fetchall()
+    else:
+        rows = c.execute("select * from std_index order by model_code limit ?", (limit,)).fetchall()
+    total = c.execute("select count(*) from std_index").fetchone()[0]
+    c.close()
+    return {'ok': True, 'total': total, 'items': dicts(rows)}
+
+
+class DeriveIn(BaseModel):
+    base: str = ''            # 基准标准单主键
+    name: str = ''            # 新非标单主键（留空则自动派生）
+    data: dict = {}           # 覆盖字段（没给的沿用基准值）
+
+
+@app.post('/api/derive')
+def api_derive(body: DeriveIn, request: Request):
+    """由标准单派生非标单：复制基准数据 → 覆盖差异字段 → 写进非标库"""
+    if not _is_admin(request):
+        return JSONResponse({'ok': False, 'error': '需要管理员登录'}, 403)
+    base = (body.base or '').strip()
+    if not base:
+        return JSONResponse({'ok': False, 'error': '缺少基准标准单'}, 400)
+    sc = conn('std')
+    r = sc.execute("select * from models where name=?", (base,)).fetchone()
+    if not r:
+        sc.close()
+        return JSONResponse({'ok': False, 'error': '基准标准单不存在：' + base}, 404)
+    raw = json.loads(r['data'])
+    base_shell, base_family, base_version = r['shell_code'], r['family_code'], r['version']
+    base_name = r['name']
+    sc.close()
+
+    # 覆盖字段写进嵌套结构
+    d = dict(body.data or {})
+    cur_f = raw.get('curFreq') or '50Hz'
+    fv = raw.setdefault('freqs', {}).setdefault(cur_f, {})
+    cm = raw.setdefault('common', {})
+    for k in FREQ_KEYS:
+        if k in d and d[k] not in (None, ''):
+            fv[k] = d[k]
+    for k in COMMON_KEYS:
+        if k in d and d[k] not in (None, ''):
+            cm[k] = d[k]
+    if d.get('model'):
+        raw['model'] = d['model']
+
+    name = (body.name or '').strip() or (base_name + ' · 非标')
+    if name == base_name:
+        return JSONResponse({'ok': False, 'error': '非标单不能和标准单同名'}, 400)
+
+    nc = sqlite3.connect(NON_DB)
+    nc.row_factory = sqlite3.Row
+    if nc.execute("select 1 from models where name=?", (name,)).fetchone():
+        nc.close()
+        return JSONResponse({'ok': False, 'error': '非标单已存在：' + name}, 409)
+    now = _now()
+    nc.execute("""insert into models(name,model,family,freq_list,src,data,created_at,updated_at,
+                 shell_code,shell_name,family_code,family_name,zone,version,display_name)
+                 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               (name, raw.get('model'), d.get('family') or '', json.dumps(list((raw.get('freqs') or {}).keys())),
+                '由标准单派生：' + base_name, json.dumps(raw, ensure_ascii=False), now, now,
+                base_shell, base_shell, base_family, d.get('family_name'), 'nonstd',
+                'V' + _dt.datetime.now().strftime('%Y%m%d') + '-01', None))
+    try:
+        nc.execute("""insert into models_fts(name,model,shell_name,family_name,e_model,e_brand,std_v,zone)
+                      values(?,?,?,?,?,?,?,?)""",
+                   (name, raw.get('model'), base_shell, d.get('family_name') or '',
+                    cm.get('e_model'), cm.get('e_brand'), cm.get('std_v'), 'nonstd'))
+    except Exception:
+        pass
+    nc.commit()
+    nc.close()
+    _log.info('derive %s <- %s', name, base_name)
+    return {'ok': True, 'name': name, 'base': base_name}
+
+
 def compare_with_std(nonstd):
-    base = (parse_name(nonstd['name'])['model_code'] or '').upper()
+    # 基准查找顺序：① 非标名自带「型号 (电压款式) [发动机]」→ 用型号代码
+    #              ② 否派生的非标名不规范（如手工命名）→ 退回用模型型号 model 字段
+    pn = parse_name(nonstd['name'])
+    base = (pn['model_code'] or '').upper()
+    if not re.match(r'^[A-Z0-9][A-Z0-9/\-\.]*$', base or ''):
+        base = ''
+    if (not base) or (not re.search(r'[\(（]', nonstd['name'] or '')):
+        base = (nonstd.get('model') or base or '').upper()
     c = conn('std')
     cand = c.execute("select name from models where upper(model)=upper(?) or name like ?",
                      (base, base + ' (%')).fetchall()
