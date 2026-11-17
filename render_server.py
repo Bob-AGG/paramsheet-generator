@@ -31,7 +31,11 @@ LOG_DIR = os.path.join(BASE, 'logs')
 os.makedirs(OUT_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 
-SOFFICE = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
+# ⚠️ 必须用 7.6：macOS 版 LibreOffice 26.x 有 CJK 渲染 bug，中文字形全丢
+# 7.6.7.2 实测正常（PDF 内嵌 SourceHanSansSC）
+SOFFICE = '/Applications/LibreOffice76.app/Contents/MacOS/soffice'
+if not os.path.exists(SOFFICE):
+    SOFFICE = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
 PDFTOPPM = '/opt/homebrew/bin/pdftoppm'
 
 _RENDER_LOCK = threading.Lock()   # soffice 不能并发跑

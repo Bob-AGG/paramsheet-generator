@@ -72,6 +72,37 @@ ADMIN_USER, ADMIN_PASS = 'bob', '12345'
 app = FastAPI(title='参数单管理工具')
 
 
+@app.get('/api/download/{fn}')
+def api_download(fn: str, as_: str = Query('', alias='as')):
+    """直接下载文件（浏览器另存为，不跳打印界面）
+    2026-11-17：文件名按「品牌+备用功率kVA+D/E+5/6」规则（as 参数），如 CU1000D5.pdf"""
+    import urllib.parse as _up
+    safe = os.path.basename(fn)
+    p = os.path.join(OUT_DIR, safe)
+    if not os.path.isfile(p) or not os.path.abspath(p).startswith(os.path.abspath(OUT_DIR)):
+        return JSONResponse({'ok': False, 'error': '文件不存在'}, 404)
+    ext = safe.rsplit('.', 1)[-1].lower()
+    mt = {'pdf': 'application/pdf',
+          'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'png': 'image/png'}.get(ext, 'application/octet-stream')
+    disp = ''
+    if as_:
+        # 只收字母数字下的点，防非法文件名
+        a = re.sub(r'[^0-9A-Za-z._\-]', '', str(as_))[:80]
+        if a:
+            disp = a if a.lower().endswith('.' + ext) else '%s.%s' % (a, ext)
+    if not disp:
+        # 兜底：去掉指纹后缀，保留机型名
+        disp = safe
+        m = re.match(r'^(.*)_[0-9a-f]{6}(_paramsheet_[a-z]{2})?(\.[a-z]+)$', safe)
+        if m:
+            disp = m.group(1) + (m.group(2) or '') + m.group(3)
+    quoted = _up.quote(disp)
+    return FileResponse(p, media_type=mt, filename=disp,
+                        headers={'Content-Disposition':
+                                 "attachment; filename=\"%s\"; filename*=UTF-8''%s" % (safe, quoted)})
+
+
 import logging
 import traceback as _tb
 import datetime as _dt
@@ -435,10 +466,98 @@ def api_whoami(request: Request):
 
 
 # ---------------- 导出 PDF ----------------
+def _tpl_for(lang):
+    """按语言取模板路径（zh / en）。未知语言回退中文。"""
+    lg = 'en' if str(lang or '').lower().startswith('en') else 'zh'
+    p = os.path.join(BASE, 'templates', 'template_%s.pptx' % lg)
+    if not os.path.exists(p):
+        lg = 'zh'
+        p = os.path.join(BASE, 'templates', 'template_zh.pptx')
+    return lg, p
+
+
+# --------- 参数单文件名（用户 2026-11-17 定） ---------
+# 格式：品牌缩写 + 备用功率kVA + D/E + 5/6
+#   D = 机械/电子调速，E = ECU/ECM
+#   5 = 50Hz，6 = 60Hz
+# 例：CU1000D5 / CU1375E5 / AGG500E6
+def _bcode(brand, model_code):
+    """品牌缩写。e_brand 全称没有既有缩写时，用型号自身的字母前缀。"""
+    b = str(brand or '').strip().upper().split()[0] if str(brand or '').strip() else ''
+    MAP = {
+        'CUMMINS': 'CU', 'PERKINS': 'PER', 'BAUDOUIN': 'BAU', 'DEUTZ': 'DE',
+        'WEICHAI': 'WP', 'HYUNDAI': 'HY', 'MTU': 'MTU', 'YUCHAI': 'YC',
+        'SCANIA': 'SC', 'SDEC': 'SD', 'VOLVO': 'VO', 'YANMAR': 'YM',
+        'ISUZU': 'IS', 'KUBOTA': 'KB', 'YANGDONG': 'YD', 'FPT': 'FPT',
+        'MITSUBISHI': 'MI', 'SME': 'SME', 'AGG': 'AGG',
+    }
+    if b in MAP:
+        return MAP[b]
+    mt = re.match(r'^([A-Za-z]+)', str(model_code or ''))
+    return (mt.group(1).upper() if mt else b) or 'GEN'
+
+
+def _gov_code(gov):
+    """调速类型 → D（机械/电子调速）/ E（ECU/ECM）。"""
+    g = str(gov or '').strip().lower()
+    if not g:
+        return 'D'
+    if ('ecu' in g) or ('ecm' in g) or ('hpcr' in g) or ('management' in g):
+        return 'E'
+    if ('mechanical' in g) or ('mechanica' in g):
+        return 'D'
+    return 'D'
+
+
+def _freq_code(freq, model_code):
+    """频率 → 5（50Hz）/ 6（60Hz）。频率缺失时借型号末位。"""
+    f = str(freq or '')
+    if '60' in f:
+        return '6'
+    if '50' in f:
+        return '5'
+    mt = re.match(r'^[A-Za-z]+[\d.]+[DE]([56])$', str(model_code or ''))
+    return mt.group(1) if mt else '5'
+
+
+def doc_filename(f, lang='zh', ext='pdf'):
+    """生成对外下载的参数单文件名，如 CU1000D5.pdf。
+
+    命名标准（用户 2026-11-17 定）：
+      品牌缩写 + 备用功率kVA + D/E + 5/6
+      D=机械/电子调速，E=ECU/ECM，5=50Hz，6=60Hz
+    型号本身已符合该标准时**直接沿用型号**（型号是给客户看的，
+    库里 eps_kva/e_gov 的差异属历史笔误，不拿它们覆盖型号）。
+    """
+    model_code = str(parse_name(f.get('name') or '').get('model_code')
+                     or f.get('model') or '').strip()
+    # 型号本身就带「D/E + 5/6」或「G + 5/6」→ 直接沿用（型号是给客户看的）
+    # 覆盖：CU1000D5 / CU1375E5 / SC2500D5C / P11D5/1P / W625G5 / CU27D5ATL
+    #       AC440L-QSZ13-G3 / 4RT55-110D 等带引擎前缀的
+    if re.search(r'(?:[DEG][56])(?![\d])', model_code):
+        return '%s.%s' % (re.sub(r'[/\\:*?"<>|]', '-', model_code), ext)
+    # AS/G 系列机身型号（如 AS25000-G31）本身就是成品型号，无 D/E/5-6 位也直接沿用
+    if re.match(r'^AS\d+-G\d+[A-Z]?$', model_code):
+        return '%s.%s' % (model_code, ext)
+    # 否则按规则拼
+    brand = f.get('e_brand') or (f.get('parsed') or {}).get('e_brand')
+    try:
+        pw = int(round(float(f.get('eps_kva'))))
+    except Exception:
+        mt = re.search(r'(\d+)', model_code)
+        pw = int(mt.group(1)) if mt else 0
+    base = '%s%d%s%s' % (_bcode(brand, model_code), pw,
+                         _gov_code(f.get('e_gov')),
+                         _freq_code(f.get('cur_freq') or f.get('curFreq'), model_code))
+    base = re.sub(r'[\\/:*?"<>|]', '-', base)
+    return '%s.%s' % (base, ext)
+
+
 class ExportIn(BaseModel):
     kind: str = 'std'
     name: str = ''
     shell: str = ''
+    lang: str = 'zh'
 
 
 @app.post('/api/export')
@@ -459,14 +578,16 @@ def api_export(body: ExportIn):
     try:
         import build_pptx
         os.makedirs(OUT_DIR, exist_ok=True)
-        pptx = build_pptx.build(f, 'zh', os.path.join(BASE, 'templates', 'template_zh.pptx'), OUT_DIR)
+        _lg, _tp = _tpl_for(body.lang)
+        pptx = build_pptx.build(f, _lg, _tp, OUT_DIR)
         pdf = pptx.rsplit('.', 1)[0] + '.pdf'
         if not os.path.exists(pdf):
             subprocess.run([_SOFFICE, '--headless',
                             '--convert-to', 'pdf', '--outdir', OUT_DIR, pptx],
                            check=True, capture_output=True, timeout=180)
         return {'ok': True, 'pdf': '/output/' + os.path.basename(pdf),
-                'pptx': '/output/' + os.path.basename(pptx)}
+                'pptx': '/output/' + os.path.basename(pptx),
+                'dlname': doc_filename(f, _lg)}
     except Exception as e:
         import traceback
         return JSONResponse({'ok': False, 'error': str(e), 'trace': traceback.format_exc()[-800:]}, 500)
@@ -478,6 +599,7 @@ class PreviewIn(BaseModel):
     shell: str = ''
     data: dict = {}
     page: int = 1
+    lang: str = 'zh'
 
 
 _PREV_LOCK = threading.Lock()
@@ -489,6 +611,7 @@ def api_preview(body: PreviewIn):
     try:
         import build_pptx
         os.makedirs(OUT_DIR, exist_ok=True)
+        _lg, _tp = _tpl_for(body.lang)
         f = dict(body.data or {})
         if not f:
             c = conn(body.kind)
@@ -514,7 +637,7 @@ def api_preview(body: PreviewIn):
         mac_err = None
         if _mac_health():
             try:
-                names, pdf_name, _ = _mac_render(f, 'zh')
+                names, pdf_name, _ = _mac_render(f, _lg)
                 pngs = []
                 for fn in names:
                     _mac_fetch(fn, OUT_DIR)
@@ -533,8 +656,7 @@ def api_preview(body: PreviewIn):
 
         # ---- 本地兜底（服务器自己渲染，慢且可能 OOM）----
         with _PREV_LOCK:
-            pptx = build_pptx.build(f, 'zh', os.path.join(BASE, 'templates', 'template_zh.pptx'),
-                                    OUT_DIR)
+            pptx = build_pptx.build(f, _lg, _tp, OUT_DIR)
             pdf = pptx.rsplit('.', 1)[0] + '.pdf'
             if not os.path.exists(pdf):
                 subprocess.run([_SOFFICE, '--headless', '--convert-to', 'pdf',
