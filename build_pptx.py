@@ -950,7 +950,7 @@ def localize_options(d, lang):
     return d
 
 
-def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=False, pic_slots=None):
+def build(data, lang="en", template=None, outdir="output", images_dir=None, transparent_bg=False, pic_slots=None, fast=False):
     """生成参数单 PPTX。
 
     2026-10-20 用户定「双保险」：进 build 先做一遍单位归一 + 下拉翻译，
@@ -1144,16 +1144,22 @@ def build(data, lang="en", template=None, outdir="output", images_dir=None, tran
     safe_model = re.sub(r'[/\\:*?"<>|]', '-', str(model)).strip() or "model"
     # 2026-10-26 修：同名型号不同动力配置清洗后会同名互相覆盖（AF17D6/1P 两个款）
     # 取关键配置指纹前 6 位追加到文件名，避免静默覆盖
-    _fp_src = "|".join(str(data.get(k, "")) for k in
-                       ("e_model", "prp_kva", "eps_kva", "std_v", "freq_tag"))
+    # 2026-11-17 修：原指纹只覆盖 5 个字段，模板实际用 50 个 → 改其余 46 个字段
+    # 文件名不变，preview/导出 命中旧缓存（改品牌/尺寸后预览还是旧图）。
+    # 改为「全部参与渲染的字段」一起算指纹，任何变化都换文件名。
+    _fp_keys = sorted(k for k in data.keys() if not str(k).startswith("__"))
+    _fp_src = "|".join("%s=%s" % (k, data.get(k)) for k in _fp_keys)
     _fp = hashlib.md5(_fp_src.encode("utf-8")).hexdigest()[:6]
     outpath = os.path.join(os.path.join(HERE, outdir) if not os.path.isabs(outdir) else outdir,
                            "%s_%s_paramsheet_%s.pptx" % (safe_model, _fp, lang))
     prs.save(outpath)
-    # 剥掉模板内嵌字体（约 28MB），加速前端下载与服务器转换
-    _strip_embedded_fonts(outpath)
-    # 压缩媒体大图（单张 11MB -> 几百 KB）
-    _compress_media(outpath)
+    # 2026-11-17：fast=True 用于「实时预览」——模板本身已压过，跳过字体剥离与媒体压缩，
+    # 实测单次从 8.5s 降到 ~2.5s。导出正式 PDF 仍走完整流程（默认 fast=False）。
+    if not fast:
+        # 剥掉模板内嵌字体（约 28MB），加速前端下载与服务器转换
+        _strip_embedded_fonts(outpath)
+        # 压缩媒体大图（单张 11MB -> 几百 KB）
+        _compress_media(outpath)
     return outpath
 
 
