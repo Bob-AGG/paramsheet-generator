@@ -29,3 +29,6 @@ data/*
 !data/engine_50hz.json
 !data/engine_60hz.json
 !data/engine_fuel.json
+
+# 截图（体积大，不入仓库）
+docs/screenshots/
