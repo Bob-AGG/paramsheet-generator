@@ -11,6 +11,10 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 .top h1{font-size:15px;font-weight:600}
 .top .sp{flex:1}
 .top .st{font-size:12px;opacity:.8}
+/* 顶栏语言下拉：深蓝底上必须显式配色，否则看不见 */
+.top select{background:#fff;color:#1f4e79;border:1px solid rgba(255,255,255,.5);
+  border-radius:6px;padding:5px 10px;font-size:12.5px;font-weight:600;cursor:pointer;outline:none}
+.top select:hover{background:#e6eef7}
 .btn{border:none;padding:7px 15px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;background:#fff;color:#1f4e79}
 .btn:hover{background:#e6eef7}
 .btn.primary{background:#1f6feb;color:#fff}
@@ -57,6 +61,15 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 .fld input,.fld select{flex:1;min-width:0;padding:5px 8px;border:1px solid #dbe0e6;border-radius:5px;font-size:12.5px;outline:none;background:#fff}
 .fld input:focus,.fld select:focus{border-color:#1f6feb;box-shadow:0 0 0 2px rgba(31,111,235,.12)}
 .fld input.chg{border-color:#e6a23c;background:#fffdf5}
+/* 非标单一律橙框（区别于「改过但还没保存」的 chg） */
+.fld input.nstd{border-color:#e6a23c;background:#fffdf5}
+.nstdbar{margin:0 12px 8px;padding:8px 10px;border:1px solid #f0c989;background:#fffbf2;
+  border-radius:6px;font-size:12px;line-height:1.65;color:#8a5a00;max-height:150px;overflow:auto}
+.nstdbar .nb-t{font-weight:700;color:#b45309}
+.nstdbar .nb-i{display:inline-block;margin:2px 10px 0 0;padding:1px 6px;background:#fff3dd;
+  border:1px solid #f0c989;border-radius:4px;color:#8a5a00}
+.nstdbar .nb-i b{color:#b45309}
+.nstdbar .nb-w{color:#b91c1c;font-weight:700}
 .tba{color:#b0b7c0;font-style:italic}
 
 /* 开架静音切换 */
@@ -100,6 +113,10 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
   <h1>机组参数单管理</h1>
   <span class="st" id="verinfo"></span>
   <div class="sp"></div>
+  <select id="fLang" onchange="setLang(this.value)" title="参数单语言">
+    <option value="zh">中文版</option>
+    <option value="en">English</option>
+  </select>
   <span class="st" id="who">游客模式</span>
   <button class="btn ghost" id="loginBtn" onclick="doLogin()">管理员登录</button>
 </div>
@@ -131,6 +148,7 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
         <button class="btn" style="padding:4px 10px;font-size:12px;color:#b91c1c" onclick="doDelete()">删除</button>
       </span></div>
     <div id="shellbar"></div>
+    <div id="nstdbar" class="nstdbar" style="display:none"></div>
     <div class="col-b" id="editor"><div class="empty">左边选一个参数单</div></div>
   </div>
 
@@ -147,9 +165,17 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 
 <script>
 const S={kind:'std',page:1,size:20,q:'',family:'',shell:'',cur:null,data:null,orig:null,
-         shells:new Set(),dict:null,admin:false,diff:null,isNew:false};
+         shells:new Set(),dict:null,admin:false,diff:null,isNew:false,lang:'zh'};
 
 const $=id=>document.getElementById(id);
+
+/* ---------- 语言切换 ---------- */
+function setLang(v){
+  S.lang = (v==='en') ? 'en' : 'zh';
+  try{ localStorage.setItem('ps_lang', S.lang); }catch(e){}
+  const sel=$('fLang'); if(sel) sel.value=S.lang;
+  if(S.data) renderPreview(true);
+}
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2000);}
 const T=(v)=> (v==null||v==='') ? '<span class="tba">TBA</span>' : esc(v);
@@ -236,7 +262,7 @@ async function openDetail(name){
   if(S.data.has_open)S.shells.add('OPEN');
   else if(S.data.has_silent)S.shells.add('SILENT');
   $('editName').textContent=S.data.parsed.model_code||'';
-  renderShellbar();renderEditor();renderPreview();
+  renderShellbar();renderNonstdBar();renderEditor();renderPreview();
   $('editOps').style.display='flex';
   document.querySelectorAll('.item').forEach(el=>{
     el.classList.toggle('on',el.querySelector('.t').textContent===name);
@@ -260,7 +286,7 @@ function renderShellbar(){
 function toggleShell(k){
   if(S.shells.has(k))S.shells.delete(k);else S.shells.add(k);
   if(S.shells.size===0)toast('至少要选一个：开架或静音');
-  renderShellbar();renderEditor();renderPreview();
+  renderShellbar();renderNonstdBar();renderEditor();renderPreview();
 }
 function curShell(){ return S.shells.has('OPEN')?'O':(S.shells.has('SILENT')?'S':'O'); }
 
@@ -290,6 +316,51 @@ function changed(key){
   }
   return (o[key]??'')!==(S.data[key]??'');
 }
+/* 字段 key -> 中文名（用于非标差异标注） */
+const FIELD_LABEL={};
+GROUPS.forEach(g=>g.f.forEach(([k,label])=>FIELD_LABEL[k]=label));
+
+/* 渲染非标提示条：列出与标准单不一致的参数 */
+function renderNonstdBar(){
+  const bar=$('nstdbar');
+  if(!bar)return;
+  const d=S.diff;
+  if(S.kind!=='nonstd' || !d){
+    bar.style.display='none';bar.innerHTML='';return;
+  }
+  const diffs=d.diffs||[];
+  let h='';
+  if(!d.base){
+    // 中高压机型结构上没有对应的低压标准单，属正常状态，不当报错
+    const hv=isHVData();
+    h = hv
+      ? '<span class="nb-t">⚠ 非标参数单</span>　<span style="color:#8a5a00">中高压机型，标准库中无对应标准单可比对</span>'
+      : '<span class="nb-w">⚠ 找不到基准标准单</span>　'+(d.note||'');
+  }else if(!diffs.length){
+    h='<span class="nb-t">⚠ 非标参数单</span>　基准：'+esc(d.base)+
+      '　<span style="color:#16a34a">当前无参数差异</span>';
+  }else{
+    h='<span class="nb-t">⚠ 非标参数单</span>　基准：'+esc(d.base)+
+      '　<span style="color:#b45309">不一致 '+diffs.length+' 项</span><br>';
+    h+=diffs.map(x=>{
+      const nm=FIELD_LABEL[x.field]||x.field;
+      const a=(x.std==null||x.std==='')?'（空）':x.std;
+      const b=(x.nonstd==null||x.nonstd==='')?'（空）':x.nonstd;
+      return '<span class="nb-i"><b>'+esc(nm)+'</b> '+esc(String(a))+' → '+esc(String(b))+'</span>';
+    }).join('');
+  }
+  bar.innerHTML=h;
+  bar.style.display='block';
+}
+
+/* 当前参数单是否中高压（std_v 线电压 >= 1000V） */
+function isHVData(){
+  const d=S.data||{};
+  const sv=String(d.std_v||'');
+  const m=sv.match(/(\d+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1])>=1000 : false;
+}
+
 function renderEditor(){
   if(!S.data){return;}
   let h='';
@@ -368,7 +439,7 @@ function renderPreview(force){
   _pvTimer=setTimeout(async()=>{
     try{
       const r=await (await fetch('api/preview',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({kind:S.kind,name:S.isNew?'':S.cur,shell:curShell()==='O'?'OPEN':'SILENT',data:S.data})})).json();
+        body:JSON.stringify({kind:S.kind,name:S.isNew?'':S.cur,shell:curShell()==='O'?'OPEN':'SILENT',data:S.data,lang:S.lang})})).json();
       if(seq!==_pvSeq)return;           // 有更新的请求，丢弃本次
       if(!r.ok){ $('preview').querySelector('.pv-live').innerHTML=`<div class="pv-wait" style="color:#b91c1c">预览失败：${esc(r.error||'')}</div>`; return; }
       const pages=(r.pages||[]).map((u,i)=>`<div class="pv-page"><div class="pv-no">第 ${i+1} 页</div><img src="${u.replace(/^\//,'')}" alt="第${i+1}页"></div>`).join('');
@@ -388,8 +459,17 @@ async function doExport(){
   $('mask').classList.add('on');$('maskTxt').textContent='正在生成 PDF…';
   try{
     const r=await (await fetch('api/export',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({kind:S.kind,name:S.cur,shell:curShell()==='O'?'OPEN':'SILENT'})})).json();
-    if(r.ok){toast('PDF 已生成');window.open(r.pdf,'_blank');}
+      body:JSON.stringify({kind:S.kind,name:S.cur,shell:curShell()==='O'?'OPEN':'SILENT',lang:S.lang})})).json();
+    if(r.ok){
+      // 直接下载，不跳打印界面
+      const fn=String(r.pdf||'').split('/').pop();
+      const a=document.createElement('a');
+      a.href='api/download/'+encodeURIComponent(fn)
+             + (r.dlname?('?as='+encodeURIComponent(r.dlname)):'');
+      a.download=r.dlname||'';
+      document.body.appendChild(a);a.click();a.remove();
+      toast('PDF 开始下载');
+    }
     else toast('失败：'+(r.error||''));
   }catch(e){toast('失败：'+e.message);}
   $('mask').classList.remove('on');
@@ -440,7 +520,8 @@ function doNew(){
   S.shells=new Set(['OPEN']);
   $('editName').textContent='（新增）';
   $('editOps').style.display='flex';
-  renderShellbar();renderEditor();renderPreview();
+  S.diff=null;
+  renderShellbar();renderNonstdBar();renderEditor();renderPreview();
   toast('填好型号/电压/发动机后点「保存」');
 }
 
@@ -472,7 +553,7 @@ async function doDerive(){
   $('editName').textContent=S.data.name;
   $('editOps').style.display='flex';
   S.shells=new Set(S.data.has_open?['OPEN']:['SILENT']);
-  renderShellbar();renderEditor();renderPreview();
+  renderShellbar();renderNonstdBar();renderEditor();renderPreview();
   toast('已载入基准参数，改完点「保存」= 生成非标单');
 }
 async function doSaveDerive(){
@@ -501,6 +582,11 @@ async function doLogin(){
 }
 
 (async()=>{
+  // 读回上次选择的语言
+  try{
+    const lg=localStorage.getItem('ps_lang');
+    if(lg==='en'||lg==='zh'){ S.lang=lg; const sel=$('fLang'); if(sel) sel.value=lg; }
+  }catch(e){}
   const r=await (await fetch('api/whoami')).json();
   S.admin=r.admin;$('who').textContent=r.admin?'管理员：'+r.user:'游客模式';
   $('loginBtn').textContent=r.admin?'退出登录':'管理员登录';
