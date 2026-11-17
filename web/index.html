@@ -74,18 +74,13 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 .pv{background:#fff;padding:0}
 .pv-bar{padding:10px 16px;border-bottom:1px solid #eef1f4;display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:#fafbfc;position:sticky;top:0;z-index:5}
 .pv-bar .hint{font-size:11px;color:#9aa4b0;margin-left:auto}
-.paper{background:#fff;max-width:900px;margin:16px auto;padding:30px 34px;box-shadow:0 2px 14px rgba(0,0,0,.09);border-radius:3px;font-size:12.5px}
-.paper h2{font-size:19px;font-weight:700;margin-bottom:4px;color:#12304d}
-.paper .sub2{font-size:11.5px;color:#6b7280;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1f4e79}
-.paper h3{font-size:13px;font-weight:700;color:#1f4e79;margin:16px 0 8px;padding-left:8px;border-left:3px solid #1f6feb}
-.pt{width:100%;border-collapse:collapse;font-size:12px}
-.pt th,.pt td{padding:6px 9px;border:1px solid #e4e8ec;text-align:left;vertical-align:top}
-.pt th{background:#f6f9fc;font-weight:600;color:#4b5563;width:38%;font-size:11.5px}
-.pt td{word-break:break-all}
-.pt tr.hl td{background:#eff6ff;font-weight:600;color:#1a4d8f}
-.pv-pic{border:1px solid #e4e8ec;border-radius:6px;overflow:hidden;background:#fafbfc;margin-bottom:12px;text-align:center;min-height:130px;display:flex;align-items:center;justify-content:center}
-.pv-pic img{width:100%;display:block}
-.pv-pic .ni{color:#9aa4b0;font-size:12px;padding:30px}
+.paper{background:#fff;max-width:900px;margin:16px auto;padding:0;box-shadow:0 2px 14px rgba(0,0,0,.09);border-radius:3px;font-size:12.5px;overflow:hidden}
+/* === 真模板预览 === */
+.pv-live{background:#eef1f4;min-height:300px;padding:14px 0}
+.pv-wait{text-align:center;padding:60px 20px;color:#9aa4b0;font-size:13px}
+.pv-page{max-width:880px;margin:0 auto 16px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.14);border-radius:2px;overflow:hidden;position:relative}
+.pv-page .pv-no{position:absolute;top:6px;left:8px;background:rgba(31,78,121,.85);color:#fff;font-size:10px;padding:2px 7px;border-radius:3px;z-index:2}
+.pv-page img{width:100%;display:block}
 
 /* PDF 遮罩 */
 .mask{position:fixed;inset:0;background:rgba(20,26,33,.55);z-index:200;display:none;align-items:center;justify-content:center}
@@ -190,7 +185,7 @@ const GROUPS=[
 
 /* ---------- 字典 ---------- */
 async function loadDict(){
-  const d=await (await fetch(`/api/dict?kind=${S.kind}`)).json();
+  const d=await (await fetch(`api/dict?kind=${S.kind}`)).json();
   S.dict=d;
   $('fFamily').innerHTML='<option value="">全部动力品牌</option>'+
     d.family.filter(f=>f.count>0).map(f=>`<option value="${f.code}">${esc(f.name)} · ${f.count}</option>`).join('');
@@ -216,7 +211,7 @@ async function doSearch(page){
   S.page=page||1;
   S.q=$('fKw').value.trim();S.family=$('fFamily').value;S.shell=$('fShell').value;
   const p=new URLSearchParams({kind:S.kind,q:S.q,family:S.family,shell:S.shell,page:S.page,size:S.size});
-  const d=await (await fetch('/api/list?'+p)).json();
+  const d=await (await fetch('api/list?'+p)).json();
   $('listCnt').textContent=`${d.total} 条`;
   $('list').innerHTML=d.items.map(it=>`
     <div class="item ${S.cur===it.name?'on':''}" onclick='openDetail(${JSON.stringify(it.name)})'>
@@ -233,7 +228,7 @@ async function doSearch(page){
 async function openDetail(name){
   S.isNew=false;S.cur=name;S.shells=new Set();
   const p=new URLSearchParams({kind:S.kind,name});
-  const r=await (await fetch('/api/detail?'+p)).json();
+  const r=await (await fetch('api/detail?'+p)).json();
   if(!r.ok){toast('读取失败');return;}
   S.data=JSON.parse(JSON.stringify(r.data));   // 编辑副本
   S.orig=JSON.parse(JSON.stringify(r.data));   // 原始值（用来标改动）
@@ -309,7 +304,7 @@ function renderEditor(){
         <label>${label}</label>
         <input type="${isNum?'number':'text'}" value="${esc(val(k))}"
           class="${changed(k)?'chg':''}"
-          oninput="onEdit('${k}',this.value)" ${isNum?'step="any"':''}>
+          oninput="onEdit('${k}',this.value,this)" ${isNum?'step="any"':''}>
       </div>`;
     });
     h+=`</div></div>`;
@@ -331,7 +326,7 @@ function buildNewName(){
   const em=(d.e_model||'').trim();
   d.name=mc+vol+(em?' ['+em+']':'');
 }
-function onEdit(k,v){
+function onEdit(k,v,el){
   setVal(k,v);
   if(S.isNew){
     if(k==='model'&&S.data.parsed)S.data.parsed.model_code=v;
@@ -339,111 +334,51 @@ function onEdit(k,v){
     $('editName').textContent=S.data.name||'（新增）';
   }
   // 只刷新预览 + 当前输入框的改动标记（不整块重绘，避免失焦）
-  const inp=event.target;
-  inp.classList.toggle('chg',changed(k));
+  // 2026-11-17 修：原来用隐式全局 event.target，严格模式/Safari 会报错，改为显式传 el
+  if(el) el.classList.toggle('chg',changed(k));
   renderPreview();
 }
 
-/* ---------- 右侧实时预览（HTML，参考样式） ---------- */
-function renderPreview(){
+/* ---------- 右侧实时预览（真模板渲染，所见即所得） ---------- */
+let _pvTimer=null, _pvSeq=0, _pvLastKey='';
+function pvKey(){
+  const d=S.data||{};
+  return JSON.stringify([S.kind,S.cur,S.isNew,curShell(),d]);
+}
+function renderPreview(force){
   if(!S.data){return;}
-  const d=S.data;
-  const isO=curShell()==='O';
-  const lwh=isO?d.o_lwh:d.s_lwh, wt=isO?d.o_wt:d.s_wt, tank=isO?d.o_tank:d.s_tank;
-  const img=isO?d.images.OPEN:d.images.SILENT;
-  const shellLabel=isO?'开架型':'静音型';
-
-  const diffHtml = (S.kind==='nonstd'&&S.diff)
-    ? (S.diff.diffs&&S.diff.diffs.length
-        ? `<div style="margin:0 0 14px;padding:10px 13px;background:#fff8e6;border:1px solid #f0d38a;border-radius:7px">
-             <div style="font-weight:600;font-size:12px;color:#8a6100;margin-bottom:7px">⚠ 与标准单不同（基准：${esc(S.diff.base||'—')}）</div>
-             ${S.diff.diffs.map(x=>`<div style="display:grid;grid-template-columns:130px 1fr 1fr;gap:8px;font-size:11.5px;padding:3px 0">
-               <span style="color:#78828e">${esc(x.field)}</span>
-               <span style="color:#9aa4b0;text-decoration:line-through">${T(x.std)}</span>
-               <span style="color:#b91c1c;font-weight:600">${T(x.nonstd)}</span></div>`).join('')}
-           </div>`
-        : `<div style="margin:0 0 14px;padding:10px 13px;background:#f0fdf4;border:1px solid #a7e0b8;border-radius:7px;font-size:12px;color:#15803d">${esc(S.diff.note||'与标准单一致')}</div>`)
-    : '';
-
-  const kv=(label,value)=>`<tr><th>${label}</th><td>${T(value)}</td></tr>`;
-
-  const html=`
-  <div class="pv-bar">
-    <button class="btn primary" onclick="doExport()">生成正式 PDF</button>
-    <button class="btn" onclick="doSave()">保存</button>
-    <span class="hint">HTML 快预览仅供参考，以导出 PDF 为准</span>
-  </div>
-  <div class="paper">
-    <h2>${esc(d.model||d.parsed.model_code||'')} 柴油发电机组</h2>
-    <div class="sub2">
-      采用 ${esc(d.e_brand||'—')} 发动机 ｜ ${esc(shellLabel)} ｜ ${esc(d.family_name||'')}
-      　版本 ${esc(d.version||'—')}
-    </div>
-    ${diffHtml}
-
-    <h3>一、发电机组额定输出</h3>
-    <table class="pt">
-      <tr><th colspan="2">PRP 常用功率 / ESP 备用功率</th></tr>
-      <tr class="hl"><td>主用功率</td><td>${T(d.prp_kva)} kVA / ${T(d.prp_kw)} kW</td></tr>
-      <tr class="hl"><td>备用功率</td><td>${T(d.eps_kva)} kVA / ${T(d.eps_kw)} kW</td></tr>
-      ${kv('频率 / 相数 / 功率因数', d.cur_freq)}
-      ${kv('标准电压', d.std_v)}
-      ${kv('可用电压', d.opt_v)}
-      ${kv('转速', d.rpm?d.rpm+' rpm':'')}
-    </table>
-
-    <h3>二、常规参数（${shellLabel}）</h3>
-    ${img?`<div class="pv-pic"><img src="${img}" alt="${shellLabel}"></div>`:`<div class="pv-pic"><div class="ni">暂无${shellLabel}图片</div></div>`}
-    <table class="pt">
-      ${kv('外形尺寸 L×W×H (mm)', lwh)}
-      ${kv('净重 (kg)', wt)}
-      ${kv('油箱容量 (L)', tank)}
-    </table>
-
-    <h3>三、发动机技术参数</h3>
-    <table class="pt">
-      ${kv('品牌', d.e_brand)}
-      ${kv('发动机型号', d.e_model)}
-      ${kv('燃料类型', d.e_fuel)}
-      ${kv('进气方式', d.e_asp)}
-      ${kv('冷却方式', d.e_cool)}
-      ${kv('调速方式', d.e_gov)}
-      ${kv('排量 (L)', d.displ)}
-      ${kv('缸数 / 排列', d.cyl_arr)}
-      ${kv('缸径 × 冲程', d.bore)}
-    </table>
-
-    <h3>四、各系统参数</h3>
-    <table class="pt">
-      ${kv('排气温度 (℃)', d.ex_t)}
-      ${kv('排气流量', d.ex_f)}
-      ${kv('最大排气背压', d.ex_bp)}
-      ${kv('燃油进油口阻力', d.fu_res)}
-      ${kv('最大燃油流量', d.fu_max)}
-      ${kv('散热器风扇风量', d.co_air)}
-      ${kv('机油总容量 (L)', d.co_oil)}
-      ${kv('冷却液总容量 (L)', d.co_cool)}
-      ${kv('启动电压', d.el_v)}
-      ${kv('启动电池', d.el_bat)}
-      ${kv('充电发电机', d.el_alt)}
-      ${kv('空滤类型', d.in_flt)}
-      ${kv('最大进气阻力', d.in_res)}
-      ${kv('进气流量', d.in_flow)}
-      ${kv('最大进气温度 (℃)', d.in_t)}
-    </table>
-
-    <h3>五、发电机技术参数</h3>
-    <table class="pt">
-      ${kv('绝缘等级 / 温升', d.g_insul)}
-      ${kv('励磁方式', d.g_exc)}
-      ${kv('引出线数量', d.g_lead)}
-      ${kv('绕组接法', d.g_conn)}
-      ${kv('节距', d.g_pitch)}
-      ${kv('相数', d.g_phase)}
-      ${kv('轴承', d.g_brg)}
-    </table>
-  </div>`;
-  $('preview').innerHTML=html;
+  const k=pvKey();
+  if(!force && k===_pvLastKey){return;}
+  _pvLastKey=k;
+  const seq=++_pvSeq;
+  const box=$('preview');
+  // 首次 / 强制刷新显示遮罩，否则原地更新避免闪烁
+  if(!box.querySelector('.pv-live')){
+    box.innerHTML=`<div class="pv-bar">
+      <button class="btn primary" onclick="doExport()">生成正式 PDF</button>
+      <button class="btn" onclick="doSave()">保存</button>
+      <button class="btn" onclick="renderPreview(true)">刷新预览</button>
+      <span class="hint">预览＝真实模板渲染，与导出 PDF 一致</span>
+    </div><div class="pv-live"><div class="pv-wait">渲染中…</div></div>`;
+  }else{
+    const live=box.querySelector('.pv-live');
+    if(!live.querySelector('img')) live.innerHTML='<div class="pv-wait">渲染中…</div>';
+  }
+  clearTimeout(_pvTimer);
+  _pvTimer=setTimeout(async()=>{
+    try{
+      const r=await (await fetch('api/preview',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kind:S.kind,name:S.isNew?'':S.cur,shell:curShell()==='O'?'OPEN':'SILENT',data:S.data})})).json();
+      if(seq!==_pvSeq)return;           // 有更新的请求，丢弃本次
+      if(!r.ok){ $('preview').querySelector('.pv-live').innerHTML=`<div class="pv-wait" style="color:#b91c1c">预览失败：${esc(r.error||'')}</div>`; return; }
+      const pages=(r.pages||[]).map((u,i)=>`<div class="pv-page"><div class="pv-no">第 ${i+1} 页</div><img src="${u.replace(/^\//,'')}" alt="第${i+1}页"></div>`).join('');
+      $('preview').querySelector('.pv-live').innerHTML=pages||'<div class="pv-wait">无页面</div>';
+    }catch(e){
+      if(seq!==_pvSeq)return;
+      const l=$('preview').querySelector('.pv-live');
+      if(l) l.innerHTML=`<div class="pv-wait" style="color:#b91c1c">预览失败：${esc(e.message)}</div>`;
+    }
+  }, 600);
 }
 
 /* ---------- 导出 PDF ---------- */
@@ -452,7 +387,7 @@ async function doExport(){
   if(S.shells.size===0){toast('先选开架或静音');return;}
   $('mask').classList.add('on');$('maskTxt').textContent='正在生成 PDF…';
   try{
-    const r=await (await fetch('/api/export',{method:'POST',headers:{'Content-Type':'application/json'},
+    const r=await (await fetch('api/export',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({kind:S.kind,name:S.cur,shell:curShell()==='O'?'OPEN':'SILENT'})})).json();
     if(r.ok){toast('PDF 已生成');window.open(r.pdf,'_blank');}
     else toast('失败：'+(r.error||''));
@@ -466,7 +401,7 @@ async function doSave(){
   if(!S.admin){toast('请先点右上角「管理员登录」');return;}
   if(S.isNew && S.deriveBase){return doSaveDerive();}
   const payload={kind:S.kind,name:S.isNew?'':S.cur,is_new:!!S.isNew,data:S.data};
-  const r=await (await fetch('/api/save',{method:'POST',headers:{'Content-Type':'application/json'},
+  const r=await (await fetch('api/save',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)})).json().catch(e=>({ok:false,error:e.message}));
   if(!r.ok){toast('保存失败：'+(r.error||''));return;}
   toast(r.action==='created'?'已新增':'已保存');
@@ -479,7 +414,7 @@ async function doDelete(){
   if(!S.cur||S.isNew){toast('先选一个参数单');return;}
   if(!S.admin){toast('请先点右上角「管理员登录」');return;}
   if(!confirm('确定删除？\n'+S.cur+'\n（删标准单时其下非标会一起删）'))return;
-  const r=await (await fetch('/api/delete',{method:'POST',headers:{'Content-Type':'application/json'},
+  const r=await (await fetch('api/delete',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({kind:S.kind,name:S.cur})})).json().catch(e=>({ok:false,error:e.message}));
   if(!r.ok){toast('删除失败：'+(r.error||''));return;}
   toast('已删除'+(r.deleted_nonstd&&r.deleted_nonstd.length?`（含非标 ${r.deleted_nonstd.length} 条）`:''));
@@ -515,7 +450,7 @@ async function doDerive(){
   // 步骤1：选基准标准单
   const q=prompt('输入标准单的型号 / 发动机型号（如 AF2270 或 AF11D5）');
   if(q===null)return;
-  const r=await (await fetch('/api/std_index?q='+encodeURIComponent(q||'')+'&limit=30')).json();
+  const r=await (await fetch('api/std_index?q='+encodeURIComponent(q||'')+'&limit=30')).json();
   if(!r.ok||!r.items.length){toast('没找到标准单');return;}
   const lines=r.items.map((it,i)=>`${i+1}. ${it.name}  —  ${it.e_model||'—'} / ${it.prp_kva||'—'}kVA`).join('\n');
   const pick=prompt('选一个作基准（输入序号）：\n\n'+lines, '1');
@@ -527,7 +462,7 @@ async function doDerive(){
   const nm=prompt('非标单名称（留空 = 「'+base.name+' · 非标」）','');
   if(nm===null)return;
   // 步骤3：读基准详情，放进编辑器，标记为非标新增
-  const d=await (await fetch('/api/detail?kind=std&name='+encodeURIComponent(base.name))).json();
+  const d=await (await fetch('api/detail?kind=std&name='+encodeURIComponent(base.name))).json();
   if(!d.ok){toast('读取基准失败');return;}
   S.isNew=true;S.deriveBase=base.name;
   S.data=JSON.parse(JSON.stringify(d.data));
@@ -541,7 +476,7 @@ async function doDerive(){
   toast('已载入基准参数，改完点「保存」= 生成非标单');
 }
 async function doSaveDerive(){
-  const r=await (await fetch('/api/derive',{method:'POST',headers:{'Content-Type':'application/json'},
+  const r=await (await fetch('api/derive',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({base:S.deriveBase,name:S.data.name,data:S.data})})).json()
     .catch(e=>({ok:false,error:e.message}));
   if(!r.ok){toast('派生失败：'+(r.error||''));return;}
@@ -554,19 +489,19 @@ async function doSaveDerive(){
 /* ---------- 登录 ---------- */
 async function doLogin(){
   if(S.admin){
-    await fetch('/api/logout',{method:'POST'});S.admin=false;
+    await fetch('api/logout',{method:'POST'});S.admin=false;
     $('who').textContent='游客模式';$('loginBtn').textContent='管理员登录';toast('已退出');return;
   }
   const u=prompt('管理员账号');if(!u)return;
   const p=prompt('密码');if(!p)return;
-  const r=await (await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+  const r=await (await fetch('api/login',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({user:u,password:p})})).json();
-  if(r.ok){S.admin=true;$('who').textContent='管理员：bob';$('loginBtn').textContent='退出登录';toast('登录成功');}
+  if(r.ok){S.admin=true;$('who').textContent='管理员：bob';$('loginBtn').textContent='退出登录';toast('登录成功');_pvLastKey='';if(S.data)renderPreview(true);}
   else toast('账号或密码不对');
 }
 
 (async()=>{
-  const r=await (await fetch('/api/whoami')).json();
+  const r=await (await fetch('api/whoami')).json();
   S.admin=r.admin;$('who').textContent=r.admin?'管理员：'+r.user:'游客模式';
   $('loginBtn').textContent=r.admin?'退出登录':'管理员登录';
   await loadDict();await doSearch();

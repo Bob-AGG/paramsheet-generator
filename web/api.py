@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """参数单管理工具 — 后端接口（第2步，FastAPI 版）"""
-import os, sys, json, sqlite3, re, subprocess
+import os, sys, json, sqlite3, re, subprocess, threading
+import requests
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,6 +14,59 @@ STD_DB = os.path.join(BASE, 'paramsheet.db')
 NON_DB = os.path.join(BASE, 'paramsheet_nonstd.db')
 IMG_DIRS = [os.path.join(BASE, 'images'), os.path.join(BASE, 'images_alt')]
 OUT_DIR = os.path.join(BASE, 'output')
+
+# LibreOffice 可执行文件（macOS 本地 / Linux 服务器自动探测）
+def _find_soffice():
+    for p in ('/Applications/LibreOffice.app/Contents/MacOS/soffice',
+              '/usr/bin/soffice', '/usr/bin/libreoffice',
+              '/usr/lib64/libreoffice/program/soffice'):
+        if os.path.exists(p):
+            return p
+    return 'soffice'
+
+
+_SOFFICE = _find_soffice()
+
+# ---------------- Mac 端渲染服务（Tailscale 内网） ----------------
+# 服务器只有 1.8GB 内存，跑 LibreOffice 会被 OOM 杀掉（实测 rss 1.5GB）。
+# 渲染挪到 16GB 的 Mac（100.125.54.14:8021），服务器只做转发 + 取回产物。
+MAC_RENDER = os.environ.get('MAC_RENDER', 'http://100.125.54.14:8021')
+MAC_ENABLED = os.environ.get('MAC_RENDER_DISABLE', '') != '1'
+
+
+def _mac_health(timeout=10):
+    """Mac 渲染服务是否可用。连不上就返回 False，走本地兜底。"""
+    if not MAC_ENABLED:
+        return False
+    try:
+        r = requests.get(MAC_RENDER + '/health', timeout=timeout)
+        return r.ok and (r.json() or {}).get('ok') is True
+    except Exception:
+        return False
+
+
+def _mac_render(f, lang='zh'):
+    """调 Mac 渲染，返回 (pages_basenames, pdf_basename, errors)。"""
+    r = requests.post(MAC_RENDER + '/render',
+                      json={'data': f, 'lang': lang, 'pages': 4, 'dpi': 110},
+                      timeout=180)
+    j = r.json()
+    if not (r.ok and j.get('ok')):
+        raise RuntimeError(j.get('error') or ('mac render http %s' % r.status_code))
+    return j.get('pages') or [], j.get('pdf'), None
+
+
+def _mac_fetch(fn, dest_dir):
+    """从 Mac 拉取渲染产物到服务器本地。"""
+    r = requests.get(MAC_RENDER + '/file/' + fn, timeout=120, stream=True)
+    if not r.ok:
+        raise RuntimeError('fetch %s failed: %s' % (fn, r.status_code))
+    dest = os.path.join(dest_dir, fn)
+    with open(dest, 'wb') as fp:
+        for chunk in r.iter_content(65536):
+            if chunk:
+                fp.write(chunk)
+    return dest
 ADMIN_USER, ADMIN_PASS = 'bob', '12345'
 
 app = FastAPI(title='参数单管理工具')
@@ -408,7 +462,7 @@ def api_export(body: ExportIn):
         pptx = build_pptx.build(f, 'zh', os.path.join(BASE, 'templates', 'template_zh.pptx'), OUT_DIR)
         pdf = pptx.rsplit('.', 1)[0] + '.pdf'
         if not os.path.exists(pdf):
-            subprocess.run(['/Applications/LibreOffice.app/Contents/MacOS/soffice', '--headless',
+            subprocess.run([_SOFFICE, '--headless',
                             '--convert-to', 'pdf', '--outdir', OUT_DIR, pptx],
                            check=True, capture_output=True, timeout=180)
         return {'ok': True, 'pdf': '/output/' + os.path.basename(pdf),
@@ -416,6 +470,118 @@ def api_export(body: ExportIn):
     except Exception as e:
         import traceback
         return JSONResponse({'ok': False, 'error': str(e), 'trace': traceback.format_exc()[-800:]}, 500)
+
+
+class PreviewIn(BaseModel):
+    kind: str = 'std'
+    name: str = ''
+    shell: str = ''
+    data: dict = {}
+    page: int = 1
+
+
+_PREV_LOCK = threading.Lock()
+
+
+@app.post('/api/preview')
+def api_preview(body: PreviewIn):
+    """用当前编辑值走一遍真实模板渲染，返回前 N 页的 PNG（所见即所得预览）。"""
+    try:
+        import build_pptx
+        os.makedirs(OUT_DIR, exist_ok=True)
+        f = dict(body.data or {})
+        if not f:
+            c = conn(body.kind)
+            r = c.execute("select * from models where name=?", (body.name,)).fetchone()
+            c.close()
+            if not r:
+                return JSONResponse({'ok': False, 'error': 'not found'}, 404)
+            f = flatten(r)
+        sh = (body.shell or '').upper()
+        if sh == 'OPEN':
+            for k in ('s_lwh', 's_wt', 's_tank'):
+                f[k] = 'TBA'
+        elif sh == 'SILENT':
+            for k in ('o_lwh', 'o_wt', 'o_tank'):
+                f[k] = 'TBA'
+        # 派生字段（与导出保持一致）
+        if not f.get('freq_phase_pf'):
+            fq = f.get('cur_freq') or ''
+            f['freq_phase_pf'] = f.get('freq') or fq
+        f['fc_lines'] = [f.get('fc_esp'), f.get('fc_prp'), f.get('fc_75'), f.get('fc_50')]
+
+        # ---- 优先走 Mac 渲染（16GB 内存，约 4.5s）；失败则本地兜底 ----
+        mac_err = None
+        if _mac_health():
+            try:
+                names, pdf_name, _ = _mac_render(f, 'zh')
+                pngs = []
+                for fn in names:
+                    _mac_fetch(fn, OUT_DIR)
+                    pngs.append('/output/' + fn)
+                if pdf_name:
+                    try:
+                        _mac_fetch(pdf_name, OUT_DIR)
+                    except Exception:
+                        pass
+                if pngs:
+                    _cleanup_output()
+                    return {'ok': True, 'pages': pngs, 'pdf': ('/output/' + pdf_name) if pdf_name else None,
+                            'host': 'mac'}
+            except Exception as e:
+                mac_err = str(e)
+
+        # ---- 本地兜底（服务器自己渲染，慢且可能 OOM）----
+        with _PREV_LOCK:
+            pptx = build_pptx.build(f, 'zh', os.path.join(BASE, 'templates', 'template_zh.pptx'),
+                                    OUT_DIR)
+            pdf = pptx.rsplit('.', 1)[0] + '.pdf'
+            if not os.path.exists(pdf):
+                subprocess.run([_SOFFICE, '--headless', '--convert-to', 'pdf',
+                                '--outdir', OUT_DIR, pptx],
+                               check=True, capture_output=True, timeout=180)
+            stem = pdf.rsplit('.', 1)[0]
+            pngs = []
+            for i in range(1, 5):
+                png = '%s_pg-%d.png' % (stem, i)
+                if not os.path.exists(png):
+                    subprocess.run(['pdftoppm', '-png', '-r', '110', '-f', str(i), '-l', str(i),
+                                    pdf, '%s_pg' % stem],
+                                   check=False, capture_output=True, timeout=120)
+                if os.path.exists(png):
+                    pngs.append('/output/' + os.path.basename(png))
+        _cleanup_output()
+        out = {'ok': True, 'pages': pngs, 'pdf': '/output/' + os.path.basename(pdf), 'host': 'server'}
+        if mac_err:
+            out['mac_error'] = mac_err[:200]
+        return out
+    except Exception as e:
+        import traceback
+        return JSONResponse({'ok': False, 'error': str(e), 'trace': traceback.format_exc()[-800:]}, 500)
+
+
+def _cleanup_output(keep=120):
+    """2026-11-17：每次渲染都会新增 pptx/pdf/4 张 png，从不清理会把磁盘塞满。
+    保留最近 keep 个文件（按 mtime），其余删掉。"""
+    try:
+        items = []
+        for fn in os.listdir(OUT_DIR):
+            fp = os.path.join(OUT_DIR, fn)
+            if os.path.isfile(fp):
+                items.append((os.path.getmtime(fp), fp))
+        if len(items) <= keep:
+            return 0
+        items.sort(reverse=True)
+        n = 0
+        for _, fp in items[keep:]:
+            try:
+                os.remove(fp)
+                n += 1
+            except Exception:
+                pass
+        return n
+    except Exception:
+        return 0
 
 
 @app.get('/output/{fn}')
