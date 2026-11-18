@@ -32,3 +32,10 @@ data/*
 
 # 截图（体积大，不入仓库）
 docs/screenshots/
+
+# 数据库文件（体积大，本机为准）
+*.db
+*.db.bak*
+
+# 运行时日志
+logs/*.log

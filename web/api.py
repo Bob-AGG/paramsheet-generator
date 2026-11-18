@@ -246,14 +246,21 @@ def api_dict(kind: str = 'std'):
         s['count'] = sc.get(s['code'], 0)
     total = c.execute("select count(*) from models").fetchone()[0]
     pend = c.execute("select count(*) from models where zone='pending'").fetchone()[0]
+    zones = {r['zone'] or 'std': r['n'] for r in
+             c.execute("select zone, count(*) n from models group by zone")}
+    vols = [r['v'] for r in c.execute(
+        "select json_extract(data,'$.common.std_v') v from models "
+        "where json_extract(data,'$.common.std_v') is not null "
+        "group by v order by cast(replace(v,'/','') as integer)")]
     c.close()
-    return {'shell': shell, 'family': family, 'voltage': volt, 'total': total, 'pending': pend, 'kind': kind}
+    return {'shell': shell, 'family': family, 'voltage': volt, 'volt_values': vols,
+            'total': total, 'pending': pend, 'zones': zones, 'kind': kind}
 
 
 # ---------------- 列表 ----------------
 @app.get('/api/list')
 def api_list(kind: str = 'std', q: str = '', family: str = '', shell: str = '',
-             zone: str = '', page: int = 1, size: int = 20):
+             zone: str = '', volt: str = '', page: int = 1, size: int = 20):
     page = max(1, page)
     size = min(100, max(5, size))
     c = conn(kind)
@@ -264,6 +271,8 @@ def api_list(kind: str = 'std', q: str = '', family: str = '', shell: str = '',
         where.append("m.shell_code = ?"); params.append(shell)
     if zone:
         where.append("m.zone = ?"); params.append(zone)
+    if volt:
+        where.append("json_extract(m.data,'$.common.std_v') = ?"); params.append(volt)
     if q.strip():
         like = '%' + q.strip() + '%'
         where.append("""(m.name like ? or m.family_name like ? or m.shell_name like ?
@@ -324,6 +333,24 @@ def api_std_index(q: str = '', limit: int = 20):
             order by model_code limit ?""", (like, like, like, like, limit)).fetchall()
     else:
         rows = c.execute("select * from std_index order by model_code limit ?", (limit,)).fetchall()
+    # 补 prp_kva / eps_kva：前端选基准时要显示功率（std_index 表若无该列，从标准库回查）
+    out = []
+    sc = None
+    for r in rows:
+        d = dict(r)
+        if d.get('prp_kva') in (None, ''):
+            if sc is None:
+                sc = conn('std')
+            rr = sc.execute('select json_extract(data,\'$.freqs."50Hz".prp_kva\') a, '
+                            'json_extract(data,\'$.freqs."50Hz".eps_kva\') b '
+                            'from models where name=?', (d.get('name'),)).fetchone()
+            if rr:
+                d['prp_kva'] = rr['a']
+                d['eps_kva'] = rr['b']
+        out.append(d)
+    if sc is not None:
+        sc.close()
+    rows = out
     total = c.execute("select count(*) from std_index").fetchone()[0]
     c.close()
     return {'ok': True, 'total': total, 'items': dicts(rows)}
