@@ -20,20 +20,20 @@ const ok = (n,v,d) => R.push({n, pass: !!v, d});
 
   // === 1. 标准库基础状态 ===
   ok('列表默认加载', (await p.$eval('#listCnt', e=>e.textContent)).includes('1945'));
-  const vOpts = await p.$eval('#fVolt', e=>[...e.options].map(o=>o.value));
-  ok('电压下拉有值', vOpts.length>30, vOpts.length+' 项');
   const pendTxt = await p.$eval('#pendBtn', e=>[e.style.display,e.textContent]);
   ok('待分类按钮可见', pendTxt[0]!=='none' && pendTxt[1].includes('46'), pendTxt.join('|'));
 
-  // === 2. 电压筛选（真实下拉选择）===
-  await p.select('#fVolt','400/230V');
-  await new Promise(r=>setTimeout(r,1500));
+  // === 2. 电压模糊搜索（用户 2026-11-18：去掉下拉，改搜索框模糊搜）===
+  await p.type('#fKw','400/230V');
+  await p.keyboard.press('Enter');
+  await new Promise(r=>setTimeout(r,1800));
   const cnt400 = await p.$eval('#listCnt', e=>e.textContent);
-  ok('400/230V 筛选 1322 条', cnt400.includes('1322'), cnt400);
+  ok('搜 400/230V 命中', /[1-9]\d* 条/.test(cnt400), cnt400);
+  await p.$eval('#fKw', el=>el.value='');
+  await p.keyboard.press('Enter');
+  await new Promise(r=>setTimeout(r,1500));
 
   // === 3. 待分类切换 ===
-  await p.select('#fVolt','');
-  await new Promise(r=>setTimeout(r,1200));
   await p.click('#pendBtn');
   await new Promise(r=>setTimeout(r,1500));
   const cntPend = await p.$eval('#listCnt', e=>e.textContent);
@@ -87,6 +87,19 @@ const ok = (n,v,d) => R.push({n, pass: !!v, d});
     await new Promise(r=>setTimeout(r,1200));
   }
 
+  // === 6.5 非标库电压模糊搜索（用户核心诉求：搜 10000v 出 10000V 的机型）===
+  await p.$eval('#fKw', el=>el.value='');
+  await p.type('#fKw','10000v');
+  await p.keyboard.press('Enter');
+  await new Promise(r=>setTimeout(r,1600));
+  const cnt10k = await p.$eval('#listCnt', e=>e.textContent);
+  ok('非标搜 10000v 命中 5 条', cnt10k.includes('5 条'), cnt10k);
+  const firstName = await p.$eval('#list', e=>{const t=e.querySelector('.item .t');return t?t.textContent:'(空)';});
+  ok('10000v 命中结果是万伏机型', /10000V/.test(firstName), firstName);
+  await p.$eval('#fKw', el=>el.value='');
+  await p.keyboard.press('Enter');
+  await new Promise(r=>setTimeout(r,1500));
+
   // === 7. 打开一条非标单，检查差异条 ===
   const ni = await p.$('#list .it, #list [onclick]');
   if (ni) {
@@ -103,8 +116,8 @@ const ok = (n,v,d) => R.push({n, pass: !!v, d});
   await new Promise(r=>setTimeout(r,2000));
   const back = await p.$eval('#listCnt', e=>e.textContent);
   ok('切回标准库回到全量', back.includes('1945'), back);
-  const vReset = await p.$eval('#fVolt', e=>e.value);
-  ok('切库后电压筛选已重置', vReset==='', vReset||'(空)');
+  const kwReset = await p.$eval('#fKw', e=>e.value);
+  ok('切库后搜索框已重置', kwReset==='', kwReset||'(空)');
 
   ok('无 JS 报错', errs.filter(e=>!e.includes('favicon')).length===0, errs.slice(0,3).join(' || ')||'无');
 

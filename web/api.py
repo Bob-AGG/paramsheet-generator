@@ -258,6 +258,74 @@ def api_dict(kind: str = 'std'):
 
 
 # ---------------- 列表 ----------------
+# 电压字段分段归一：把 "10000/5773V" 变成 "|10000|5773|"，
+# 这样 "like '%|10000|%'" 只命中真正的 10000V 段，不会被 6600 之类子串误伤
+_VOLT_SEG_FORM_LIKE = """('|' || replace(replace(replace(replace(
+     lower(json_extract(m.data,'$.common.std_v')),
+     'v',''),' ',''),'/','|'),'.','') || '|') like ?"""
+
+
+def _build_search_where(q: str):
+    """搜索词 -> SQL 条件，返回 (cond 列表, 参数列表)。
+
+    单词内部是「或」，多个词之间是「且」。
+    单词规则：
+      ① 文字直匹配 名称/型号/发动机/发动机品牌/款式/电压原文/频率原文
+      ② 电压段精确匹配 10000 / 10000V / 10000v -> std_v "10000/5773V" 的 10000 段
+      ③ 带 k 写法 10kV / 6.6kV -> 换算伏特再走 ②
+      ④ 功率数字 仅【纯数字】输入时启用（搜 1375）
+    """
+    words = [w for w in re.split(r'[\s,，]+', q.strip()) if w]
+    if not words:
+        return [], []
+    groups, all_params = [], []
+    for w in words:
+        conds, params = _build_word_conds(w)
+        groups.append('(' + ' or '.join(conds) + ')')
+        all_params.extend(params)
+    joined = (' and '.join(groups)) if len(groups) > 1 else groups[0]
+    return ['(' + joined + ')'], all_params
+
+
+def _build_word_conds(w: str):
+    """单个词的匹配条件 + 参数"""
+    like = '%' + w + '%'
+    conds, params = [], []
+
+    # ① 文字直匹配
+    conds.append("""(m.name like ? or m.model like ? or m.family_name like ?
+         or m.family_code like ? or m.shell_name like ? or m.shell_code like ?
+         or json_extract(m.data,'$.common.e_model') like ?
+         or json_extract(m.data,'$.common.e_brand') like ?
+         or json_extract(m.data,'$.common.std_v') like ?
+         or json_extract(m.data,'$.curFreq') like ?)""")
+    params += [like] * 10
+
+    # ② 电压段精确匹配（避免 6600/3810V 被搜 "60" 误命中）
+    qn = re.sub(r'[^0-9.]', '', w).rstrip('.')
+    if qn and re.fullmatch(r'\d+(?:\.\d+)?', qn):
+        conds.append(_VOLT_SEG_FORM_LIKE)
+        params.append('%|' + qn + '|%')
+
+    # ③ 10kV / 6.6kV 写法
+    mk = re.fullmatch(r'\s*(\d+(?:\.\d+)?)\s*k\s*v?\s*', w, re.I)
+    if mk:
+        volts = str(int(round(float(mk.group(1)) * 1000)))
+        conds.append(_VOLT_SEG_FORM_LIKE)
+        params.append('%|' + volts + '|%')
+
+    # ④ 功率：仅纯数字输入
+    if re.fullmatch(r'\d+', w.strip()):
+        conds.append("""(cast(json_extract(m.data,'$.freqs."50Hz".prp_kva') as text) like ?
+             or cast(json_extract(m.data,'$.freqs."50Hz".eps_kva') as text) like ?
+             or cast(json_extract(m.data,'$.freqs."60Hz".prp_kva') as text) like ?
+             or cast(json_extract(m.data,'$.freqs."60Hz".eps_kva') as text) like ?)""")
+        params += ['%' + w.strip() + '%'] * 4
+
+    return conds, params
+
+
+
 @app.get('/api/list')
 def api_list(kind: str = 'std', q: str = '', family: str = '', shell: str = '',
              zone: str = '', volt: str = '', page: int = 1, size: int = 20):
@@ -274,12 +342,13 @@ def api_list(kind: str = 'std', q: str = '', family: str = '', shell: str = '',
     if volt:
         where.append("json_extract(m.data,'$.common.std_v') = ?"); params.append(volt)
     if q.strip():
-        like = '%' + q.strip() + '%'
-        where.append("""(m.name like ? or m.family_name like ? or m.shell_name like ?
-             or json_extract(m.data,'$.common.e_model') like ?
-             or json_extract(m.data,'$.common.e_brand') like ?
-             or json_extract(m.data,'$.common.std_v') like ?)""")
-        params += [like] * 6
+        # ---- 智能模糊搜索（2026-11-18 用户定）----
+        # 一个搜索框搞定：型号 / 发动机 / 品牌 / 款式 / 电压 / 频率 / 功率
+        # 「10000v」「10000V」「10kV」「10000/5773V」命中同一条；
+        # 空格分隔多词 = 且（"50Hz 10000V"、"CU 11000V"）
+        _conds, _params = _build_search_where(q)
+        where.extend(_conds)
+        params.extend(_params)
     wsql = (' where ' + ' and '.join(where)) if where else ''
     total = c.execute("select count(*) from models m" + wsql, params).fetchone()[0]
     rows = c.execute("""select m.name, m.shell_code, m.shell_name, m.family_code, m.family_name,
