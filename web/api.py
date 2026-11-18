@@ -238,19 +238,21 @@ def api_dict(kind: str = 'std'):
     shell = dicts(c.execute("select * from dict_shell order by sort_order").fetchall())
     family = dicts(c.execute("select * from dict_family order by sort_order").fetchall())
     volt = dicts(c.execute("select * from dict_voltage order by phase,freq,voltage").fetchall())
-    fc = {r['family_code']: r['n'] for r in c.execute("select family_code, count(*) n from models group by family_code")}
-    sc = {r['shell_code']: r['n'] for r in c.execute("select shell_code, count(*) n from models group by shell_code")}
+    _vis = "where zone in ('std','pending')"
+    fc = {r['family_code']: r['n'] for r in c.execute(f"select family_code, count(*) n from models {_vis} group by family_code")}
+    sc = {r['shell_code']: r['n'] for r in c.execute(f"select shell_code, count(*) n from models {_vis} group by shell_code")}
     for f in family:
         f['count'] = fc.get(f['code'], 0)
     for s in shell:
         s['count'] = sc.get(s['code'], 0)
-    total = c.execute("select count(*) from models").fetchone()[0]
+    total = c.execute("select count(*) from models where zone in ('std','pending')").fetchone()[0]
     pend = c.execute("select count(*) from models where zone='pending'").fetchone()[0]
     zones = {r['zone'] or 'std': r['n'] for r in
              c.execute("select zone, count(*) n from models group by zone")}
     vols = [r['v'] for r in c.execute(
         "select json_extract(data,'$.common.std_v') v from models "
         "where json_extract(data,'$.common.std_v') is not null "
+        "and zone in ('std','pending') "
         "group by v order by cast(replace(v,'/','') as integer)")]
     c.close()
     return {'shell': shell, 'family': family, 'voltage': volt, 'volt_values': vols,
@@ -332,7 +334,9 @@ def api_list(kind: str = 'std', q: str = '', family: str = '', shell: str = '',
     page = max(1, page)
     size = min(100, max(5, size))
     c = conn(kind)
-    where, params = [], []
+    # 燃气机组默认不出现在任何列表里（用户 2026-11-18：只做柴发）
+    # 非标库没有 zone='gas'，其 zone 值是 'nonstd'，需一并放行
+    where, params = ["m.zone in ('std','pending','nonstd')"], []
     if family:
         where.append("m.family_code = ?"); params.append(family)
     if shell:
