@@ -126,8 +126,10 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
   <button class="modebtn" data-kind="nonstd" onclick="setKind('nonstd')">非标参数单</button>
   <select id="fFamily" onchange="doSearch()"><option value="">全部动力品牌</option></select>
   <select id="fShell" onchange="doSearch()"><option value="">全部款式</option></select>
+  <select id="fVolt" onchange="doSearch()"><option value="">全部标准电压</option></select>
   <input type="text" id="fKw" placeholder="搜型号 / 发动机 / 品牌 / 电压" onkeydown="if(event.key==='Enter')doSearch()">
   <button class="btn primary" onclick="doSearch()">搜索</button>
+  <button class="btn ghost" id="pendBtn" onclick="togglePending()" style="display:none">待分类 0</button>
   <button class="btn" id="newBtn" onclick="doNew()" style="margin-left:auto">+ 新增参数单</button>
   <button class="btn" id="deriveBtn" onclick="doDerive()" style="display:none">＋ 由标准单派生非标</button>
 </div>
@@ -164,7 +166,7 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 <div class="toast" id="toast"></div>
 
 <script>
-const S={kind:'std',page:1,size:20,q:'',family:'',shell:'',cur:null,data:null,orig:null,
+const S={kind:'std',page:1,size:20,q:'',family:'',shell:'',volt:'',zone:'',cur:null,data:null,orig:null,
          shells:new Set(),dict:null,admin:false,diff:null,isNew:false,lang:'zh'};
 
 const $=id=>document.getElementById(id);
@@ -217,10 +219,24 @@ async function loadDict(){
     d.family.filter(f=>f.count>0).map(f=>`<option value="${f.code}">${esc(f.name)} · ${f.count}</option>`).join('');
   $('fShell').innerHTML='<option value="">全部款式</option>'+
     d.shell.filter(s=>s.count>0).map(s=>`<option value="${s.code}">${esc(s.name)} · ${s.count}</option>`).join('');
+  if($('fVolt')){
+    const vv=(d.volt_values||[]);
+    $('fVolt').innerHTML='<option value="">全部标准电压</option>'+
+      vv.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  }
+  if($('pendBtn')){
+    const pn=(S.kind==='std'?(d.pending||0):0);
+    $('pendBtn').style.display = pn>0 ? '' : 'none';
+    $('pendBtn').textContent = '待分类 '+pn + (S.zone==='pending'?' ✕':'');
+  }
   $('verinfo').textContent=`共 ${d.total} 条`+(S.kind==='std'?`（待分类 ${d.pending}）`:'');
 }
+function togglePending(){
+  S.zone = (S.zone==='pending') ? '' : 'pending';
+  doSearch(1);
+}
 function setKind(k){
-  S.kind=k;S.page=1;S.cur=null;S.data=null;
+  S.kind=k;S.page=1;S.cur=null;S.data=null;S.zone='';S.volt='';S.q='';S.family='';S.shell='';
   document.querySelectorAll('.modebtn').forEach(b=>b.classList.toggle('on',b.dataset.kind===k));
   $('editor').innerHTML='<div class="empty">左边选一个参数单</div>';
   $('shellbar').innerHTML='';
@@ -236,7 +252,9 @@ function setKind(k){
 async function doSearch(page){
   S.page=page||1;
   S.q=$('fKw').value.trim();S.family=$('fFamily').value;S.shell=$('fShell').value;
-  const p=new URLSearchParams({kind:S.kind,q:S.q,family:S.family,shell:S.shell,page:S.page,size:S.size});
+  if($('fVolt'))S.volt=$('fVolt').value;
+  const p=new URLSearchParams({kind:S.kind,q:S.q,family:S.family,shell:S.shell,
+    volt:S.volt||'',zone:S.zone||'',page:S.page,size:S.size});
   const d=await (await fetch('api/list?'+p)).json();
   $('listCnt').textContent=`${d.total} 条`;
   $('list').innerHTML=d.items.map(it=>`
