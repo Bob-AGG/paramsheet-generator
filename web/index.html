@@ -237,6 +237,11 @@ function togglePending(){
 }
 function setKind(k){
   S.kind=k;S.page=1;S.cur=null;S.data=null;S.zone='';S.volt='';S.q='';S.family='';S.shell='';
+  // 状态清了控件也要清，否则 doSearch 会把控件里的旧值读回来（2026-11-18 三遍校验抓到）
+  if($('fKw'))$('fKw').value='';
+  if($('fFamily'))$('fFamily').value='';
+  if($('fShell'))$('fShell').value='';
+  if($('fVolt'))$('fVolt').value='';
   document.querySelectorAll('.modebtn').forEach(b=>b.classList.toggle('on',b.dataset.kind===k));
   $('editor').innerHTML='<div class="empty">左边选一个参数单</div>';
   $('shellbar').innerHTML='';
@@ -257,6 +262,9 @@ async function doSearch(page){
     volt:S.volt||'',zone:S.zone||'',page:S.page,size:S.size});
   const d=await (await fetch('api/list?'+p)).json();
   $('listCnt').textContent=`${d.total} 条`;
+  if($('pendBtn')&&S.kind==='std'){
+    $('pendBtn').textContent='待分类 '+((S.dict&&S.dict.pending)||0)+(S.zone==='pending'?' ✕':'');
+  }
   $('list').innerHTML=d.items.map(it=>`
     <div class="item ${S.cur===it.name?'on':''}" onclick='openDetail(${JSON.stringify(it.name)})'>
       <div class="t">${esc(it.name)}</div>
