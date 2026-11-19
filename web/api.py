@@ -238,21 +238,23 @@ def api_dict(kind: str = 'std'):
     shell = dicts(c.execute("select * from dict_shell order by sort_order").fetchall())
     family = dicts(c.execute("select * from dict_family order by sort_order").fetchall())
     volt = dicts(c.execute("select * from dict_voltage order by phase,freq,voltage").fetchall())
-    _vis = "where zone in ('std','pending')"
+    # 非标库 zone 值是 'nonstd'（无 std/pending），可见范围要跟着 kind 走
+    # （2026-11-19 修：此前非标库 family/shell/电压 计数恒为 0 → 筛选全空）
+    _vis = "where zone in ('std','pending')" if kind != 'nonstd' else "where zone in ('nonstd')"
     fc = {r['family_code']: r['n'] for r in c.execute(f"select family_code, count(*) n from models {_vis} group by family_code")}
     sc = {r['shell_code']: r['n'] for r in c.execute(f"select shell_code, count(*) n from models {_vis} group by shell_code")}
     for f in family:
         f['count'] = fc.get(f['code'], 0)
     for s in shell:
         s['count'] = sc.get(s['code'], 0)
-    total = c.execute("select count(*) from models where zone in ('std','pending')").fetchone()[0]
+    total = c.execute(f"select count(*) from models {_vis}").fetchone()[0]
     pend = c.execute("select count(*) from models where zone='pending'").fetchone()[0]
     zones = {r['zone'] or 'std': r['n'] for r in
              c.execute("select zone, count(*) n from models group by zone")}
     vols = [r['v'] for r in c.execute(
         "select json_extract(data,'$.common.std_v') v from models "
         "where json_extract(data,'$.common.std_v') is not null "
-        "and zone in ('std','pending') "
+        "and " + _vis.replace('where ', '') + " "
         "group by v order by cast(replace(v,'/','') as integer)")]
     c.close()
     return {'shell': shell, 'family': family, 'voltage': volt, 'volt_values': vols,

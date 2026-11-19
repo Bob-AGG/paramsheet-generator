@@ -1044,3 +1044,231 @@ Traceback (most recent call last):
   File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 96, in send_eom
     raise LocalProtocolError("Too little data for declared Content-Length")
 h11._util.LocalProtocolError: Too little data for declared Content-Length
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/protocols/http/h11_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/applications.py", line 1138, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/routing.py", line 121, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/routing.py", line 108, in app
+    await response(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/responses.py", line 365, in __call__
+    await self._handle_simple(send, send_header_only, send_pathsend)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/responses.py", line 396, in _handle_simple
+    await send({"type": "http.response.body", "body": chunk, "more_body": more_body})
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 39, in sender
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 39, in sender
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 161, in _send
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/protocols/http/h11_impl.py", line 513, in send
+    output = self.conn.send(event=h11.EndOfMessage())
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_connection.py", line 538, in send
+    data_list = self.send_with_data_passthrough(event)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_connection.py", line 571, in send_with_data_passthrough
+    writer(event, data_list.append)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 67, in __call__
+    self.send_eom(event.headers, write)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 96, in send_eom
+    raise LocalProtocolError("Too little data for declared Content-Length")
+h11._util.LocalProtocolError: Too little data for declared Content-Length
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/protocols/http/h11_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/applications.py", line 1138, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/routing.py", line 121, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/routing.py", line 108, in app
+    await response(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/responses.py", line 365, in __call__
+    await self._handle_simple(send, send_header_only, send_pathsend)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/responses.py", line 396, in _handle_simple
+    await send({"type": "http.response.body", "body": chunk, "more_body": more_body})
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 39, in sender
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 39, in sender
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 161, in _send
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/protocols/http/h11_impl.py", line 513, in send
+    output = self.conn.send(event=h11.EndOfMessage())
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_connection.py", line 538, in send
+    data_list = self.send_with_data_passthrough(event)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_connection.py", line 571, in send_with_data_passthrough
+    writer(event, data_list.append)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 67, in __call__
+    self.send_eom(event.headers, write)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 96, in send_eom
+    raise LocalProtocolError("Too little data for declared Content-Length")
+h11._util.LocalProtocolError: Too little data for declared Content-Length
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/protocols/http/h11_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/applications.py", line 1138, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/routing.py", line 121, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/routing.py", line 108, in app
+    await response(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/responses.py", line 365, in __call__
+    await self._handle_simple(send, send_header_only, send_pathsend)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/responses.py", line 396, in _handle_simple
+    await send({"type": "http.response.body", "body": chunk, "more_body": more_body})
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 39, in sender
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 39, in sender
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 161, in _send
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/protocols/http/h11_impl.py", line 513, in send
+    output = self.conn.send(event=h11.EndOfMessage())
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_connection.py", line 538, in send
+    data_list = self.send_with_data_passthrough(event)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_connection.py", line 571, in send_with_data_passthrough
+    writer(event, data_list.append)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 67, in __call__
+    self.send_eom(event.headers, write)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 96, in send_eom
+    raise LocalProtocolError("Too little data for declared Content-Length")
+h11._util.LocalProtocolError: Too little data for declared Content-Length
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/protocols/http/h11_impl.py", line 409, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/applications.py", line 1138, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/applications.py", line 113, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/routing.py", line 121, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/fastapi/routing.py", line 108, in app
+    await response(scope, receive, send)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/responses.py", line 365, in __call__
+    await self._handle_simple(send, send_header_only, send_pathsend)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/responses.py", line 396, in _handle_simple
+    await send({"type": "http.response.body", "body": chunk, "more_body": more_body})
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 39, in sender
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/_exception_handler.py", line 39, in sender
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/starlette/middleware/errors.py", line 161, in _send
+    await send(message)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/uvicorn/protocols/http/h11_impl.py", line 513, in send
+    output = self.conn.send(event=h11.EndOfMessage())
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_connection.py", line 538, in send
+    data_list = self.send_with_data_passthrough(event)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_connection.py", line 571, in send_with_data_passthrough
+    writer(event, data_list.append)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 67, in __call__
+    self.send_eom(event.headers, write)
+  File "/Users/bob/Library/Python/3.9/lib/python/site-packages/h11/_writers.py", line 96, in send_eom
+    raise LocalProtocolError("Too little data for declared Content-Length")
+h11._util.LocalProtocolError: Too little data for declared Content-Length
